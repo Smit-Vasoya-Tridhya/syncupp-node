@@ -1,0 +1,11 @@
+{
+    "admin":{
+        "adminNotFound":"Admin not found."
+    },
+
+    "auth":{
+        "emailPassNotFound":"Email or password not found.",
+        "incorrectPassword":"Email or password is incorrect.",
+        "loggedIn":"Logged in successfully."
+    }
+}

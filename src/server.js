@@ -8,6 +8,7 @@ const errorHandler = require("./helpers/error");
 const cors = require("cors");
 const rootRoutes = require("./routes/index");
 const logger = require("./logger");
+const { insertData } = require("./seeder/seeder");
 
 app.use(express.json());
 app.use(cors());
@@ -17,4 +18,7 @@ app.use(rootRoutes);
 // handling error from all of the route
 app.use(errorHandler);
 
-app.listen(port, () => logger.info(`Server started at port:${port}`));
+app.listen(port, async () => {
+  //   await insertData();
+  logger.info(`Server started at port:${port}`);
+});
