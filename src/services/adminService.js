@@ -45,11 +45,7 @@ class AdminService {
         admin_exist?.password
       );
       if (!correct_password)
-        return throwError(
-          returnMessage("auth", "incorrectPassword"),
-          statusCode.badRequest
-        );
-
+        return throwError(returnMessage("auth", "incorrectPassword"));
       return this.tokenGenerator(admin_exist);
     } catch (error) {
       logger.error(`Error while admin login, ${error}`);

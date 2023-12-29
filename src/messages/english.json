@@ -6,6 +6,14 @@
     "auth":{
         "emailPassNotFound":"Email or password not found.",
         "incorrectPassword":"Email or password is incorrect.",
-        "loggedIn":"Logged in successfully."
+        "loggedIn":"Logged in successfully.",
+        "invalidEmail":"Email is invalid.",
+        "invalidPassword":"Password should contain one uppercase letter, one lowercase letter, one special character, one number and minimum 8 length.",
+        "googelAuthTokenNotFound": "Google oAuth token not found."
+    },
+
+    "agency":{
+        "agencyExist":"Agency already exists.",
+        "agencyRegistered":"Agency registered successfully."
     }
 }

@@ -1,3 +1,4 @@
+const { throwError } = require("../helpers/errorUtil");
 const engMessage = require("../messages/english.json");
 
 exports.returnMessage = (module, key, language = "en") => {
@@ -30,4 +31,20 @@ exports.validateEmail = (email) => {
     return false;
 
   return regex.test(email);
+};
+
+exports.passwordValidation = (password) => {
+  const passwordRegex =
+    /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/;
+
+  return passwordRegex.test(password);
+};
+
+exports.validateRequestFields = (payload, fields) => {
+  for (const field of fields) {
+    if (!payload[field]) {
+      return throwError(`${field} is required.`);
+    }
+  }
+  return;
 };

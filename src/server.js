@@ -9,9 +9,12 @@ const cors = require("cors");
 const rootRoutes = require("./routes/index");
 const logger = require("./logger");
 const { insertData } = require("./seeder/seeder");
-
+const morgan = require("morgan");
+const path = require("path");
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "*" }));
+app.use(morgan("dev"));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 app.use(rootRoutes);
 
