@@ -64,16 +64,33 @@ class AdminService {
 
   forgotPassword = async (payload) => {
     const { email } = payload;
-    const admin = await Admin.findOne({ email: email });
+    const admin = await Admin.findOne({ email: email }, { password: 0 });
     return admin;
   };
 
   resetPassword = async (payload) => {
     const { token, email } = payload;
-    const admin = await Admin.findOne({
-      email: email,
-      reset_password_token: token,
-    });
+    const admin = await Admin.findOne(
+      {
+        email: email,
+        reset_password_token: token,
+      },
+      {
+        password: 0,
+      }
+    );
+    return admin;
+  };
+  updatePassword = async (payload) => {
+    const admin = await Admin.findOne(
+      {
+        email: "admin@yopmail.com",
+      },
+      {
+        password: 0,
+      }
+    );
+
     return admin;
   };
 }

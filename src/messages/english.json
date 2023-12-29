@@ -9,10 +9,12 @@
         "loggedIn":"Logged in successfully."
     }
 ,
-    "Admin": {
-        "resetPassword" : "Password reset successfully",
-        "emailSent" : "Token sent to your email successfully",
-        "emailNotFOund": "Email does not exist."
+"Admin": {
+    "resetPassword": "Password reset successfully",
+    "emailSent": "Token sent to your email successfully",
+    "emailNotFound": "Email does not exist.",
+    "passwordNotMatch": "Old password does not match",
+    "passwordUpdated": "Password updated successfully"
+}
 
-    }
 }
