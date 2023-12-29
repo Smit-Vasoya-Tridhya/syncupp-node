@@ -5,6 +5,8 @@ const { throwError } = require("../helpers/errorUtil");
 const { returnMessage } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
+const sendEmail = require("../helpers/sendEmail");
 
 class AdminService {
   tokenGenerator = (payload) => {
@@ -62,13 +64,29 @@ class AdminService {
     return admins;
   };
 
-  forgotPassword = async (payload) => {
+  forgotPassword = async (payload, req, res) => {
     const { email } = payload;
     const admin = await Admin.findOne({ email: email }, { password: 0 });
-    return admin;
+    if (!admin) {
+      return throwError(returnMessage("Admin", "emailNotFound"));
+    }
+    if (admin) {
+      const reset_password_token = crypto.randomBytes(20).toString("hex");
+      const reset_password_url = `${req.protocol}://${req.get(
+        "host"
+      )}/api/v1/passwordReset/${reset_password_token}`;
+      const message = `Your password reset token is :- \n\n ${reset_password_url}  \n\n IF you have not requested this mail then , Please ignore`;
+      await sendEmail({
+        email: req.body.email,
+        subject: "Admin Panel Password Recovery",
+        message: message,
+      });
+      admin.reset_password_token = reset_password_token;
+      await admin.save();
+    }
   };
 
-  resetPassword = async (payload) => {
+  resetPassword = async (payload, req, res) => {
     const { token, email } = payload;
     const admin = await Admin.findOne(
       {
@@ -79,19 +97,32 @@ class AdminService {
         password: 0,
       }
     );
-    return admin;
+    if (!admin) {
+      return throwError(returnMessage("Admin", "emailNotFound"));
+    } else {
+      const hash_password = await bcrypt.hash(req.body.newPassword, 10);
+      admin.password = hash_password;
+      admin.reset_password_token = "";
+      await admin.save();
+    }
   };
-  updatePassword = async (payload) => {
-    const admin = await Admin.findOne(
-      {
-        email: "admin@yopmail.com",
-      },
-      {
-        password: 0,
-      }
-    );
+  updatePassword = async (payload, req, res) => {
+    const admin = await Admin.findOne({
+      email: "admin@yopmail.com",
+    });
 
-    return admin;
+    if (admin) {
+      const is_match = await bcrypt.compare(
+        req.body.oldPassword,
+        admin.password
+      );
+      if (!is_match) {
+        return throwError(returnMessage("Admin", "passwordNotMatch"));
+      }
+      const hash_password = await bcrypt.hash(req.body.newPassword, 10);
+      admin.password = hash_password;
+      await admin.save();
+    }
   };
 }
 

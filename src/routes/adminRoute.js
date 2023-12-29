@@ -12,12 +12,7 @@ const { resetPasswordValidator } = require("../validators/admin.validator");
 // this route is used for the ADMIN panel Login
 adminRoute.post("/login", login);
 adminRoute.post("/forgotPassword", forgotPassword);
-adminRoute.post(
-  "/resetPassword",
-  resetPasswordValidator,
-  validatorFunc,
-  resetPassword
-);
+adminRoute.post("/resetPassword", resetPassword);
 adminRoute.post("/updatePassword", updatePassword);
 adminRoute.get("/getAdmins", getAdmins);
 
