@@ -8,4 +8,11 @@
         "incorrectPassword":"Email or password is incorrect.",
         "loggedIn":"Logged in successfully."
     }
+,
+    "Admin": {
+        "resetPassword" : "Password reset successfully",
+        "emailSent" : "Token sent to your email successfully",
+        "emailNotFOund": "Email does not exist."
+
+    }
 }

@@ -26,7 +26,7 @@ class AdminService {
     try {
       const { email, password } = payload;
 
-      if (!data.email || !data.password)
+      if (!email || !password)
         return throwError(
           returnMessage("auth", "emailPassNotFound"),
           statusCode.badRequest
@@ -55,6 +55,26 @@ class AdminService {
       logger.error(`Error while admin login, ${error}`);
       throwError(error?.message, error?.status);
     }
+  };
+
+  getAdmins = async (payload) => {
+    const admins = await Admin.find({});
+    return admins;
+  };
+
+  forgotPassword = async (payload) => {
+    const { email } = payload;
+    const admin = await Admin.findOne({ email: email });
+    return admin;
+  };
+
+  resetPassword = async (payload) => {
+    const { token, email } = payload;
+    const admin = await Admin.findOne({
+      email: email,
+      reset_password_token: token,
+    });
+    return admin;
   };
 }
 
