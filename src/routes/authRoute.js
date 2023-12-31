@@ -8,6 +8,7 @@ authRoute.post(
   authController.agencySignUp
 );
 
-authRoute.post("/google-signup", authController.agencyGoogelSignUp);
+authRoute.post("/google-signup", authController.agencyGoogleSignUp);
+authRoute.post("/facebook-signup", authController.agencyFacebookSignUp);
 
 module.exports = authRoute;

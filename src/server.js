@@ -20,7 +20,6 @@ app.use(rootRoutes);
 
 // handling error from all of the route
 app.use(errorHandler);
-
 app.listen(port, async () => {
   //   await insertData();
   logger.info(`Server started at port:${port}`);

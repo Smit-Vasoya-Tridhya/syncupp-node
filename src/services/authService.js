@@ -50,8 +50,13 @@ class AuthService {
 
   agencySignUp = async (payload, files) => {
     try {
-      const { first_name, last_name, email, password, contact_number } =
-        payload;
+      const {
+        first_name,
+        last_name,
+        email,
+        password,
+        contact_number,
+      } = payload;
       validateRequestFields(payload, [
         "first_name",
         "last_name",
@@ -115,7 +120,7 @@ class AuthService {
     try {
       const { signupId } = payload;
       if (!signupId)
-        return throwError(returnMessage("auth", "googelAuthTokenNotFound"));
+        return throwError(returnMessage("auth", "googleAuthTokenNotFound"));
       const decoded = jwt.decode(signupId);
 
       let existing_agency = await Authentication.findOne({
@@ -135,7 +140,6 @@ class AuthService {
           first_name: decoded?.given_name,
           last_name: decoded?.family_name,
           email: decoded?.email,
-          image_url,
           reference_id: agency?._id,
           remember_me: payload?.remember_me,
           role: role?._id,
@@ -150,6 +154,65 @@ class AuthService {
     } catch (error) {
       logger.error("Error while google sign In", error);
       return throwError(error?.message, error?.status);
+    }
+  };
+
+  facebookSignIn = async (payload) => {
+    try {
+      const redirect_uri = encodeURIComponent(
+        `${process.env.SERVER_URL}/api/v1/auth/facebook-signup`
+      );
+      const accessTokenUrl =
+        "https://graph.facebook.com/v6.0/oauth/access_token?" +
+        `client_id=${process.env.FACEBOOK_CLIENT_ID}&` +
+        `client_secret=${process.env.FACEBOOK_CLIENT_SECRET}&` +
+        `redirect_uri=${redirect_uri}&` +
+        `code=${encodeURIComponent(payload)}`;
+
+      const accessToken = await axios
+        .get(accessTokenUrl)
+        .then((res) => res.data["access_token"]);
+
+      const data = await axios
+        .get(
+          `https://graph.facebook.com/me?access_token=${encodeURIComponent(
+            accessToken
+          )}&fields=id,name,email,first_name,last_name`
+        )
+        .then((res) => res.data);
+
+      if (!data?.email) return throwError(returnMessage("default", "default"));
+
+      let existing_agency = await Authentication.findOne({
+        email: data?.email,
+        is_deleted: false,
+      })
+        .populate("role")
+        .lean();
+
+      if (!existing_agency) {
+        const [agency, role] = await Promise.resolve([
+          agencyService.agencyRegistration({}),
+          Role_Master.findOne({ name: "agency" }).lean(),
+        ]);
+
+        const agency_enroll = await Authentication.create({
+          first_name: data?.first_name,
+          last_name: data?.last_name,
+          email: data?.email,
+          reference_id: agency?._id,
+          role: role?._id,
+          status: "payment_pending",
+          is_facebook_signup: true,
+        });
+        agency_enroll.role = role;
+        return this.tokenGenerator(agency_enroll);
+      } else {
+        return this.tokenGenerator(existing_agency);
+      }
+    } catch (error) {
+      logger.error(`Error while facebook signup:${error.message}`);
+      throwError(error?.message, error?.status);
     }
   };
 }
