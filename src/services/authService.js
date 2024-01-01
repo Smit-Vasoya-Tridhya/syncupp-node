@@ -92,10 +92,10 @@ class AuthService {
       const [agency, encrypted_password, role] = await Promise.all([
         agencyService.agencyRegistration(agency_object),
         this.passwordEncryption({ password }),
-        Role_Master.findOne({ name: "agency" }).lean(),
+        Role_Master.findOne({ name: "agency" }).select("name").lean(),
       ]);
 
-      const agency_enroll = await Authentication.create({
+      let agency_enroll = await Authentication.create({
         first_name,
         last_name,
         email,
@@ -107,6 +107,7 @@ class AuthService {
         role: role?._id,
         status: "payment_pending",
       });
+      agency_enroll = agency_enroll.toObject();
       agency_enroll.role = role;
       return this.tokenGenerator(agency_enroll);
     } catch (error) {
@@ -126,16 +127,16 @@ class AuthService {
         email: decoded.email,
         is_deleted: false,
       })
-        .populate("role")
+        .populate("role", "name")
         .lean();
 
       if (!existing_agency) {
         const [agency, role] = await Promise.resolve([
           agencyService.agencyRegistration({}),
-          Role_Master.findOne({ name: "agency" }).lean(),
+          Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
 
-        const agency_enroll = await Authentication.create({
+        let agency_enroll = await Authentication.create({
           first_name: decoded?.given_name,
           last_name: decoded?.family_name,
           email: decoded?.email,
@@ -145,6 +146,7 @@ class AuthService {
           status: "payment_pending",
           is_google_signup: true,
         });
+        agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
         return this.tokenGenerator(agency_enroll);
       } else {
@@ -186,13 +188,13 @@ class AuthService {
         email: data?.email,
         is_deleted: false,
       })
-        .populate("role")
+        .populate("role", "name")
         .lean();
 
       if (!existing_agency) {
         const [agency, role] = await Promise.resolve([
           agencyService.agencyRegistration({}),
-          Role_Master.findOne({ name: "agency" }).lean(),
+          Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
 
         const agency_enroll = await Authentication.create({
@@ -204,6 +206,7 @@ class AuthService {
           status: "payment_pending",
           is_facebook_signup: true,
         });
+        agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
         return this.tokenGenerator(agency_enroll);
       } else {
@@ -224,7 +227,7 @@ class AuthService {
         email,
         is_deleted: false,
       })
-        .populate("role")
+        .populate("role", "name")
         .lean();
 
       if (!existing_Data)
