@@ -38,11 +38,6 @@ const registerAgency = {
               type: "boolean",
               default: false,
             },
-            role: {
-              type: "string",
-              descripition: "Enter object id of the Role",
-              required: true,
-            },
             agency_logo: {
               type: "file",
               descripition: "Enter your agency logo image",
