@@ -10,4 +10,4 @@ const sendResponse = (
     .json({ success, message, data, status: statusCode });
 };
 
-module.exports = sendResponse;
+module.exports = { sendResponse };

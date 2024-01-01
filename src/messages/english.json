@@ -3,16 +3,27 @@
     "adminNotFound": "Admin not found.",
     "resetPassword": "Password reset successfully",
     "emailSent": "Token sent to your email successfully",
-    "emailNotFound": "Email does not exist",
-    "passwordNotMatch": "Old password does not match",
-    "passwordUpdated": "Password updated successfully"
+    "emailNotFound": "Email does not exist"
   },
 
   "auth": {
     "emailPassNotFound": "Email or password not found.",
     "incorrectPassword": "Email or password is incorrect.",
-    "loggedIn": "Logged in successfully."
+    "loggedIn": "Logged in successfully.",
+    "invalidEmail": "Email is invalid.",
+    "invalidPassword": "Password should contain one uppercase letter, one lowercase letter, one special character, one number and minimum 8 length.",
+    "googleAuthTokenNotFound": "Google oAuth token not found.",
+    "facebookAuthTokenNotFound": "Facebook oAuth token not found."
   },
+
+  "Admin": {
+    "resetPassword": "Password reset successfully.",
+    "emailSent": "Token sent to your email successfully.",
+    "emailNotFound": "Email does not exist.",
+    "passwordNotMatch": "Old password does not match",
+    "passwordUpdated": "Password updated successfully"
+  },
+
   "teamAgency": {
     "memberNotFound": "Team member not found.",
     "emailExist": "Email already registered",
@@ -26,5 +37,11 @@
     "oldPasswordMismatch": "Old password does not match",
     "passwordUpdated": "Password updated successfully",
     "invalidToken": "Invalid token"
-  }
+  },
+  "agency": {
+    "agencyExist": "Agency already exists.",
+    "agencyRegistered": "Agency registered successfully."
+  },
+
+  "default": { "default": "Something went wrong." }
 }
