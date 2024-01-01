@@ -1,9 +1,9 @@
 {
   "admin": {
     "adminNotFound": "Admin not found.",
-    "resetPassword": "Password reset successfully",
-    "emailSent": "Token sent to your email successfully",
-    "emailNotFound": "Email does not exist"
+    "resetPassword": "Password reset successfully.",
+    "emailSent": "Token sent to your email successfully.",
+    "emailNotFound": "Email does not exist."
   },
 
   "auth": {
@@ -20,23 +20,28 @@
     "resetPassword": "Password reset successfully.",
     "emailSent": "Token sent to your email successfully.",
     "emailNotFound": "Email does not exist.",
-    "passwordNotMatch": "Old password does not match",
-    "passwordUpdated": "Password updated successfully"
+    "passwordNotMatch": "Old password does not match.",
+    "passwordUpdated": "Password updated successfully."
   },
 
   "teamAgency": {
-    "memberNotFound": "Team member not found.",
-    "emailExist": "Email already registered",
-    "passwordAlreadySet": "Password already set",
-    "invitationSent": "Invitation email sent successfully",
-    "accountCreated": "Account created successfully",
-    "emailNotRegistered": "This email is not registered",
-    "passwordReset": "Password reset successful",
-    "tokenSent": "Token sent to your email successfully",
-    "emailNotFound": "Email does not exist",
-    "oldPasswordMismatch": "Old password does not match",
-    "passwordUpdated": "Password updated successfully",
-    "invalidToken": "Invalid token"
+    "memberNotFound": "Team member not found with this mail.",
+    "emailExist": "Email already registered.",
+    "passwordAlreadySet": "Password already set.",
+    "invitationSent": "Invitation email sent successfully.",
+    "accountCreated": "Account created successfully.",
+    "emailNotRegistered": "This email is not registered.",
+    "passwordReset": "Password reset successful.",
+    "tokenSent": "Token sent to your email successfully.",
+    "emailNotFound": "Email does not exist.",
+    "oldPasswordMismatch": "Old password does not match.",
+    "passwordUpdated": "Password updated successfully.",
+    "invalidToken": "Invalid token.",
+    "registerFirst": "Register first.",
+    "passwordSet": "Password set successfully.",
+    "resetPassword": "Password reset successfully.",
+    "emailSent": "Token sent to your email successfully.",
+    "passwordNotMatch": "Old password does not match."
   },
   "agency": {
     "agencyExist": "Agency already exists.",

@@ -3,8 +3,8 @@ const { crm_connection } = require("../config/connection");
 
 const authenticationSchema = new mongoose.Schema(
   {
-    first_name: { type: String, required: true },
-    last_name: { type: String, required: true },
+    first_name: { type: String },
+    last_name: { type: String },
     email: { type: String, required: true },
     password: { type: String },
     contact_number: { type: Number },
@@ -15,12 +15,18 @@ const authenticationSchema = new mongoose.Schema(
     remember_me: { type: Boolean, default: false },
     is_deleted: { type: Boolean, default: false },
     role: { type: mongoose.Types.ObjectId, ref: "role_master", required: true },
-    reference_id: { type: mongoose.Types.ObjectId, required: true },
+    reference_id: {
+      type: mongoose.Types.ObjectId,
+      ref: "agency",
+      required: true,
+    },
     image_url: { type: String },
     status: {
       type: String,
       enum: ["payment_pending", "payment_done", "confirmed", "confirm_pending"],
     },
+    name: { type: String },
+    is_verified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

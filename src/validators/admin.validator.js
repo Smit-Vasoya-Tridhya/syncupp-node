@@ -4,22 +4,22 @@ exports.resetPasswordValidator = [
   body("token")
     .not()
     .isEmpty()
-    .withMessage(validationMessage.admin.tokenRequired),
+    .withMessage(validationMessage.general.tokenRequired),
   body("email")
     .not()
     .isEmpty()
-    .withMessage(validationMessage.admin.emailRequired)
+    .withMessage(validationMessage.general.emailRequired)
     .matches(
       /^([a-zA-Z0-9]+)([\-\_\.]*)([a-zA-Z0-9]*)([@])([a-zA-Z0-9]{2,})([\.][a-zA-Z]{2,3})$/
     )
-    .withMessage(validationMessage.admin.invalidEmail)
+    .withMessage(validationMessage.general.invalidEmail)
     .trim(),
   body("newPassword")
     .not()
     .isEmpty()
-    .withMessage(validationMessage.admin.passwordRequired)
+    .withMessage(validationMessage.general.passwordRequired)
     .trim()
     .isLength({ min: 6 })
     .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$.!%*#?&])[A-Za-z\d@$.!%*#?&]{6,}$/)
-    .withMessage(validationMessage.admin.invalidPassword),
+    .withMessage(validationMessage.general.invalidPassword),
 ];
