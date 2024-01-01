@@ -20,7 +20,8 @@ class AdminService {
       );
       return { token, user: payload };
     } catch (error) {
-      logger.error("Error while token generate", error);
+      logger.error(`Error while token generate, ${error}`);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -51,7 +52,7 @@ class AdminService {
       return this.tokenGenerator(admin_exist);
     } catch (error) {
       logger.error(`Error while admin login, ${error}`);
-      throwError(error?.message, error?.status);
+      throwError(error?.message, error?.statusCode);
     }
   };
 

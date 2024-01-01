@@ -26,7 +26,7 @@ class AuthService {
       return { token, user: payload };
     } catch (error) {
       logger.error(`Error while token generate: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -35,7 +35,7 @@ class AuthService {
       return await bcrypt.compare(payload.password, payload.encrypted_password);
     } catch (error) {
       logger.error(`Error while password verification: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -44,7 +44,7 @@ class AuthService {
       return await bcrypt.hash(payload.password, 14);
     } catch (error) {
       logger.error(`Error while password encryption: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -85,7 +85,7 @@ class AuthService {
         industry: payload?.industry,
       };
 
-      const [agency, encrypted_password, role] = await Promise.resolve([
+      const [agency, encrypted_password, role] = await Promise.all([
         agencyService.agencyRegistration(agency_object),
         this.passwordEncryption({ password }),
         Role_Master.findOne({ name: "agency" }).lean(),
@@ -107,7 +107,7 @@ class AuthService {
       return this.tokenGenerator(agency_enroll);
     } catch (error) {
       logger.error(`Error while agency signup: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -148,7 +148,7 @@ class AuthService {
       }
     } catch (error) {
       logger.error("Error while google sign In", error);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -207,7 +207,7 @@ class AuthService {
       }
     } catch (error) {
       logger.error(`Error while facebook signup:${error.message}`);
-      throwError(error?.message, error?.status);
+      throwError(error?.message, error?.statusCode);
     }
   };
 }
