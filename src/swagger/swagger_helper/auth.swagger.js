@@ -5,7 +5,7 @@ const registerAgency = {
   security: [],
   requestBody: {
     content: {
-      "multipart/form-data": {
+      "application/json": {
         schema: {
           type: "object",
           properties: {
@@ -37,10 +37,6 @@ const registerAgency = {
             remember_me: {
               type: "boolean",
               default: false,
-            },
-            agency_logo: {
-              type: "file",
-              descripition: "Enter your agency logo image",
             },
             company_website: {
               type: "string",
@@ -139,6 +135,166 @@ const facebookSignIn = {
   },
 };
 
+const login = {
+  tags: ["CRM Panel"],
+  description: "CRM login",
+  summary: "CRM login",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            email: {
+              type: "string",
+              descripition: "Enter your email",
+              required: true,
+            },
+            password: {
+              type: "string",
+              descripition: "Enter your password",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const forgotPassword = {
+  tags: ["CRM Panel"],
+  description: "CRM forgot password",
+  summary: "CRM forgot password",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            email: {
+              type: "string",
+              descripition: "Enter your email",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const resetPassword = {
+  tags: ["CRM Panel"],
+  description: "CRM reset password",
+  summary: "CRM reset password",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            email: {
+              type: "string",
+              descripition: "Enter your email",
+              required: true,
+            },
+            password: {
+              type: "string",
+              descripition: "Enter your password",
+              required: true,
+            },
+            token: {
+              type: "string",
+              descripition: "Enter your token",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const changePassword = {
+  tags: ["CRM Panel"],
+  description: "CRM change password",
+  summary: "CRM change password",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            old_password: {
+              type: "string",
+              descripition: "Enter your old password",
+              required: true,
+            },
+            new_password: {
+              type: "string",
+              descripition: "Enter your new password",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const authRoutes = {
   "/api/v1/auth/signup": {
     post: registerAgency,
@@ -148,6 +304,18 @@ const authRoutes = {
   },
   "/api/v1/auth/facebook-signup": {
     get: facebookSignIn,
+  },
+  "/api/v1/auth/login": {
+    post: login,
+  },
+  "/api/v1/auth/forgot-password": {
+    post: forgotPassword,
+  },
+  "/api/v1/auth/reset-password": {
+    post: resetPassword,
+  },
+  "/api/v1/auth/change-password": {
+    post: changePassword,
   },
 };
 

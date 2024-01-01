@@ -19,7 +19,13 @@ const authenticationSchema = new mongoose.Schema(
     image_url: { type: String },
     status: {
       type: String,
-      enum: ["payment_pending", "payment_done", "confirmed", "confirm_pending"],
+      enum: [
+        "payment_pending",
+        "payment_done",
+        "confirmed",
+        "confirm_pending",
+        "agency_inactive",
+      ],
     },
   },
   { timestamps: true }

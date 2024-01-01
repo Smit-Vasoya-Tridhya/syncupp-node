@@ -44,3 +44,47 @@ exports.agencyFacebookSignUp = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.login = catchAsyncError(async (req, res, next) => {
+  const loggedIn = await authService.login(req.body);
+  return sendResponse(
+    res,
+    true,
+    returnMessage("auth", "loggedIn"),
+    loggedIn,
+    statusCode.success
+  );
+});
+
+exports.forgotPassword = catchAsyncError(async (req, res, next) => {
+  await authService.forgotPassword(req.body);
+  return sendResponse(
+    res,
+    true,
+    returnMessage("auth", "resetPasswordMailSent"),
+    {},
+    statusCode.success
+  );
+});
+
+exports.resetPassword = catchAsyncError(async (req, res, next) => {
+  await authService.resetPassword(req.body);
+  return sendResponse(
+    res,
+    true,
+    returnMessage("auth", "passwordReset"),
+    {},
+    statusCode.success
+  );
+});
+
+exports.changePassword = catchAsyncError(async (req, res, next) => {
+  await authService.changePassword(req.body, req.user._id);
+  return sendResponse(
+    res,
+    true,
+    returnMessage("auth", "passwordChanged"),
+    {},
+    statusCode.success
+  );
+});

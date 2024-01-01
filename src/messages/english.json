@@ -10,7 +10,17 @@
     "invalidEmail": "Email is invalid.",
     "invalidPassword": "Password should contain one uppercase letter, one lowercase letter, one special character, one number and minimum 8 length.",
     "googleAuthTokenNotFound": "Google oAuth token not found.",
-    "facebookAuthTokenNotFound": "Facebook oAuth token not found."
+    "facebookAuthTokenNotFound": "Facebook oAuth token not found.",
+    "dataNotFound": "Data not found.",
+    "emailRequired": "Email is required.",
+    "emailNotFound": "Email does not exist.",
+    "invalidToken": "Token is invalid.",
+    "resetPasswordMailSent": "Reset password mail is sent. please check your inbox.",
+    "passwordReset": "Password reset successfully.",
+    "passwordChanged": "Password changed successfully.",
+    "unAuthorized": "You are un-authorized to perform this action.",
+    "passwordRequired": "Old and new passwords are required.",
+    "incorrectOldPassword": "Old password does not match"
   },
 
   "Admin": {
@@ -23,7 +33,12 @@
 
   "agency": {
     "agencyExist": "Agency already exists.",
-    "agencyRegistered": "Agency registered successfully."
+    "agencyRegistered": "Agency registered successfully.",
+    "agencyInactive": "Agency is in-active."
+  },
+
+  "emailTemplate": {
+    "forgotPasswordSubject": "Reset your password now."
   },
 
   "default": { "default": "Something went wrong." }
