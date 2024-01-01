@@ -1,10 +1,11 @@
 const adminRoutes = require("./swagger_helper/admin.swagger");
+const teamAgencyRoutes = require("./swagger_helper/teamAgency.swagger");
 
 const swaggerDoc = {
   openapi: "3.0.0",
   host: "",
   info: {
-    title: "Admin Panel",
+    title: "SyncUpp",
     version: "0.0.1",
     description: "Swagger API Documentation for Admin Panel",
   },
@@ -28,10 +29,15 @@ const swaggerDoc = {
       name: "Admin Panel",
       description: "Admin's Route",
     },
+    {
+      name: "Team Agency",
+      description: "Team Agency's Route",
+    },
   ],
 
   paths: {
     ...adminRoutes,
+    ...teamAgencyRoutes,
   },
 };
 module.exports = swaggerDoc;

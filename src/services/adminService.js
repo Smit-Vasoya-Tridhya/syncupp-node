@@ -74,7 +74,7 @@ class AdminService {
       const reset_password_token = crypto.randomBytes(20).toString("hex");
       const reset_password_url = `${req.protocol}://${req.get(
         "host"
-      )}/api/v1/passwordReset/${reset_password_token}`;
+      )}/api/v1/password-reset/${reset_password_token}`;
       const message = `Your password reset token is :- \n\n ${reset_password_url}  \n\n IF you have not requested this mail then , Please ignore`;
       await sendEmail({
         email: req.body.email,
