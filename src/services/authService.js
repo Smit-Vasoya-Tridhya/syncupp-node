@@ -50,13 +50,8 @@ class AuthService {
 
   agencySignUp = async (payload, files) => {
     try {
-      const {
-        first_name,
-        last_name,
-        email,
-        password,
-        contact_number,
-      } = payload;
+      const { first_name, last_name, email, password, contact_number } =
+        payload;
       validateRequestFields(payload, [
         "first_name",
         "last_name",
@@ -80,7 +75,7 @@ class AuthService {
         return throwError(returnMessage("agency", "agencyExist"));
 
       let image_url;
-      if (files.fieldname === "client_image") {
+      if (files && files.fieldname === "client_image") {
         image_url = "uploads/" + files?.filename;
       }
       const agency_object = {
