@@ -10,7 +10,7 @@ exports.login = catchAsyncError(async (req, res, next) => {
   sendResponse(
     res,
     true,
-    returnMessage("admin", "loggedIn"),
+    returnMessage("auth", "loggedIn"),
     admin,
     statusCode.success
   );

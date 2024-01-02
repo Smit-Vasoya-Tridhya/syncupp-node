@@ -21,7 +21,7 @@
 
   "admin": {
     "resetPassword": "Password reset successfully.",
-    "emailSent": "Token sent to your email successfully.",
+    "emailSent": "Forgot password mail sent successfully.",
     "emailNotFound": "Email does not exist.",
     "passwordNotMatch": "Old password does not match",
     "passwordUpdated": "Password updated successfully",
