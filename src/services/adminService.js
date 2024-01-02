@@ -125,9 +125,10 @@ class AdminService {
   };
 
   changePassword = async (payload, teamId) => {
+    const id = "658d560823890bb61dfb118d";
     try {
       const { newPassword, oldPassword } = payload;
-      const admin = await Admin.findById(teamId);
+      const admin = await Admin.findById({ _id: id });
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }
@@ -136,7 +137,7 @@ class AdminService {
       if (!is_match) {
         return throwError(returnMessage("admin", "passwordNotMatch"));
       }
-      const hash_password = await bcrypt.hash(newPassword, 10);
+      const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
       await admin.save();
     } catch (error) {

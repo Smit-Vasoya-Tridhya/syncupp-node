@@ -42,139 +42,6 @@ const loginTeamAgency = {
     },
   },
 };
-const forgotTeamAgencyPassword = {
-  tags: ["Team Agency"],
-  description: "",
-  summary: "Team agency Forgot Password ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            email: {
-              type: "string",
-              description: "Enter email id",
-              required: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-const resetTeamAgencyPassword = {
-  tags: ["Team Agency"],
-  description: "",
-  summary: "Reset team agency Password ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            email: {
-              type: "string",
-              description: "Enter email id",
-              required: true,
-            },
-            newPassword: {
-              type: "string",
-              description: "Enter password",
-              required: true,
-            },
-            token: {
-              type: "string",
-              description: "Enter token",
-              required: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-
-const updateTeamAgencyPassword = {
-  tags: ["Team Agency"],
-  description: "",
-  summary: "Update team agency Password ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            oldPassword: {
-              type: "string",
-              description: "Enter email id",
-              required: true,
-            },
-            newPassword: {
-              type: "string",
-              description: "Enter password",
-              required: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
 
 const verifyTeamAgency = {
   tags: ["Team Agency"],
@@ -236,7 +103,7 @@ const verifyTeamAgency = {
   },
 };
 
-const registerTeamAgency = {
+const addTeamMemberAgency = {
   tags: ["Team Agency"],
   description: "",
   summary: "Team Agency Forgot Password ",
@@ -291,24 +158,126 @@ const registerTeamAgency = {
   },
 };
 
+const getTeamMemberAgency = {
+  tags: ["Team Agency"],
+  description: "",
+  summary: "Get team member ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "integer", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const getAllTeamMemberAgency = {
+  tags: ["Team Agency"],
+  description: "",
+  summary: "Get All Team Agency Member ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "integer", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+const deleteTeamMemberAgency = {
+  tags: ["Team Agency"],
+  description: "",
+  summary: "Delete Team Agency ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "integer", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const teamAgencyRoutes = {
   "/api/v1/teamAgency/login": {
     post: loginTeamAgency,
   },
-  "/api/v1/teamAgency/forgotPassword": {
-    post: forgotTeamAgencyPassword,
-  },
-  "/api/v1/teamAgency/resetPassword": {
-    post: resetTeamAgencyPassword,
-  },
-  "/api/v1/teamAgency/updatePassword": {
-    post: updateTeamAgencyPassword,
-  },
-  "/api/v1/teamAgency/register": {
-    post: registerTeamAgency,
+
+  "/api/v1/teamAgency/add": {
+    post: addTeamMemberAgency,
   },
   "/api/v1/teamAgency/verify": {
     post: verifyTeamAgency,
+  },
+  "/api/v1/teamAgency/details/:id": {
+    post: getTeamMemberAgency,
+  },
+  "/api/v1/teamAgency/getAll": {
+    post: getAllTeamMemberAgency,
+  },
+  "/api/v1/teamAgency/getAll": {
+    post: deleteTeamMemberAgency,
   },
 };
 

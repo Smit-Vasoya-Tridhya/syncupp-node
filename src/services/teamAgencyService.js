@@ -1,14 +1,18 @@
 const jwt = require("jsonwebtoken");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const { returnMessage } = require("../utils/utils");
+const {
+  returnMessage,
+  forgotPasswordEmailTemplate,
+} = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
-const TeamAuthAgency = require("../models/authenticationSchema");
+const Authentication = require("../models/authenticationSchema");
 const Agency_Type_Master = require("../models/masters/agencyTypeMasterSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
+const Team_Agency = require("../models/teamAgencySchema");
 
 class TeamAgencyService {
   // Token generate
@@ -28,46 +32,59 @@ class TeamAgencyService {
     }
   };
 
-  // Register
+  // Add Team Member
 
-  register = async (payload, req, res) => {
+  add = async (payload, user_id) => {
     try {
       const { email, name, contact_number, role } = payload;
 
-      const teamMember = await TeamAuthAgency.findOne({ email });
+      const teamMember = await Authentication.findOne({ email });
 
       if (teamMember) {
-        return throwError(
-          returnMessage("teamAgency", "emailExist"),
-          statusCode.badRequest
-        );
+        return throwError(returnMessage("teamAgency", "emailExist"));
       }
 
       const newRole = await Role_Master.create({
         name: "agency",
       });
 
-      const newTeamMember = await TeamAuthAgency.create({
+      const teamRole = await Agency_Type_Master.create({
+        name: role,
+        label: role,
+      });
+
+      const teamAgency = await Team_Agency.create({
+        role: teamRole._id,
+        agency_id: user_id,
+      });
+
+      const newTeamMember = await Authentication.create({
         email,
         name,
         contact_number,
         role: newRole._id,
-        reference_id: "65928863d4a6b3861d7a5fbb",
+        reference_id: teamAgency._id,
       });
 
-      const invitation_token = crypto.randomBytes(20).toString("hex");
-      const invitation_token_url = `${req.protocol}://${req.get(
-        "host"
-      )}/api/v1/verify-account/${invitation_token}`;
+      const invitation_token = crypto.randomBytes(32).toString("hex");
+      console.log(invitation_token);
+      const encode = encodeURIComponent(email);
 
-      const message = `Click on the link to set up your account ${invitation_token_url}`;
+      const link = `${process.env.TEAMAGENCY_SETPASSWORD_PATH}?token=${invitation_token}&email=${encode}`;
+      const forgot_email_template = forgotPasswordEmailTemplate(link);
+
       await sendEmail({
-        email: req.body.email,
-        subject: "Invitation to set up your account",
-        message: message,
+        email: email,
+        subject: returnMessage("emailTemplate", "forgotPasswordSubject"),
+        message: forgot_email_template,
       });
 
-      newTeamMember.invitation_token = invitation_token;
+      const hash_token = crypto
+        .createHash("sha256")
+        .update(invitation_token)
+        .digest("hex");
+
+      newTeamMember.invitation_token = hash_token;
       await newTeamMember.save();
     } catch (error) {
       logger.error(`Error while Team agency register, ${error}`);
@@ -75,49 +92,36 @@ class TeamAgencyService {
     }
   };
 
-  // Verify
+  // Verify Team Mem
 
-  verify = async (payload, req, res) => {
+  verify = async (payload) => {
     try {
       const { first_name, last_name, email, password, token } = payload;
 
-      const teamMember = await TeamAuthAgency.findOne({ email });
+      const hash_token = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+      const teamMember = await Authentication.findOne({
+        email: email,
+        invitation_token: hash_token,
+      });
 
       if (!teamMember) {
-        return throwError(
-          returnMessage("teamAgency", "registerFirst"),
-          statusCode.badRequest
-        );
+        return throwError(returnMessage("teamAgency", "invalidToken"));
       }
-
-      if (teamMember && teamMember.is_verified === true) {
-        return throwError(
-          returnMessage("teamAgency", "passwordAlreadySet"),
-          statusCode.badRequest
-        );
-      }
-
-      console.log(token);
-      console.log(teamMember.invitation_token);
-      if (token !== teamMember.invitation_token) {
-        return throwError(
-          returnMessage("teamAgency", "invalidToken"),
-          statusCode.badRequest
-        );
-      }
-
-      const hash_password = await bcrypt.hash(password, 10);
-      const verifyTeamMember = await TeamAuthAgency.findOneAndUpdate(
+      const hash_password = await bcrypt.hash(password, 14);
+      await Authentication.findOneAndUpdate(
         { email: email },
         {
           first_name,
           last_name,
           email,
           password: hash_password,
+          invitation_token: undefined,
         }
       );
-
-      await verifyTeamMember.save();
     } catch (error) {
       logger.error(`Error while Team agency verify , ${error}`);
       throwError(error?.message, error?.status);
@@ -136,7 +140,7 @@ class TeamAgencyService {
           statusCode.badRequest
         );
 
-      const member_exist = await TeamAuthAgency.findOne(
+      const member_exist = await Authentication.findOne(
         { email: email },
         { invitation_token: 0 }
       ).lean();
@@ -164,79 +168,93 @@ class TeamAgencyService {
     }
   };
 
-  // forgotPassword
-
-  forgotPassword = async (payload, req, res) => {
-    const { email } = payload;
-
-    console.log(email);
-    const teamMember = await TeamAuthAgency.findOne(
-      { email: email },
-      { password: 0 }
-    );
-    if (!teamMember) {
-      return throwError(returnMessage("teamAgency", "emailNotFound"));
-    }
-    if (teamMember) {
-      const reset_password_token = crypto.randomBytes(20).toString("hex");
-      const reset_password_url = `${req.protocol}://${req.get(
-        "host"
-      )}/api/v1/password-reset/${reset_password_token}`;
-      const message = `Your password reset token is :- \n\n ${reset_password_url}  \n\n IF you have not requested this mail then , Please ignore`;
-      await sendEmail({
-        email: req.body.email,
-        subject: "Team member panel Password Recovery",
-        message: message,
-      });
-      teamMember.reset_password_token = reset_password_token;
-      await teamMember.save();
-    }
-  };
-
-  //resetPassword
-
-  resetPassword = async (payload, req, res) => {
-    const { token, email } = payload;
-    const teamMember = await TeamAuthAgency.findOne(
-      {
-        email: email,
-      },
-      {
-        password: 0,
-      }
-    );
-    if (token !== teamMember.reset_password_token) {
-      return throwError(returnMessage("teamAgency", "invalidToken"));
-    }
-
-    if (!teamMember) {
-      return throwError(returnMessage("teamAgency", "emailNotFound"));
-    } else {
-      const hash_password = await bcrypt.hash(req.body.newPassword, 10);
-      teamMember.password = hash_password;
-      teamMember.reset_password_token = "";
-      await teamMember.save();
-    }
-  };
-
-  //updatePassword
-  updatePassword = async (payload, req, res) => {
-    const teamMember = await TeamAuthAgency.findOne({
-      email: "hhhh@gmail.com",
-    });
-    if (teamMember) {
-      const is_match = await bcrypt.compare(
-        req.body.oldPassword,
-        teamMember.password
+  // getOne Team agency
+  getOne = async (payload) => {
+    try {
+      const memberId = payload;
+      const teamMember = await Authentication.findOne(
+        {
+          _id: memberId,
+        },
+        { password: 0 }
       );
 
-      console.log(is_match);
-      if (!is_match) {
-        return throwError(returnMessage("teamAgency", "passwordNotMatch"));
+      if (!teamMember) {
+        return throwError(returnMessage("teamAgency", "invalidId"));
       }
-      const hash_password = await bcrypt.hash(req.body.newPassword, 10);
-      teamMember.password = hash_password;
-      await teamMember.save();
+      return teamMember;
+    } catch (error) {
+      logger.error(`Error while get team member, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  // getOne Team agency
+  delete = async (payload) => {
+    try {
+      const memberId = payload;
+
+      const teamMember = await Authentication.findByIdAndDelete({
+        _id: memberId,
+      });
+
+      if (!teamMember) {
+        return throwError(returnMessage("teamAgency", "invalidId"));
+      }
+      return;
+    } catch (error) {
+      logger.error(`Error while Team member  delete, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  getAll = async (payload, req, query) => {
+    try {
+      const user_id = payload;
+      const user = await Authentication.findOne({
+        _id: user_id,
+      }).lean();
+
+      const data = await Team_Agency.distinct("_id", {
+        agency_id: user.reference_id,
+      });
+
+      const idData = data.map((id) => id.toHexString());
+
+      const { page = 1, limit = 10, search, ...sortBy } = req.query;
+
+      // const page = req.query.page || 1;
+      // const limit = parseInt(req.query.items) || 10;
+      const skip = page * limit - limit;
+      // let sortBy = req.query.name || { createdAt: 1 };
+
+      const resultsPromise = await Authentication.find({
+        reference_id: idData,
+      })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: 1 })
+        .exec();
+
+      // Counting the total documents
+      const countPromise = await Authentication.countDocuments({
+        reference_id: idData,
+      });
+
+      // Resolving both promises
+      const [result, count] = await Promise.all([resultsPromise, countPromise]);
+
+      const pages = Math.ceil(count / limit);
+
+      const pagination = { page, pages, count };
+
+      if (count > 0) {
+        return { result, pagination };
+      }
+      return throwError(returnMessage("teamAgency", "invalidId"));
+    } catch (error) {
+      logger.error(`Error while Team member  delete, ${error}`);
+      throwError(error?.message, error?.status);
     }
   };
 }

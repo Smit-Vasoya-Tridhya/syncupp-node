@@ -61,7 +61,7 @@ exports.resetPassword = catchAsyncError(async (req, res, next) => {
 //Update password
 
 exports.changePassword = catchAsyncError(async (req, res, next) => {
-  await adminService.changePassword(req.body);
+  await adminService.changePassword(req.body, req?.user?._id);
 
   sendResponse(
     res,

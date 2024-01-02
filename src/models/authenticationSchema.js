@@ -17,7 +17,6 @@ const authenticationSchema = new mongoose.Schema(
     role: { type: mongoose.Types.ObjectId, ref: "role_master", required: true },
     reference_id: {
       type: mongoose.Types.ObjectId,
-      ref: "agency",
       required: true,
     },
     image_url: { type: String },
@@ -32,7 +31,6 @@ const authenticationSchema = new mongoose.Schema(
       ],
     },
     name: { type: String },
-    is_verified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -1,43 +1,29 @@
 const {
-  register,
   verify,
   login,
-  forgotPassword,
-  resetPassword,
-  updatePassword,
+  add,
+  getOne,
+  deleteMember,
+  getAll,
 } = require("../controllers/teamAgencyController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
-  resetPasswordValidator,
-  forgotPasswordValidator,
   loginTeamMemberValidator,
   verifyValidator,
-  registerMemberValidator,
+  addMemberValidator,
 } = require("../validators/teamAgency.validator");
-
+const { protect } = require("../middlewares/authMiddleware");
 const teamAgencyRoute = require("express").Router();
 
 // this route is used for the Team Agency Route.
-teamAgencyRoute.post(
-  "/register",
-  registerMemberValidator,
-  validatorFunc,
-  register
-);
+
 teamAgencyRoute.post("/verify", verifyValidator, validatorFunc, verify);
 teamAgencyRoute.post("/login", loginTeamMemberValidator, validatorFunc, login);
-teamAgencyRoute.post(
-  "/forgotpassword",
-  forgotPasswordValidator,
-  validatorFunc,
-  forgotPassword
-);
-teamAgencyRoute.post(
-  "/resetPassword",
-  resetPasswordValidator,
-  validatorFunc,
-  resetPassword
-);
-teamAgencyRoute.post("/updatePassword", updatePassword);
+
+teamAgencyRoute.use(protect);
+teamAgencyRoute.post("/add", addMemberValidator, validatorFunc, add);
+teamAgencyRoute.get("/details/:id", getOne);
+teamAgencyRoute.delete("/delete/:id", deleteMember);
+teamAgencyRoute.get("/getAll", getAll);
 
 module.exports = teamAgencyRoute;

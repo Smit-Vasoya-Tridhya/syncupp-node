@@ -5,9 +5,10 @@ const TeamAgencyService = require("../services/teamAgencyService");
 const { sendResponse } = require("../utils/sendResponse");
 const teamAgencyService = new TeamAgencyService();
 
-// Team Member Register
-exports.register = catchAsyncError(async (req, res, next) => {
-  await teamAgencyService.register(req.body, req, res);
+// Team Member add
+exports.add = catchAsyncError(async (req, res, next) => {
+  const user_id = req.user.reference_id;
+  await teamAgencyService.add(req.body, user_id);
   sendResponse(
     res,
     true,
@@ -19,7 +20,7 @@ exports.register = catchAsyncError(async (req, res, next) => {
 
 // Team Member Verification
 exports.verify = catchAsyncError(async (req, res, next) => {
-  await teamAgencyService.verify(req.body, req, res);
+  await teamAgencyService.verify(req.body);
   sendResponse(
     res,
     true,
@@ -41,43 +42,48 @@ exports.login = catchAsyncError(async (req, res, next) => {
   );
 });
 
-/// forgotPassword
-exports.forgotPassword = catchAsyncError(async (req, res, next) => {
-  console.log(req.body);
-  const teamMember = await teamAgencyService.forgotPassword(req.body, req, res);
+//  Get one Team Member
 
+exports.getOne = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+  const teamMember = await teamAgencyService.getOne(id);
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "emailSent"),
+    returnMessage("teamAgency", "memberGet"),
     teamMember,
     statusCode.success
   );
 });
 
-// resetPassword
+//  Delete Team Member
 
-exports.resetPassword = catchAsyncError(async (req, res, next) => {
-  await teamAgencyService.resetPassword(req.body, req, res);
-
+exports.deleteMember = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+  await teamAgencyService.delete(id);
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "resetPassword"),
+    returnMessage("teamAgency", "deleted"),
     null,
     statusCode.success
   );
 });
+//  Get All Team Member
 
-//Update password
-
-exports.updatePassword = catchAsyncError(async (req, res, next) => {
-  await teamAgencyService.updatePassword(req.body, req, res);
+exports.getAll = catchAsyncError(async (req, res, next) => {
+  const user_id = req.user._id;
+  const { result, pagination } = await teamAgencyService.getAll(
+    user_id,
+    req,
+    req.query
+  );
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "passwordUpdated"),
-    null,
-    statusCode.success
+    returnMessage("teamAgency", "TeamMemberFetched"),
+    result,
+    statusCode.success,
+    pagination
   );
 });
