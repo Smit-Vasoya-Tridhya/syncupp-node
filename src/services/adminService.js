@@ -71,8 +71,10 @@ class AdminService {
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }
-      const reset_password_token = crypto.randomBytes(20).toString("hex");
-      const link = `process.env.CLIENT_RESETPASSWORD_PATH/admin/reset-password/${reset_password_token}`;
+      const reset_password_token = crypto.randomBytes(32).toString("hex");
+      const encode = encodeURIComponent(email);
+
+      const link = `${process.env.CLIENT_RESETPASSWORD_PATH}?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
       await sendEmail({
@@ -85,10 +87,6 @@ class AdminService {
         .createHash("sha256")
         .update(reset_password_token)
         .digest("hex");
-
-      console.log(reset_password_token);
-      console.log(hash_token);
-
       admin.reset_password_token = hash_token;
       await admin.save();
     } catch (error) {
@@ -100,9 +98,14 @@ class AdminService {
   resetPassword = async (payload) => {
     try {
       const { token, email, newPassword } = payload;
+      const hash_token = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
       const admin = await Admin.findOne(
         {
           email: email,
+          reset_password_token: hash_token,
         },
         {
           password: 0,
@@ -110,17 +113,9 @@ class AdminService {
       );
 
       if (!admin) {
-        return throwError(returnMessage("admin", "emailNotFound"));
-      }
-
-      const hash_token = crypto
-        .createHash("sha256")
-        .update(token)
-        .digest("hex");
-
-      if (hash_token !== admin.reset_password_token) {
         return throwError(returnMessage("admin", "invalidToken"));
       }
+
       const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
       admin.reset_password_token = undefined;
