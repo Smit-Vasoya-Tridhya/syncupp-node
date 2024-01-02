@@ -1,14 +1,19 @@
 const authRoute = require("express").Router();
 const { upload } = require("../helpers/multer");
 const authController = require("../controllers/authController");
+const { protect } = require("../middlewares/authMiddleware");
 
-authRoute.post(
-  "/signup",
-  upload.fields([{ name: "agency_logo", maxCount: 1 }]),
-  authController.agencySignUp
-);
+authRoute.post("/signup", authController.agencySignUp);
 
 authRoute.post("/google-signup", authController.agencyGoogleSignUp);
-authRoute.post("/facebook-signup", authController.agencyFacebookSignUp);
+authRoute.get("/facebook-signup", authController.agencyFacebookSignUp);
+
+// this will work for all type of the memebers
+authRoute.post("/login", authController.login);
+authRoute.post("/forgot-password", authController.forgotPassword);
+authRoute.post("/reset-password", authController.resetPassword);
+
+authRoute.use(protect);
+authRoute.post("/change-password", authController.changePassword);
 
 module.exports = authRoute;

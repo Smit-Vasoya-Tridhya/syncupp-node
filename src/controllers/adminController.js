@@ -33,12 +33,12 @@ exports.getAdmins = catchAsyncError(async (req, res, next) => {
 
 // forgotPassword
 exports.forgotPassword = catchAsyncError(async (req, res, next) => {
-  const admin = await adminService.forgotPassword(req.body, req, res);
+  const admin = await adminService.forgotPassword(req.body);
 
   sendResponse(
     res,
     true,
-    returnMessage("Admin", "emailSent"),
+    returnMessage("admin", "emailSent"),
     admin,
     statusCode.success
   );
@@ -47,12 +47,12 @@ exports.forgotPassword = catchAsyncError(async (req, res, next) => {
 // resetPassword
 
 exports.resetPassword = catchAsyncError(async (req, res, next) => {
-  await adminService.resetPassword(req.body, req, res);
+  await adminService.resetPassword(req.body);
 
   sendResponse(
     res,
     true,
-    returnMessage("Admin", "resetPassword"),
+    returnMessage("admin", "resetPassword"),
     null,
     statusCode.success
   );
@@ -60,13 +60,13 @@ exports.resetPassword = catchAsyncError(async (req, res, next) => {
 
 //Update password
 
-exports.updatePassword = catchAsyncError(async (req, res, next) => {
-  await adminService.updatePassword(req.body, req, res);
+exports.changePassword = catchAsyncError(async (req, res, next) => {
+  await adminService.changePassword(req.body);
 
   sendResponse(
     res,
     true,
-    returnMessage("Admin", "passwordUpdated"),
+    returnMessage("admin", "passwordUpdated"),
     null,
     statusCode.success
   );
