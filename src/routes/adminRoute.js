@@ -4,7 +4,7 @@ const {
   forgotPassword,
   resetPassword,
   getAdmins,
-  updatePassword,
+  changePassword,
 } = require("../controllers/adminController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const { resetPasswordValidator } = require("../validators/admin.validator");
@@ -13,7 +13,7 @@ const { resetPasswordValidator } = require("../validators/admin.validator");
 adminRoute.post("/login", login);
 adminRoute.post("/forgotPassword", forgotPassword);
 adminRoute.post("/resetPassword", resetPassword);
-adminRoute.post("/updatePassword", updatePassword);
+adminRoute.post("/updatePassword", changePassword);
 adminRoute.get("/getAdmins", getAdmins);
 
 module.exports = adminRoute;

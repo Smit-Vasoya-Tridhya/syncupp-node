@@ -1,8 +1,4 @@
 {
-  "admin": {
-    "adminNotFound": "Admin not found."
-  },
-
   "auth": {
     "emailPassNotFound": "Email or password not found.",
     "incorrectPassword": "Email or password is incorrect.",
@@ -23,12 +19,14 @@
     "incorrectOldPassword": "Old password does not match"
   },
 
-  "Admin": {
+  "admin": {
     "resetPassword": "Password reset successfully.",
     "emailSent": "Token sent to your email successfully.",
     "emailNotFound": "Email does not exist.",
     "passwordNotMatch": "Old password does not match",
-    "passwordUpdated": "Password updated successfully"
+    "passwordUpdated": "Password updated successfully",
+    "invalidToken": "Token is invalid.",
+    "adminNotFound": "Admin not found."
   },
 
   "agency": {
