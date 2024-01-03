@@ -1,4 +1,4 @@
-# SyncUpp
+# Tracky
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.com/tridhyatech-node/syncupp.git
+git remote add origin https://gitlab.com/tridhyatech-node/tracky.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.com/tridhyatech-node/syncupp/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.com/tridhyatech-node/tracky/-/settings/integrations)
 
 ## Collaborate with your team
 
