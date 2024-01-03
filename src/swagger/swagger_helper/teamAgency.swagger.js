@@ -174,7 +174,7 @@ const getTeamMemberAgency = {
       description: "ID of the team member",
       required: true,
       schema: {
-        type: "integer", // adjust the type accordingly
+        type: "string", // adjust the type accordingly
       },
     },
   ],
@@ -194,24 +194,46 @@ const getTeamMemberAgency = {
 
 const getAllTeamMemberAgency = {
   tags: ["Team Agency"],
-  description: "",
+  description:
+    "sortOrder = (asc ,desc)  ,sortField = (name ,email , comtact_no  , page  = (number) , resultPerPage   =(number)  , )  , ",
   summary: "Get All Team Agency Member ",
   security: [
     {
       bearerAuth: [],
     },
   ],
-  parameters: [
-    {
-      name: "id",
-      in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
-      required: true,
-      schema: {
-        type: "integer", // adjust the type accordingly
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            sortOrder: {
+              type: "asc",
+              description: "Enter email id",
+              required: true,
+            },
+            sortField: {
+              type: "string",
+              description: "Enter sortField",
+              required: true,
+            },
+            resultPerPage: {
+              type: "integer",
+              description: "Enter resultPerPage",
+              required: true,
+            },
+            page: {
+              type: "integer",
+              description: "Enter page Number",
+              required: true,
+            },
+          },
+        },
       },
     },
-  ],
+  },
   responses: {
     200: {
       description: "ok",
@@ -259,6 +281,73 @@ const deleteTeamMemberAgency = {
   },
 };
 
+const editTeamMemberAgency = {
+  tags: ["Team Agency"],
+  description: "",
+  summary: "Edit Team Agency ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            name: {
+              type: "string",
+              description: "Enter name",
+              required: true,
+            },
+            contact_number: {
+              type: "number",
+              description: "Enter contact number",
+              required: true,
+            },
+
+            first_name: {
+              type: "string",
+              description: "Enter first name",
+              required: true,
+            },
+            last_name: {
+              type: "string",
+              description: "Enter last name",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "string", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const teamAgencyRoutes = {
   "/api/v1/teamAgency/login": {
     post: loginTeamAgency,
@@ -270,14 +359,17 @@ const teamAgencyRoutes = {
   "/api/v1/teamAgency/verify": {
     post: verifyTeamAgency,
   },
-  "/api/v1/teamAgency/details/:id": {
-    post: getTeamMemberAgency,
-  },
   "/api/v1/teamAgency/getAll": {
-    post: getAllTeamMemberAgency,
+    get: getAllTeamMemberAgency,
   },
-  "/api/v1/teamAgency/getAll": {
-    post: deleteTeamMemberAgency,
+  "/api/v1/teamAgency/details/{id}": {
+    get: getTeamMemberAgency,
+  },
+  "/api/v1/teamAgency/delete/{id}": {
+    delete: deleteTeamMemberAgency,
+  },
+  "/api/v1/teamAgency/edit/{id}": {
+    put: editTeamMemberAgency,
   },
 };
 

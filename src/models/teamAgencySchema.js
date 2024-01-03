@@ -8,7 +8,11 @@ const teamAgencySchema = new mongoose.Schema(
       ref: "agency",
       required: true,
     },
-    role: { type: mongoose.Types.ObjectId, ref: "role_master", required: true },
+    role: {
+      type: mongoose.Types.ObjectId,
+      ref: "agency_type_master",
+      required: true,
+    },
   },
   { timestamps: true }
 );

@@ -125,10 +125,11 @@ class AdminService {
   };
 
   changePassword = async (payload, teamId) => {
-    const id = "658d560823890bb61dfb118d";
+    console.log(teamId);
+    // const id = "658d560823890bb61dfb118d";
     try {
       const { newPassword, oldPassword } = payload;
-      const admin = await Admin.findById({ _id: id });
+      const admin = await Admin.findById({ _id: teamId });
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }

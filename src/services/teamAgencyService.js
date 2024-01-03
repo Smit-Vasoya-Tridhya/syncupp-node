@@ -13,6 +13,7 @@ const Authentication = require("../models/authenticationSchema");
 const Agency_Type_Master = require("../models/masters/agencyTypeMasterSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const Team_Agency = require("../models/teamAgencySchema");
+const { paginationObject, getKeywordType } = require("./commonSevice");
 
 class TeamAgencyService {
   // Token generate
@@ -208,52 +209,118 @@ class TeamAgencyService {
     }
   };
 
-  getAll = async (payload, req, query) => {
+  getAll = async (payload, searchObj) => {
     try {
       const user_id = payload;
       const user = await Authentication.findOne({
         _id: user_id,
       }).lean();
 
-      const data = await Team_Agency.distinct("_id", {
-        agency_id: user.reference_id,
-      });
+      const teamMemberData = await Team_Agency.distinct(
+        "_id",
+        {
+          agency_id: user.reference_id,
+        },
+        {
+          is_deleted: false,
+        }
+      );
 
-      const idData = data.map((id) => id.toHexString());
+      const teamMemberIdData = teamMemberData.map((id) => id.toHexString());
 
-      const { page = 1, limit = 10, search, ...sortBy } = req.query;
+      const queryObj = { reference_id: teamMemberIdData };
 
-      // const page = req.query.page || 1;
-      // const limit = parseInt(req.query.items) || 10;
-      const skip = page * limit - limit;
-      // let sortBy = req.query.name || { createdAt: 1 };
+      if (searchObj.search && searchObj.search !== "") {
+        queryObj["$or"] = [
+          {
+            name: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+        ];
 
-      const resultsPromise = await Authentication.find({
-        reference_id: idData,
-      })
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: 1 })
-        .exec();
+        const keywordType = getKeywordType(searchObj.search);
+        if (keywordType === "number") {
+          const numericKeyword = parseInt(searchObj.search);
+          queryObj["$or"].push({
+            contact_number: numericKeyword,
+          });
+        }
+      }
+
+      const teamMemberRoleList = await Team_Agency.find({
+        _id: { $in: teamMemberIdData },
+      }).populate("role");
+
+      const pagination = paginationObject(searchObj);
+
+      console.log(pagination);
+      const teamMemberList = await Authentication.find(queryObj)
+        .skip(pagination.skip)
+        .limit(pagination.resultPerPage)
+        .sort(pagination.sort)
+        .lean();
 
       // Counting the total documents
-      const countPromise = await Authentication.countDocuments({
-        reference_id: idData,
+      const count = await Authentication.countDocuments(queryObj);
+
+      // Calculating total pages
+      const pages = Math.ceil(count / pagination.resultPerPage);
+
+      // Create a map for quick lookup based on "_id"
+      const roleMap = new Map(
+        teamMemberRoleList.map((role) => [role._id.toString(), role])
+      );
+
+      // Combine the lists
+      const combinedList = teamMemberList.map((teamMember) => {
+        const matchingRole = roleMap.get(teamMember.reference_id.toString());
+        return {
+          ...teamMember,
+          teamMemberRole: matchingRole || null, // Attach the role or null if not found
+        };
       });
 
-      // Resolving both promises
-      const [result, count] = await Promise.all([resultsPromise, countPromise]);
+      // Create the final object
+      const combinedOutput = { teamMemberList: combinedList };
 
-      const pages = Math.ceil(count / limit);
-
-      const pagination = { page, pages, count };
-
-      if (count > 0) {
-        return { result, pagination };
-      }
-      return throwError(returnMessage("teamAgency", "invalidId"));
+      return {
+        combinedOutput,
+        pagination: {
+          page: pagination.page,
+          pages: pages,
+          count: count,
+        },
+        // pageCount:
+        //   Math.ceil(
+        //     combinedOutput.teamMemberList.length / pagination.resultPerPage
+        //   ) || 0,
+      };
     } catch (error) {
-      logger.error(`Error while Team member  delete, ${error}`);
+      logger.error(`Error while Team members, Listing ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  // edit Team Member agency
+  editMember = async (payload, userId) => {
+    try {
+      const memberId = userId;
+      const teamMember = await Authentication.findByIdAndUpdate(
+        {
+          _id: memberId,
+        },
+        payload,
+        { new: true, useFindAndModify: false }
+      );
+
+      if (!teamMember) {
+        return throwError(returnMessage("teamAgency", "invalidId"));
+      }
+      return teamMember;
+    } catch (error) {
+      logger.error(`Error while Team member Edit, ${error}`);
       throwError(error?.message, error?.status);
     }
   };

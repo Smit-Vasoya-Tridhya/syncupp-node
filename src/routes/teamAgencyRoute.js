@@ -5,6 +5,7 @@ const {
   getOne,
   deleteMember,
   getAll,
+  editMember,
 } = require("../controllers/teamAgencyController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
@@ -25,5 +26,6 @@ teamAgencyRoute.post("/add", addMemberValidator, validatorFunc, add);
 teamAgencyRoute.get("/details/:id", getOne);
 teamAgencyRoute.delete("/delete/:id", deleteMember);
 teamAgencyRoute.get("/getAll", getAll);
+teamAgencyRoute.put("/edit/:id", editMember);
 
 module.exports = teamAgencyRoute;

@@ -69,21 +69,35 @@ exports.deleteMember = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
 //  Get All Team Member
 
 exports.getAll = catchAsyncError(async (req, res, next) => {
   const user_id = req.user._id;
-  const { result, pagination } = await teamAgencyService.getAll(
+  const { pagination, combinedOutput } = await teamAgencyService.getAll(
     user_id,
-    req,
-    req.query
+    req.body
   );
   sendResponse(
     res,
     true,
     returnMessage("teamAgency", "TeamMemberFetched"),
-    result,
+    combinedOutput,
     statusCode.success,
     pagination
+  );
+});
+
+//  Get All Team Member
+
+exports.editMember = catchAsyncError(async (req, res, next) => {
+  const user_id = req.user._id;
+  const teamMember = await teamAgencyService.editMember(req.body, user_id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("teamAgency", "updated"),
+    teamMember,
+    statusCode.success
   );
 });

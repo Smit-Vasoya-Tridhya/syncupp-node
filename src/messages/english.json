@@ -51,7 +51,8 @@
     "memberGet": "Team member details fetched successfully.",
     "deleted": "Team member deleted successfully.",
     "TeamMemberFetched": "All team member fetched successfully.",
-    "noDataFound": "All team member fetched successfully."
+    "noDataFound": "All team member fetched successfully.",
+    "updated": "Team member updated successfully."
   },
   "agency": {
     "agencyExist": "Agency already exists.",
