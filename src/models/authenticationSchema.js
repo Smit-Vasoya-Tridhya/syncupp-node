@@ -3,8 +3,9 @@ const { crm_connection } = require("../config/connection");
 
 const authenticationSchema = new mongoose.Schema(
   {
-    first_name: { type: String, required: true },
-    last_name: { type: String, required: true },
+    first_name: { type: String },
+    last_name: { type: String },
+    name: { type: String },
     email: { type: String, required: true },
     password: { type: String },
     contact_number: { type: Number },

@@ -16,7 +16,8 @@
     "passwordChanged": "Password changed successfully.",
     "unAuthorized": "You are un-authorized to perform this action.",
     "passwordRequired": "Old and new passwords are required.",
-    "incorrectOldPassword": "Old password does not match"
+    "incorrectOldPassword": "Old password does not match.",
+    "insufficientPermission": "In-sufficient permission."
   },
 
   "admin": {
@@ -32,11 +33,14 @@
   "agency": {
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",
-    "agencyInactive": "Agency is in-active."
+    "agencyInactive": "Agency is in-active.",
+    "clientCreated": "Invitation mail sent to the client.",
+    "clientExist": "Client already exist."
   },
 
   "emailTemplate": {
-    "forgotPasswordSubject": "Reset your password now."
+    "forgotPasswordSubject": "Reset your password now.",
+    "invitation": "Join to SyncUpp"
   },
 
   "default": { "default": "Something went wrong." }
