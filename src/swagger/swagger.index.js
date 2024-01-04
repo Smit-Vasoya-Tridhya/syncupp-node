@@ -1,6 +1,6 @@
 const adminRoutes = require("./swagger_helper/admin.swagger");
-const teamAgencyRoutes = require("./swagger_helper/teamAgency.swagger");
 const authRoutes = require("./swagger_helper/auth.swagger");
+const teamMembersRoutes = require("./swagger_helper/teamMember.swagger");
 
 const swaggerDoc = {
   openapi: "3.0.0",
@@ -31,8 +31,8 @@ const swaggerDoc = {
       description: "Admin's Route",
     },
     {
-      name: "Team Agency",
-      description: "Team Agency's Route",
+      name: "Team Member",
+      description: "Team Member's Route",
       name: "CRM Panel",
       description: "CRM panel Authentication route",
     },
@@ -40,7 +40,7 @@ const swaggerDoc = {
 
   paths: {
     ...adminRoutes,
-    ...teamAgencyRoutes,
+    ...teamMembersRoutes,
     ...authRoutes,
   },
 };

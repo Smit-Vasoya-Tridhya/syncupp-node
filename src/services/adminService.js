@@ -59,9 +59,19 @@ class AdminService {
     }
   };
 
-  getAdmins = async (payload) => {
-    const admins = await Admin.find({});
-    return admins;
+  getAdmin = async (payload) => {
+    try {
+      const admin_id = payload;
+      const admin = await Admin.find({ _id: admin_id });
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "adminNotFound"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while get Admin, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
   };
 
   forgotPassword = async (payload) => {
@@ -73,7 +83,7 @@ class AdminService {
       }
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
-
+      console.log(reset_password_token);
       const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
@@ -125,8 +135,6 @@ class AdminService {
   };
 
   changePassword = async (payload, teamId) => {
-    console.log(teamId);
-    // const id = "658d560823890bb61dfb118d";
     try {
       const { newPassword, oldPassword } = payload;
       const admin = await Admin.findById({ _id: teamId });
@@ -144,6 +152,27 @@ class AdminService {
     } catch (error) {
       logger.error(`Error while admin updatePassword, ${error}`);
       throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // update Team Member agency
+  updateAdmin = async (payload, admin_id) => {
+    try {
+      const admin = await Admin.findByIdAndUpdate(
+        {
+          _id: admin_id,
+        },
+        payload,
+        { new: true, useFindAndModify: false }
+      );
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "invalidId"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while Admin update, ${error}`);
+      throwError(error?.message, error?.status);
     }
   };
 }

@@ -11,7 +11,7 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
     const Authorization = token.split(" ")[1];
     const decodedUserData = jwt.verify(
       Authorization,
-      process.env.JWT_SECRET_KEY
+      process.env.JWT_ADMIN_SECRET_KEY
     );
     const user = await Admin.findById(decodedUserData.id)
       .where("is_deleted")

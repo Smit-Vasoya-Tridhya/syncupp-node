@@ -3,11 +3,11 @@ const router = require("express").Router();
 const userRoute = require("./userRoute");
 const authRoute = require("./authRoute");
 const adminRoute = require("./adminRoute");
-const teamAgencyRoute = require("./teamAgencyRoute");
+const teamMemberRoute = require("./teamMemberRoute");
 
 router.use("/api/v1/user", userRoute);
 router.use("/api/v1/auth", authRoute);
 router.use("/api/v1/admin", adminRoute);
-router.use("/api/v1/teamAgency", teamAgencyRoute);
+router.use("/api/v1/teamMember", teamMemberRoute);
 
 module.exports = router;

@@ -1,7 +1,7 @@
-const loginTeamAgency = {
-  tags: ["Team Agency"],
+const loginTeamMember = {
+  tags: ["Team Member"],
   description: "",
-  summary: "Login team agency ",
+  summary: "Login team Member ",
   security: [
     {
       bearerAuth: [],
@@ -43,10 +43,10 @@ const loginTeamAgency = {
   },
 };
 
-const verifyTeamAgency = {
-  tags: ["Team Agency"],
+const verifyTeamMember = {
+  tags: ["Team Member"],
   description: "",
-  summary: "Team agency Forgot Password ",
+  summary: "Team Member Verify Password ",
   security: [
     {
       bearerAuth: [],
@@ -103,10 +103,10 @@ const verifyTeamAgency = {
   },
 };
 
-const addTeamMemberAgency = {
-  tags: ["Team Agency"],
+const addTeamMember = {
+  tags: ["Team Member"],
   description: "",
-  summary: "Team Agency Forgot Password ",
+  summary: "Team Member Forgot Password ",
   security: [
     {
       bearerAuth: [],
@@ -158,8 +158,8 @@ const addTeamMemberAgency = {
   },
 };
 
-const getTeamMemberAgency = {
-  tags: ["Team Agency"],
+const getTeamMember = {
+  tags: ["Team Member"],
   description: "",
   summary: "Get team member ",
   security: [
@@ -192,11 +192,11 @@ const getTeamMemberAgency = {
   },
 };
 
-const getAllTeamMemberAgency = {
-  tags: ["Team Agency"],
+const getAllTeamMember = {
+  tags: ["Team Member"],
   description:
     "sortOrder = (asc ,desc)  ,sortField = (name ,email , comtact_no  , page  = (number) , resultPerPage   =(number)  , )  , ",
-  summary: "Get All Team Agency Member ",
+  summary: "Get All Team Member Member ",
   security: [
     {
       bearerAuth: [],
@@ -247,10 +247,10 @@ const getAllTeamMemberAgency = {
     },
   },
 };
-const deleteTeamMemberAgency = {
-  tags: ["Team Agency"],
+const deleteTeamMember = {
+  tags: ["Team Member"],
   description: "",
-  summary: "Delete Team Agency ",
+  summary: "Delete Team Member ",
   security: [
     {
       bearerAuth: [],
@@ -281,10 +281,10 @@ const deleteTeamMemberAgency = {
   },
 };
 
-const editTeamMemberAgency = {
-  tags: ["Team Agency"],
+const editTeamMember = {
+  tags: ["Team Member"],
   description: "",
-  summary: "Edit Team Agency ",
+  summary: "Edit Team Member ",
   security: [
     {
       bearerAuth: [],
@@ -348,29 +348,29 @@ const editTeamMemberAgency = {
   },
 };
 
-const teamAgencyRoutes = {
-  "/api/v1/teamAgency/login": {
-    post: loginTeamAgency,
+const teamMembersRoutes = {
+  "/api/v1/teamMember/login": {
+    post: loginTeamMember,
   },
 
-  "/api/v1/teamAgency/add": {
-    post: addTeamMemberAgency,
+  "/api/v1/teamMember/add": {
+    post: addTeamMember,
   },
-  "/api/v1/teamAgency/verify": {
-    post: verifyTeamAgency,
+  "/api/v1/teamMember/verify": {
+    post: verifyTeamMember,
   },
-  "/api/v1/teamAgency/getAll": {
-    get: getAllTeamMemberAgency,
+  "/api/v1/teamMember/getAll": {
+    get: getAllTeamMember,
   },
-  "/api/v1/teamAgency/details/{id}": {
-    get: getTeamMemberAgency,
+  "/api/v1/teamMember/details/{id}": {
+    get: getTeamMember,
   },
-  "/api/v1/teamAgency/delete/{id}": {
-    delete: deleteTeamMemberAgency,
+  "/api/v1/teamMember/delete/{id}": {
+    delete: deleteTeamMember,
   },
-  "/api/v1/teamAgency/edit/{id}": {
-    put: editTeamMemberAgency,
+  "/api/v1/teamMember/edit/{id}": {
+    put: editTeamMember,
   },
 };
 
-module.exports = teamAgencyRoutes;
+module.exports = teamMembersRoutes;

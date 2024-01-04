@@ -1,18 +1,18 @@
 const catchAsyncError = require("../helpers/catchAsyncError");
 const { returnMessage } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
-const TeamAgencyService = require("../services/teamAgencyService");
+const TeamMemberService = require("../services/teamMemberService");
 const { sendResponse } = require("../utils/sendResponse");
-const teamAgencyService = new TeamAgencyService();
+const teamMemberService = new TeamMemberService();
 
 // Team Member add
 exports.add = catchAsyncError(async (req, res, next) => {
   const user_id = req.user.reference_id;
-  await teamAgencyService.add(req.body, user_id);
+  await teamMemberService.add(req.body, user_id);
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "invitationSent"),
+    returnMessage("teamMember", "invitationSent"),
     null,
     statusCode.success
   );
@@ -20,11 +20,11 @@ exports.add = catchAsyncError(async (req, res, next) => {
 
 // Team Member Verification
 exports.verify = catchAsyncError(async (req, res, next) => {
-  await teamAgencyService.verify(req.body);
+  await teamMemberService.verify(req.body);
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "passwordSet"),
+    returnMessage("teamMember", "passwordSet"),
     null,
     statusCode.success
   );
@@ -32,7 +32,7 @@ exports.verify = catchAsyncError(async (req, res, next) => {
 
 // Team Member Login
 exports.login = catchAsyncError(async (req, res, next) => {
-  const teamMember = await teamAgencyService.login(req.body);
+  const teamMember = await teamMemberService.login(req.body);
   sendResponse(
     res,
     true,
@@ -46,11 +46,11 @@ exports.login = catchAsyncError(async (req, res, next) => {
 
 exports.getOne = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const teamMember = await teamAgencyService.getOne(id);
+  const teamMember = await teamMemberService.getOne(id);
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "memberGet"),
+    returnMessage("teamMember", "memberGet"),
     teamMember,
     statusCode.success
   );
@@ -60,11 +60,11 @@ exports.getOne = catchAsyncError(async (req, res, next) => {
 
 exports.deleteMember = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  await teamAgencyService.delete(id);
+  await teamMemberService.delete(id);
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "deleted"),
+    returnMessage("teamMember", "deleted"),
     null,
     statusCode.success
   );
@@ -74,15 +74,15 @@ exports.deleteMember = catchAsyncError(async (req, res, next) => {
 
 exports.getAll = catchAsyncError(async (req, res, next) => {
   const user_id = req.user._id;
-  const { pagination, combinedOutput } = await teamAgencyService.getAll(
+  const { pagination, teamMemberList } = await teamMemberService.getAll(
     user_id,
     req.body
   );
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "TeamMemberFetched"),
-    combinedOutput,
+    returnMessage("teamMember", "TeamMemberFetched"),
+    teamMemberList,
     statusCode.success,
     pagination
   );
@@ -92,11 +92,11 @@ exports.getAll = catchAsyncError(async (req, res, next) => {
 
 exports.editMember = catchAsyncError(async (req, res, next) => {
   const user_id = req.user._id;
-  const teamMember = await teamAgencyService.editMember(req.body, user_id);
+  const teamMember = await teamMemberService.editMember(req.body, user_id);
   sendResponse(
     res,
     true,
-    returnMessage("teamAgency", "updated"),
+    returnMessage("teamMember", "updated"),
     teamMember,
     statusCode.success
   );

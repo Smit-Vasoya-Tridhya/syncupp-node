@@ -16,7 +16,7 @@ const authenticationSchema = new mongoose.Schema(
     is_deleted: { type: Boolean, default: false },
     role: {
       type: mongoose.Types.ObjectId,
-      ref: "agency_type_master",
+      ref: "role_master",
       required: true,
     },
     reference_id: {

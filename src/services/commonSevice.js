@@ -5,12 +5,13 @@ exports.paginationObject = (paginationObject) => {
   const sortOrder = paginationObject.sortOrder === "asc" ? 1 : -1;
 
   const sortField =
-    paginationObject.sortField !== ""
-      ? paginationObject.sortField
+    paginationObject.sortField !== "permission"
+      ? paginationObject.sortField !== ""
+        ? paginationObject.sortField
+        : "createdAt"
       : "createdAt";
   const sort = {};
   sort[sortField] = sortOrder;
-
   return { page, skip, resultPerPage, sort };
 };
 

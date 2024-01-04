@@ -10,12 +10,15 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
 const Authentication = require("../models/authenticationSchema");
-const Agency_Type_Master = require("../models/masters/agencyTypeMasterSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const Team_Agency = require("../models/teamAgencySchema");
 const { paginationObject, getKeywordType } = require("./commonSevice");
+const Team_Role_Master = require("../models/masters/teamRoleSchema");
+const Team_Client = require("../models/teamClientSchema");
+const mongoose = require("mongoose");
+const { match } = require("assert");
 
-class TeamAgencyService {
+class TeamMemberService {
   // Token generate
 
   tokenGenerator = (payload) => {
@@ -38,40 +41,57 @@ class TeamAgencyService {
   add = async (payload, user_id) => {
     try {
       const { email, name, contact_number, role } = payload;
-
-      const teamMember = await Authentication.findOne({ email });
-
-      if (teamMember) {
-        return throwError(returnMessage("teamAgency", "emailExist"));
+      const isEmail = await Authentication.findOne({ email: email });
+      if (isEmail) {
+        return throwError(returnMessage("teamMember", "emailExist"));
       }
 
-      const newRole = await Role_Master.create({
-        name: "agency",
+      const teamMember = await Authentication.findOne({
+        reference_id: user_id,
+      }).populate({
+        path: "role",
+        model: "role_master",
       });
 
-      const teamRole = await Agency_Type_Master.create({
-        name: role,
-        label: role,
+      let roleKey;
+      let TeamModelName;
+      let memberOf;
+      if (teamMember.role.name === "agency") {
+        roleKey = "team_agency";
+        TeamModelName = Team_Agency;
+        memberOf = "agency_id";
+      }
+      if (teamMember.role.name === "client") {
+        roleKey = "team_client";
+        TeamModelName = Team_Client;
+        memberOf = "client_id";
+      }
+      const newMasterRole = await Role_Master.create({
+        name: roleKey,
       });
 
-      const teamAgency = await Team_Agency.create({
+      const teamRole = await Team_Role_Master.create({
+        role: role,
+      });
+
+      const teamModel = await TeamModelName.create({
         role: teamRole._id,
-        agency_id: user_id,
+        [memberOf]: user_id,
       });
 
       const newTeamMember = await Authentication.create({
         email,
         name,
         contact_number,
-        role: newRole._id,
-        reference_id: teamAgency._id,
+        role: newMasterRole._id,
+        reference_id: teamModel._id,
       });
 
       const invitation_token = crypto.randomBytes(32).toString("hex");
       console.log(invitation_token);
       const encode = encodeURIComponent(email);
 
-      const link = `${process.env.TEAMAGENCY_SETPASSWORD_PATH}?token=${invitation_token}&email=${encode}`;
+      const link = `${process.env.TEAM_MEMBER_SETPASSWORD_PATH}?token=${invitation_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
       await sendEmail({
@@ -87,13 +107,15 @@ class TeamAgencyService {
 
       newTeamMember.invitation_token = hash_token;
       await newTeamMember.save();
+
+      console.log(newTeamMember);
     } catch (error) {
-      logger.error(`Error while Team agency register, ${error}`);
+      logger.error(`Error while Team Member register, ${error}`);
       throwError(error?.message, error?.status);
     }
   };
 
-  // Verify Team Mem
+  // Verify Team Member
 
   verify = async (payload) => {
     try {
@@ -110,7 +132,7 @@ class TeamAgencyService {
       });
 
       if (!teamMember) {
-        return throwError(returnMessage("teamAgency", "invalidToken"));
+        return throwError(returnMessage("teamMember", "invalidToken"));
       }
       const hash_password = await bcrypt.hash(password, 14);
       await Authentication.findOneAndUpdate(
@@ -124,12 +146,12 @@ class TeamAgencyService {
         }
       );
     } catch (error) {
-      logger.error(`Error while Team agency verify , ${error}`);
+      logger.error(`Error while Team Member verify , ${error}`);
       throwError(error?.message, error?.status);
     }
   };
 
-  // Login
+  // Login Team Member
 
   login = async (payload) => {
     try {
@@ -148,7 +170,7 @@ class TeamAgencyService {
 
       if (!member_exist)
         return throwError(
-          returnMessage("teamAgency", "memberNotFound"),
+          returnMessage("teamMember", "memberNotFound"),
           statusCode.notFound
         );
 
@@ -164,12 +186,13 @@ class TeamAgencyService {
 
       return this.tokenGenerator(member_exist);
     } catch (error) {
-      logger.error(`Error while Team agency  login, ${error}`);
+      logger.error(`Error while Team Member  login, ${error}`);
       throwError(error?.message, error?.status);
     }
   };
 
-  // getOne Team agency
+  // getOne Team Member
+
   getOne = async (payload) => {
     try {
       const memberId = payload;
@@ -178,10 +201,26 @@ class TeamAgencyService {
           _id: memberId,
         },
         { password: 0 }
-      );
+      )
+        .populate({
+          path: "role",
+          model: "role_master",
+          select: "-createdAt -updatedAt",
+        })
+        .populate({
+          path: "reference_id",
+          model: "team_agency",
+          select: "-createdAt -updatedAt",
+
+          populate: {
+            path: "role",
+            model: "team_role_master",
+            select: "-createdAt -updatedAt",
+          },
+        });
 
       if (!teamMember) {
-        return throwError(returnMessage("teamAgency", "invalidId"));
+        return throwError(returnMessage("teamMember", "invalidId"));
       }
       return teamMember;
     } catch (error) {
@@ -190,36 +229,41 @@ class TeamAgencyService {
     }
   };
 
-  // getOne Team agency
-  delete = async (payload) => {
-    try {
-      const memberId = payload;
-
-      const teamMember = await Authentication.findByIdAndDelete({
-        _id: memberId,
-      });
-
-      if (!teamMember) {
-        return throwError(returnMessage("teamAgency", "invalidId"));
-      }
-      return;
-    } catch (error) {
-      logger.error(`Error while Team member  delete, ${error}`);
-      throwError(error?.message, error?.status);
-    }
-  };
+  // Get All team Members
 
   getAll = async (payload, searchObj) => {
     try {
       const user_id = payload;
+      const teamMember = await Authentication.findOne({
+        _id: user_id,
+      }).populate({
+        path: "role",
+        model: "role_master",
+      });
+
+      let roleKey;
+      let TeamModelName;
+      let memberOf;
+      if (teamMember.role.name === "agency") {
+        roleKey = "team_agency";
+        TeamModelName = Team_Agency;
+        memberOf = "agency_id";
+      }
+      if (teamMember.role.name === "client") {
+        roleKey = "team_agency";
+        TeamModelName = Team_Client;
+        memberOf = "client_id";
+      }
+
       const user = await Authentication.findOne({
         _id: user_id,
       }).lean();
+      console.log(user);
 
-      const teamMemberData = await Team_Agency.distinct(
+      const teamMemberData = await TeamModelName.distinct(
         "_id",
         {
-          agency_id: user.reference_id,
+          [memberOf]: user.reference_id,
         },
         {
           is_deleted: false,
@@ -249,53 +293,37 @@ class TeamAgencyService {
         }
       }
 
-      const teamMemberRoleList = await Team_Agency.find({
-        _id: { $in: teamMemberIdData },
-      }).populate("role");
-
       const pagination = paginationObject(searchObj);
 
-      console.log(pagination);
       const teamMemberList = await Authentication.find(queryObj)
+        .populate({
+          path: "role",
+          model: "role_master",
+        })
+        .populate({
+          path: "reference_id",
+          model: roleKey,
+          populate: {
+            path: "role",
+            model: "team_role_master",
+          },
+        })
         .skip(pagination.skip)
         .limit(pagination.resultPerPage)
         .sort(pagination.sort)
         .lean();
 
-      // Counting the total documents
-      const count = await Authentication.countDocuments(queryObj);
+      const count = await Authentication.countDocuments(queryObj); // Counting the total documents
 
-      // Calculating total pages
-      const pages = Math.ceil(count / pagination.resultPerPage);
-
-      // Create a map for quick lookup based on "_id"
-      const roleMap = new Map(
-        teamMemberRoleList.map((role) => [role._id.toString(), role])
-      );
-
-      // Combine the lists
-      const combinedList = teamMemberList.map((teamMember) => {
-        const matchingRole = roleMap.get(teamMember.reference_id.toString());
-        return {
-          ...teamMember,
-          teamMemberRole: matchingRole || null, // Attach the role or null if not found
-        };
-      });
-
-      // Create the final object
-      const combinedOutput = { teamMemberList: combinedList };
+      const pages = Math.ceil(count / pagination.resultPerPage); // Calculating total pages
 
       return {
-        combinedOutput,
+        teamMemberList,
         pagination: {
           page: pagination.page,
           pages: pages,
           count: count,
         },
-        // pageCount:
-        //   Math.ceil(
-        //     combinedOutput.teamMemberList.length / pagination.resultPerPage
-        //   ) || 0,
       };
     } catch (error) {
       logger.error(`Error while Team members, Listing ${error}`);
@@ -303,7 +331,28 @@ class TeamAgencyService {
     }
   };
 
-  // edit Team Member agency
+  // Delete a team member
+
+  delete = async (payload) => {
+    try {
+      const memberId = payload;
+
+      const teamMember = await Authentication.findByIdAndDelete({
+        _id: memberId,
+      });
+
+      if (!teamMember) {
+        return throwError(returnMessage("teamMember", "invalidId"));
+      }
+      return;
+    } catch (error) {
+      logger.error(`Error while Team member  delete, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  // Edit Team Member
+
   editMember = async (payload, userId) => {
     try {
       const memberId = userId;
@@ -311,12 +360,13 @@ class TeamAgencyService {
         {
           _id: memberId,
         },
+
         payload,
         { new: true, useFindAndModify: false }
       );
 
       if (!teamMember) {
-        return throwError(returnMessage("teamAgency", "invalidId"));
+        return throwError(returnMessage("teamMember", "invalidId"));
       }
       return teamMember;
     } catch (error) {
@@ -326,4 +376,4 @@ class TeamAgencyService {
   };
 }
 
-module.exports = TeamAgencyService;
+module.exports = TeamMemberService;
