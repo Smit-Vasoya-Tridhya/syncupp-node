@@ -90,6 +90,7 @@ class AdminService {
         .digest("hex");
       admin.reset_password_token = hash_token;
       await admin.save();
+      return;
     } catch (error) {
       logger.error(`Error while admin forgotpassword, ${error}`);
       throwError(error?.message, error?.statusCode);
@@ -103,15 +104,11 @@ class AdminService {
         .createHash("sha256")
         .update(token)
         .digest("hex");
-      const admin = await Admin.findOne(
-        {
-          email: email,
-          reset_password_token: hash_token,
-        },
-        {
-          password: 0,
-        }
-      );
+      const admin = await Admin.findOne({
+        email: email,
+        reset_password_token: hash_token,
+        is_deleted: false,
+      });
 
       if (!admin) {
         return throwError(returnMessage("admin", "invalidToken"));
@@ -121,6 +118,7 @@ class AdminService {
       admin.password = hash_password;
       admin.reset_password_token = undefined;
       await admin.save();
+      return;
     } catch (error) {
       logger.error(`Error while admin resetPassword, ${error}`);
       throwError(error?.message, error?.statusCode);
