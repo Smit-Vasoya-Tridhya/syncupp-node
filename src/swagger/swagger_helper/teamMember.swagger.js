@@ -359,7 +359,7 @@ const teamMembersRoutes = {
   "/api/v1/teamMember/verify": {
     post: verifyTeamMember,
   },
-  "/api/v1/teamMember/getAll": {
+  "/api/v1/teamMember/get-all": {
     get: getAllTeamMember,
   },
   "/api/v1/teamMember/details/{id}": {
