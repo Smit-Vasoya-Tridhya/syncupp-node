@@ -9,7 +9,7 @@ class AgencyService {
       return await Agency.create(payload);
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 }
