@@ -6,7 +6,7 @@ const { protect } = require("../middlewares/authMiddleware");
 authRoute.post("/signup", authController.agencySignUp);
 
 authRoute.post("/google-signup", authController.agencyGoogleSignUp);
-authRoute.get("/facebook-signup", authController.agencyFacebookSignUp);
+authRoute.post("/facebook-signup", authController.agencyFacebookSignUp);
 
 // this will work for all type of the memebers
 authRoute.post("/login", authController.login);

@@ -14,23 +14,26 @@ const sendEmail = require("../helpers/sendEmail");
 class AdminService {
   tokenGenerator = (payload) => {
     try {
+      const expiresIn = payload?.rememberMe
+        ? process.env.JWT_REMEMBER_EXPIRE
+        : process.env.JWT_EXPIRES_IN;
       const token = jwt.sign(
         { id: payload._id },
         process.env.JWT_ADMIN_SECRET_KEY,
         {
-          expiresIn: process.env.JWT_EXPIRES_IN,
+          expiresIn,
         }
       );
       return { token, user: payload };
     } catch (error) {
       logger.error(`Error while token generate, ${error}`);
-      throwError(error?.message, error?.statusCode);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
   login = async (payload) => {
     try {
-      const { email, password } = payload;
+      const { email, password, rememberMe } = payload;
 
       if (!email || !password)
         return throwError(
@@ -38,7 +41,10 @@ class AdminService {
           statusCode.badRequest
         );
 
-      const admin_exist = await Admin.findOne({ email }).lean();
+      const admin_exist = await Admin.findOne({
+        email,
+        is_deleted: false,
+      }).lean();
 
       if (!admin_exist)
         return throwError(
@@ -52,10 +58,10 @@ class AdminService {
       );
       if (!correct_password)
         return throwError(returnMessage("auth", "incorrectPassword"));
-      return this.tokenGenerator(admin_exist);
+      return this.tokenGenerator({ ...admin_exist, rememberMe });
     } catch (error) {
       logger.error(`Error while admin login, ${error}`);
-      throwError(error?.message, error?.statusCode);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -92,7 +98,7 @@ class AdminService {
       return;
     } catch (error) {
       logger.error(`Error while admin forgotpassword, ${error}`);
-      throwError(error?.message, error?.statusCode);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -120,7 +126,7 @@ class AdminService {
       return;
     } catch (error) {
       logger.error(`Error while admin resetPassword, ${error}`);
-      throwError(error?.message, error?.statusCode);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -141,7 +147,7 @@ class AdminService {
       await admin.save();
     } catch (error) {
       logger.error(`Error while admin updatePassword, ${error}`);
-      throwError(error?.message, error?.statusCode);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 }

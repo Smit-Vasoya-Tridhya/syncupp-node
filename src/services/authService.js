@@ -16,21 +16,26 @@ const Role_Master = require("../models/masters/roleMasterSchema");
 const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
-
+const axios = require("axios");
+require("dotenv").config();
 class AuthService {
   tokenGenerator = (payload) => {
     try {
+      const expiresIn = payload?.rememberMe
+        ? process.env.JWT_REMEMBER_EXPIRE
+        : process.env.JWT_EXPIRES_IN;
+
       const token = jwt.sign(
         { id: payload._id, reference: payload.reference_id },
         process.env.JWT_SECRET_KEY,
         {
-          expiresIn: process.env.JWT_EXPIRES_IN,
+          expiresIn,
         }
       );
       return { token, user: payload };
     } catch (error) {
       logger.error(`Error while token generate: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -39,7 +44,7 @@ class AuthService {
       return await bcrypt.compare(payload.password, payload.encrypted_password);
     } catch (error) {
       logger.error(`Error while password verification: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -48,7 +53,7 @@ class AuthService {
       return await bcrypt.hash(payload.password, 14);
     } catch (error) {
       logger.error(`Error while password encryption: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -109,10 +114,13 @@ class AuthService {
       });
       agency_enroll = agency_enroll.toObject();
       agency_enroll.role = role;
-      return this.tokenGenerator(agency_enroll);
+      return this.tokenGenerator({
+        ...agency_enroll,
+        rememberMe: payload?.rememberMe,
+      });
     } catch (error) {
       logger.error(`Error while agency signup: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -131,7 +139,7 @@ class AuthService {
         .lean();
 
       if (!existing_agency) {
-        const [agency, role] = await Promise.resolve([
+        const [agency, role] = await Promise.all([
           agencyService.agencyRegistration({}),
           Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
@@ -141,44 +149,35 @@ class AuthService {
           last_name: decoded?.family_name,
           email: decoded?.email,
           reference_id: agency?._id,
-          remember_me: payload?.remember_me,
           role: role?._id,
           status: "payment_pending",
           is_google_signup: true,
         });
         agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
-        return this.tokenGenerator(agency_enroll);
+        return this.tokenGenerator({
+          ...agency_enroll,
+        });
       } else {
-        return this.tokenGenerator(existing_agency);
+        return this.tokenGenerator({
+          ...existing_agency,
+        });
       }
     } catch (error) {
       logger.error("Error while google sign In", error);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
   facebookSignIn = async (payload) => {
     try {
-      const redirect_uri = encodeURIComponent(
-        `${process.env.SERVER_URL}/api/v1/auth/facebook-signup`
-      );
-      const accessTokenUrl =
-        "https://graph.facebook.com/v6.0/oauth/access_token?" +
-        `client_id=${process.env.FACEBOOK_CLIENT_ID}&` +
-        `client_secret=${process.env.FACEBOOK_CLIENT_SECRET}&` +
-        `redirect_uri=${redirect_uri}&` +
-        `code=${encodeURIComponent(payload)}`;
-
-      const accessToken = await axios
-        .get(accessTokenUrl)
-        .then((res) => res.data["access_token"]);
+      const { access_token } = payload;
+      if (!access_token || access_token === "")
+        return throwError(returnMessage("auth", "facebookAuthTokenNotFound"));
 
       const data = await axios
         .get(
-          `https://graph.facebook.com/me?access_token=${encodeURIComponent(
-            accessToken
-          )}&fields=id,name,email,first_name,last_name`
+          `https://graph.facebook.com/me?access_token=${access_token}&fields=id,name,email,first_name,last_name`
         )
         .then((res) => res.data);
 
@@ -192,12 +191,12 @@ class AuthService {
         .lean();
 
       if (!existing_agency) {
-        const [agency, role] = await Promise.resolve([
+        const [agency, role] = await Promise.all([
           agencyService.agencyRegistration({}),
           Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
 
-        const agency_enroll = await Authentication.create({
+        let agency_enroll = await Authentication.create({
           first_name: data?.first_name,
           last_name: data?.last_name,
           email: data?.email,
@@ -208,13 +207,17 @@ class AuthService {
         });
         agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
-        return this.tokenGenerator(agency_enroll);
+        return this.tokenGenerator({
+          ...agency_enroll,
+        });
       } else {
-        return this.tokenGenerator(existing_agency);
+        return this.tokenGenerator({
+          ...existing_agency,
+        });
       }
     } catch (error) {
       logger.error(`Error while facebook signup:${error.message}`);
-      throwError(error?.message, error?.statusCode);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -250,10 +253,13 @@ class AuthService {
       )
         return throwError(returnMessage("agency", "agencyInactive"));
 
-      return this.tokenGenerator(existing_Data);
+      return this.tokenGenerator({
+        ...existing_Data,
+        rememberMe: payload?.rememberMe,
+      });
     } catch (error) {
       logger.error(`Error while login: ${error.message}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -267,7 +273,7 @@ class AuthService {
       return { token, hash_token };
     } catch (error) {
       logger.error(`Error while generating reset password token: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -307,7 +313,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error with forget password: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -345,7 +351,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error while resetting password: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -376,7 +382,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error while changing password: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 }

@@ -112,15 +112,22 @@ const facebookSignIn = {
   tags: ["CRM Panel"],
   description: "Agency Facebook SignIn",
   summary: "Agency Facebook SignIn",
-  parameters: [
-    {
-      name: "code",
-      in: "query",
-      description: "Code from the facebook signup",
-      required: true,
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            access_token: {
+              type: "string",
+              descripition: "Enter your token",
+              required: true,
+            },
+          },
+        },
+      },
     },
-  ],
-
+  },
   responses: {
     200: {
       descripition: "ok",
@@ -303,7 +310,7 @@ const authRoutes = {
     post: googleSignIn,
   },
   "/api/v1/auth/facebook-signup": {
-    get: facebookSignIn,
+    post: facebookSignIn,
   },
   "/api/v1/auth/login": {
     post: login,
