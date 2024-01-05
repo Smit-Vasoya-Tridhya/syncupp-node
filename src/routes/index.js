@@ -8,6 +8,6 @@ const teamMemberRoute = require("./teamMemberRoute");
 router.use("/api/v1/user", userRoute);
 router.use("/api/v1/auth", authRoute);
 router.use("/api/v1/admin", adminRoute);
-router.use("/api/v1/teamMember", teamMemberRoute);
+router.use("/api/v1/team-member", teamMemberRoute);
 
 module.exports = router;

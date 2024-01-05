@@ -350,26 +350,26 @@ const editTeamMember = {
 };
 
 const teamMembersRoutes = {
-  "/api/v1/teamMember/login": {
+  "/api/v1/team-member/login": {
     post: loginTeamMember,
   },
 
-  "/api/v1/teamMember/add": {
+  "/api/v1/team-member/add": {
     post: addTeamMember,
   },
-  "/api/v1/teamMember/verify": {
+  "/api/v1/team-member/verify": {
     post: verifyTeamMember,
   },
-  "/api/v1/teamMember/get-all": {
+  "/api/v1/team-member/get-all": {
     get: getAllTeamMember,
   },
-  "/api/v1/teamMember/details/{id}": {
+  "/api/v1/team-member/details/{id}": {
     get: getTeamMember,
   },
-  "/api/v1/teamMember/delete/{id}": {
+  "/api/v1/team-member/delete/{id}": {
     delete: deleteTeamMember,
   },
-  "/api/v1/teamMember/edit/{id}": {
+  "/api/v1/team-member/edit/{id}": {
     put: editTeamMember,
   },
 };

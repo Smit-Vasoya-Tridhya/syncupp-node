@@ -6,6 +6,7 @@ const {
   deleteMember,
   getAll,
   editMember,
+  getMember,
 } = require("../controllers/teamMemberController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
@@ -23,7 +24,7 @@ teamMemberRoute.post("/login", loginTeamMemberValidator, validatorFunc, login);
 
 teamMemberRoute.use(protect);
 teamMemberRoute.post("/add", addMemberValidator, validatorFunc, add);
-teamMemberRoute.get("/details/:id", getOne);
+teamMemberRoute.get("/details/:id", getMember);
 teamMemberRoute.delete("/delete/:id", deleteMember);
 teamMemberRoute.get("/get-all", getAll);
 teamMemberRoute.put("/edit/:id", editMember);

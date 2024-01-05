@@ -15,8 +15,6 @@ const Team_Agency = require("../models/teamAgencySchema");
 const { paginationObject, getKeywordType } = require("./commonSevice");
 const Team_Role_Master = require("../models/masters/teamRoleSchema");
 const Team_Client = require("../models/teamClientSchema");
-const mongoose = require("mongoose");
-const { match } = require("assert");
 
 class TeamMemberService {
   // Token generate
@@ -41,13 +39,17 @@ class TeamMemberService {
   add = async (payload, user_id) => {
     try {
       const { email, name, contact_number, role } = payload;
-      const isEmail = await Authentication.findOne({ email: email });
+      const isEmail = await Authentication.findOne({
+        email: email,
+        is_deleted: true,
+      });
       if (isEmail) {
         return throwError(returnMessage("teamMember", "emailExist"));
       }
 
       const teamMember = await Authentication.findOne({
         reference_id: user_id,
+        is_deleted: true,
       }).populate({
         path: "role",
         model: "role_master",
@@ -128,6 +130,7 @@ class TeamMemberService {
 
       const teamMember = await Authentication.findOne({
         email: email,
+        is_deleted: true,
         invitation_token: hash_token,
       });
 
@@ -136,7 +139,7 @@ class TeamMemberService {
       }
       const hash_password = await bcrypt.hash(password, 14);
       await Authentication.findOneAndUpdate(
-        { email: email },
+        { email: email, is_deleted: true },
         {
           first_name,
           last_name,
@@ -164,7 +167,7 @@ class TeamMemberService {
         );
 
       const member_exist = await Authentication.findOne(
-        { email: email },
+        { email: email, is_deleted: false },
         { invitation_token: 0 }
       ).lean();
 
@@ -191,14 +194,15 @@ class TeamMemberService {
     }
   };
 
-  // getOne Team Member
+  // getMember Team Member
 
-  getOne = async (payload) => {
+  getMember = async (payload) => {
     try {
       const memberId = payload;
       const teamMember = await Authentication.findOne(
         {
           _id: memberId,
+          is_deleted: false,
         },
         { password: 0 }
       )
@@ -236,6 +240,7 @@ class TeamMemberService {
       const user_id = payload;
       const teamMember = await Authentication.findOne({
         _id: user_id,
+        is_deleted: false,
       }).populate({
         path: "role",
         model: "role_master",
@@ -257,21 +262,16 @@ class TeamMemberService {
 
       const user = await Authentication.findOne({
         _id: user_id,
+        is_deleted: false,
       }).lean();
 
-      const teamMemberData = await TeamModelName.distinct(
-        "_id",
-        {
-          [memberOf]: user.reference_id,
-        },
-        {
-          is_deleted: false,
-        }
-      );
+      const teamMemberData = await TeamModelName.distinct("_id", {
+        [memberOf]: user.reference_id,
+      });
 
       const teamMemberIdData = teamMemberData.map((id) => id.toHexString());
 
-      const queryObj = { reference_id: teamMemberIdData };
+      const queryObj = { reference_id: teamMemberIdData, is_deleted: false };
 
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
@@ -293,7 +293,6 @@ class TeamMemberService {
       }
 
       const pagination = paginationObject(searchObj);
-      console.log(pagination);
       const teamMemberList = await Authentication.find(queryObj)
         .populate({
           path: "role",
@@ -332,13 +331,14 @@ class TeamMemberService {
 
   // Delete a team member
 
-  delete = async (payload) => {
+  deleteMember = async (payload) => {
     try {
       const memberId = payload;
 
-      const teamMember = await Authentication.findByIdAndDelete({
-        _id: memberId,
-      });
+      const teamMember = await Authentication.updateOne(
+        { _id: memberId },
+        { $set: { is_deleted: true } }
+      );
 
       if (!teamMember) {
         return throwError(returnMessage("teamMember", "invalidId"));
@@ -355,9 +355,10 @@ class TeamMemberService {
   editMember = async (payload, userId) => {
     try {
       const memberId = userId;
-      const teamMember = await Authentication.findByIdAndUpdate(
+      const teamMember = await Authentication.findOneAndUpdate(
         {
           _id: memberId,
+          is_deleted: false,
         },
 
         payload,
