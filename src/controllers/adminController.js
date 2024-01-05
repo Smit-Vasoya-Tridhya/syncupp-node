@@ -136,3 +136,16 @@ exports.updateFaq = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+// Get FQA
+
+exports.getFaq = catchAsyncError(async (req, res, next) => {
+  const getFaq = await adminService.getFaq(req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "getFaq"),
+    getFaq,
+    statusCode.success
+  );
+});

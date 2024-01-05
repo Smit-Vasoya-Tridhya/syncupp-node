@@ -195,7 +195,7 @@ const getTeamMember = {
 const getAllTeamMember = {
   tags: ["Team Member"],
   description:
-    "sortOrder = (asc ,desc)  ,sortField = (name ,email , comtact_no  , page  = (number) , resultPerPage   =(number)  , )  , ",
+    "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
   summary: "Get All Team Member Member ",
   security: [
     {
@@ -209,24 +209,24 @@ const getAllTeamMember = {
           type: "object",
 
           properties: {
-            sortOrder: {
-              type: "asc",
-              description: "Enter email id",
-              required: true,
-            },
             sortField: {
               type: "string",
               description: "Enter sortField",
               required: true,
             },
-            resultPerPage: {
-              type: "integer",
-              description: "Enter resultPerPage",
+            sortOrder: {
+              type: "string",
+              description: "Enter sortOrder",
               required: true,
             },
             page: {
-              type: "integer",
-              description: "Enter page Number",
+              type: "number",
+              description: "Enter page number",
+              required: true,
+            },
+            itemsPerPage: {
+              type: "number",
+              description: "Enter itemsPerPage",
               required: true,
             },
           },
@@ -234,6 +234,7 @@ const getAllTeamMember = {
       },
     },
   },
+
   responses: {
     200: {
       description: "ok",

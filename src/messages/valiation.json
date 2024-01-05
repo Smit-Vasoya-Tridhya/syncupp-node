@@ -19,7 +19,8 @@
     "nameRequired": "Name is required",
     "questionRequired": "Question required",
     "answerRequired": "Answer required",
-    "questionLength": "Question must not exceed 50 characters",
-    "answerLength": "Answer must not exceed  characters"
+    "questionLength": "Question must not exceed 100 characters",
+    "answerLength": "Answer must not exceed 1000 characters",
+    "faqIdsReq": "faqIdsToDelete key required"
   }
 }

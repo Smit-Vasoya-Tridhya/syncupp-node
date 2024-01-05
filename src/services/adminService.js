@@ -233,6 +233,24 @@ class AdminService {
       throwError(error?.message, error?.status);
     }
   };
+  // GET FQA
+
+  getFaq = async (faqId) => {
+    try {
+      const faq = await AdminFqa.findById(
+        {
+          _id: faqId,
+        },
+        {
+          is_deleted: false,
+        }
+      );
+      return faq;
+    } catch (error) {
+      logger.error(`Error while Get FQA, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
 }
 
 module.exports = AdminService;

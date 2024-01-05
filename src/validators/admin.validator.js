@@ -73,7 +73,8 @@ exports.updatePasswordValidator = [
     .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$.!%*#?&])[A-Za-z\d@$.!%*#?&]{6,}$/)
     .withMessage(validationMessage.general.invalidPassword),
 ];
-exports.createFaqValidator = [
+
+exports.addFaqValidator = [
   body("question")
     .not()
     .isEmpty()
@@ -84,6 +85,20 @@ exports.createFaqValidator = [
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.answerRequired)
+    .isLength({ max: 1000 }) // specify the maximum length for the answer
+    .withMessage(validationMessage.general.answerLength),
+];
+exports.deleteFaqValidator = [
+  body("faqIdsToDelete")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.faqIdsReq),
+];
+exports.updateFaqValidator = [
+  body("question")
+    .isLength({ max: 100 }) // specify the maximum length for the question
+    .withMessage(validationMessage.general.questionLength),
+  body("answer")
     .isLength({ max: 1000 }) // specify the maximum length for the answer
     .withMessage(validationMessage.general.answerLength),
 ];

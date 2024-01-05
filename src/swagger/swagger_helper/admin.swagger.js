@@ -201,7 +201,7 @@ const updateAdminProfile = {
               description: "Enter last name",
             },
             contact_no: {
-              type: "string",
+              type: "number",
               description: "Enter contact number",
             },
           },
@@ -357,6 +357,52 @@ const updateFaqAdmin = {
       },
     },
   },
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "string", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const getFaqAdmin = {
+  tags: ["Admin Panel"],
+  description: "",
+  summary: "Get FAQ ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {},
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "string", // adjust the type accordingly
+      },
+    },
+  ],
   responses: {
     200: {
       description: "ok",
@@ -382,7 +428,7 @@ const adminRoutes = {
     post: resetAdminPassword,
   },
   "/api/v1/admin/updatePassword": {
-    post: updateAdminPassword,
+    put: updateAdminPassword,
   },
   "/api/v1/admin/updateProfile": {
     put: updateAdminProfile,
@@ -395,6 +441,9 @@ const adminRoutes = {
   },
   "/api/v1/admin/delete-faq": {
     delete: deleteFaq,
+  },
+  "/api/v1/admin/get-faq/{id}": {
+    get: getFaqAdmin,
   },
   "/api/v1/admin/update-faq/{id}": {
     put: updateFaqAdmin,

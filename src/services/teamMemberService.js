@@ -258,7 +258,6 @@ class TeamMemberService {
       const user = await Authentication.findOne({
         _id: user_id,
       }).lean();
-      console.log(user);
 
       const teamMemberData = await TeamModelName.distinct(
         "_id",
@@ -294,7 +293,7 @@ class TeamMemberService {
       }
 
       const pagination = paginationObject(searchObj);
-
+      console.log(pagination);
       const teamMemberList = await Authentication.find(queryObj)
         .populate({
           path: "role",

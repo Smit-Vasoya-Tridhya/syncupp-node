@@ -32,8 +32,9 @@
     "updated": "Admin updated successfully.",
     "faqAdded": "FAQ created successfully.",
     "faqUpdated": "FAQ updated successfully.",
-    "getAllFaq": "FAQ fetched successfully.",
-    "deleteFaq": "FAQ deleted successfully."
+    "getAllFaq": "FAQs fetched successfully.",
+    "deleteFaq": "FAQ deleted successfully.",
+    "getFaq": "FAQ fetched successfully."
   },
 
   "teamMember": {

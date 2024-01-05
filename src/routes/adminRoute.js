@@ -10,6 +10,7 @@ const {
   getAllFaq,
   deleteFaq,
   updateFaq,
+  getFaq,
 } = require("../controllers/adminController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
@@ -17,13 +18,14 @@ const {
   loginAdminValidator,
   forgotPasswordValidator,
   updatePasswordValidator,
+  deleteFaqValidator,
+  addFaqValidator,
+  updateFaqValidator,
 } = require("../validators/admin.validator");
 const { protect } = require("../middlewares/authAdminMiddleware");
 
 // this route is used for the ADMIN panel Login
 adminRoute.post("/login", login);
-adminRoute.post("/forgotPassword", forgotPassword);
-adminRoute.get("/getAdmins", getAdmin);
 adminRoute.post("/login", loginAdminValidator, validatorFunc, login);
 
 adminRoute.post(
@@ -49,9 +51,10 @@ adminRoute.put(
 );
 adminRoute.get("/details", getAdmin);
 adminRoute.put("/updateProfile", updateAdmin);
-adminRoute.post("/add-faq", addFaq);
+adminRoute.post("/add-faq", addFaqValidator, validatorFunc, addFaq);
 adminRoute.get("/get-all-faq", getAllFaq);
-adminRoute.delete("/delete-faq", deleteFaq);
-adminRoute.put("/update-faq/:id", updateFaq);
+adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
+adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
+adminRoute.get("/get-faq/:id", getFaq);
 
 module.exports = adminRoute;
