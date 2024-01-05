@@ -23,3 +23,17 @@ exports.resetPasswordValidator = [
     .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$.!%*#?&])[A-Za-z\d@$.!%*#?&]{6,}$/)
     .withMessage(validationMessage.admin.invalidPassword),
 ];
+exports.createFaqValidator = [
+  body("question")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.questionRequired)
+    .isLength({ max: 100 }) // specify the maximum length for the question
+    .withMessage(validationMessage.general.questionLength),
+  body("answer")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.answerRequired)
+    .isLength({ max: 1000 }) // specify the maximum length for the answer
+    .withMessage(validationMessage.general.answerLength),
+];

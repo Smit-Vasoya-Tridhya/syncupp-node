@@ -26,7 +26,14 @@
     "passwordNotMatch": "Old password does not match",
     "passwordUpdated": "Password updated successfully",
     "invalidToken": "Token is invalid.",
-    "adminNotFound": "Admin not found."
+    "adminNotFound": "Admin not found.",
+    "adminFetched": "Admin details fetched successfully",
+    "invalidId": "invalidId.",
+    "updated": "Admin updated successfully.",
+    "faqAdded": "FAQ created successfully.",
+    "faqUpdated": "FAQ updated successfully.",
+    "getAllFaq": "FAQ fetched successfully.",
+    "deleteFaq": "FAQ deleted successfully."
   },
 
   "agency": {

@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/adminSchema");
+const AdminFqa = require("../models/adminFaqSchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const {
@@ -144,6 +145,83 @@ class AdminService {
     } catch (error) {
       logger.error(`Error while admin updatePassword, ${error}`);
       throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // update Agency profile
+  updateAdmin = async (payload, admin_id) => {
+    try {
+      const admin = await Admin.findByIdAndUpdate(
+        {
+          _id: admin_id,
+        },
+        payload,
+        { new: true, useFindAndModify: false }
+      );
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "invalidId"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while Admin update, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  // Add   FQA
+
+  addFaq = async (payload) => {
+    try {
+      const faq = await AdminFqa.create(payload);
+      return faq;
+    } catch (error) {
+      logger.error(`Error while Admin add FQA, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  // GET All FQA
+  getAllFaq = async (payload) => {
+    try {
+      const faqs = await AdminFqa.find({ is_deleted: false });
+      return faqs;
+    } catch (error) {
+      logger.error(`Error while Admin FQA Listing, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  // Delete FQA
+  deleteFaq = async (payload) => {
+    const { faqIdsToDelete } = payload;
+    try {
+      const deletedFaqs = await AdminFqa.updateMany(
+        { _id: { $in: faqIdsToDelete } },
+        { $set: { is_deleted: true } }
+      );
+      return deletedFaqs;
+    } catch (error) {
+      logger.error(`Error while Deleting FQA, ${error}`);
+      throwError(error?.message, error?.status);
+    }
+  };
+
+  // Add   FQA
+
+  updateFaq = async (payload, faqId) => {
+    try {
+      const faq = await AdminFqa.findByIdAndUpdate(
+        {
+          _id: faqId,
+        },
+        payload,
+        { new: true, useFindAndModify: false }
+      );
+      return faq;
+    } catch (error) {
+      logger.error(`Error while updating FQA, ${error}`);
+      throwError(error?.message, error?.status);
     }
   };
 }
