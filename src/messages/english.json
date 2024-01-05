@@ -21,10 +21,10 @@
 
   "admin": {
     "resetPassword": "Password reset successfully.",
-    "emailSent": "Token sent to your email successfully.",
+    "emailSent": "Forgot password mail sent successfully.",
     "emailNotFound": "Email does not exist.",
-    "passwordNotMatch": "Old password does not match",
-    "passwordUpdated": "Password updated successfully",
+    "passwordNotMatch": "Old password does not match.",
+    "passwordUpdated": "Password updated successfully.",
     "invalidToken": "Token is invalid.",
     "adminNotFound": "Admin not found.",
     "adminFetched": "Admin details fetched successfully",
@@ -36,6 +36,31 @@
     "deleteFaq": "FAQ deleted successfully."
   },
 
+  "teamMember": {
+    "memberNotFound": "Team member not found with this mail.",
+    "invalidId": "invalidId.",
+    "emailExist": "Email already registered.",
+    "passwordAlreadySet": "Password already set.",
+    "invitationSent": "Invitation email sent successfully.",
+    "accountCreated": "Account created successfully.",
+    "emailNotRegistered": "This email is not registered.",
+    "passwordReset": "Password reset successful.",
+    "tokenSent": "Token sent to your email successfully.",
+    "emailNotFound": "Email does not exist.",
+    "oldPasswordMismatch": "Old password does not match.",
+    "passwordUpdated": "Password updated successfully.",
+    "invalidToken": "Invalid token.",
+    "registerFirst": "Register first.",
+    "passwordSet": "Password set successfully.",
+    "resetPassword": "Password reset successfully.",
+    "emailSent": "Token sent to your email successfully.",
+    "passwordNotMatch": "Old password does not match.",
+    "memberGet": "Team member details fetched successfully.",
+    "deleted": "Team member deleted successfully.",
+    "TeamMemberFetched": "All team member fetched successfully.",
+    "noDataFound": "All team member fetched successfully.",
+    "updated": "Team member updated successfully."
+  },
   "agency": {
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",

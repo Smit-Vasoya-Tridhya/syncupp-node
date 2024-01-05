@@ -3,7 +3,6 @@ const {
   login,
   forgotPassword,
   resetPassword,
-  getAdmins,
   changePassword,
   getAdmin,
   updateAdmin,
@@ -13,17 +12,24 @@ const {
   updateFaq,
 } = require("../controllers/adminController");
 const validatorFunc = require("../utils/validatorFunction.helper");
-const { resetPasswordValidator } = require("../validators/admin.validator");
+const {
+  resetPasswordValidator,
+  loginAdminValidator,
+  forgotPasswordValidator,
+  updatePasswordValidator,
+} = require("../validators/admin.validator");
+const { protect } = require("../middlewares/authAdminMiddleware");
 
 // this route is used for the ADMIN panel Login
 adminRoute.post("/login", login);
 adminRoute.post("/forgotPassword", forgotPassword);
-adminRoute.get("/getAdmins", getAdmins);
+adminRoute.get("/getAdmins", getAdmin);
 adminRoute.post("/login", loginAdminValidator, validatorFunc, login);
+
 adminRoute.post(
   "/forgotPassword",
-  // forgotPasswordValidator,
-  // validatorFunc,
+  forgotPasswordValidator,
+  validatorFunc,
   forgotPassword
 );
 adminRoute.post(
@@ -37,8 +43,8 @@ adminRoute.use(protect);
 
 adminRoute.put(
   "/updatePassword",
-  // updatePasswordValidator,
-  // validatorFunc,
+  updatePasswordValidator,
+  validatorFunc,
   changePassword
 );
 adminRoute.get("/details", getAdmin);

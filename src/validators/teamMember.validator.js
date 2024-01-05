@@ -1,10 +1,19 @@
 const { body } = require("express-validator");
 const validationMessage = require("../messages/valiation.json");
-exports.resetPasswordValidator = [
-  body("token")
+
+exports.addMemberValidator = [
+  body("name")
     .not()
     .isEmpty()
-    .withMessage(validationMessage.general.tokenRequired),
+    .withMessage(validationMessage.general.nameRequired),
+  body("role")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.roleRequired),
+  body("contact_number")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.contactNoRequired),
   body("email")
     .not()
     .isEmpty()
@@ -14,17 +23,18 @@ exports.resetPasswordValidator = [
     )
     .withMessage(validationMessage.general.invalidEmail)
     .trim(),
-  body("newPassword")
-    .not()
-    .isEmpty()
-    .withMessage(validationMessage.general.passwordRequired)
-    .trim()
-    .isLength({ min: 6 })
-    .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$.!%*#?&])[A-Za-z\d@$.!%*#?&]{6,}$/)
-    .withMessage(validationMessage.general.invalidPassword),
 ];
 
-exports.loginAdminValidator = [
+exports.verifyValidator = [
+  body("first_name")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.firstNameRequired),
+  body("last_name")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.lastNameRequired),
+
   body("email")
     .not()
     .isEmpty()
@@ -43,8 +53,7 @@ exports.loginAdminValidator = [
     .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$.!%*#?&])[A-Za-z\d@$.!%*#?&]{6,}$/)
     .withMessage(validationMessage.general.invalidPassword),
 ];
-
-exports.forgotPasswordValidator = [
+exports.loginTeamMemberValidator = [
   body("email")
     .not()
     .isEmpty()
@@ -54,9 +63,7 @@ exports.forgotPasswordValidator = [
     )
     .withMessage(validationMessage.general.invalidEmail)
     .trim(),
-];
-exports.updatePasswordValidator = [
-  body("oldPassword")
+  body("password")
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.passwordRequired)
@@ -64,26 +71,4 @@ exports.updatePasswordValidator = [
     .isLength({ min: 6 })
     .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$.!%*#?&])[A-Za-z\d@$.!%*#?&]{6,}$/)
     .withMessage(validationMessage.general.invalidPassword),
-  body("newPassword")
-    .not()
-    .isEmpty()
-    .withMessage(validationMessage.general.passwordRequired)
-    .trim()
-    .isLength({ min: 6 })
-    .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$.!%*#?&])[A-Za-z\d@$.!%*#?&]{6,}$/)
-    .withMessage(validationMessage.general.invalidPassword),
-];
-exports.createFaqValidator = [
-  body("question")
-    .not()
-    .isEmpty()
-    .withMessage(validationMessage.general.questionRequired)
-    .isLength({ max: 100 }) // specify the maximum length for the question
-    .withMessage(validationMessage.general.questionLength),
-  body("answer")
-    .not()
-    .isEmpty()
-    .withMessage(validationMessage.general.answerRequired)
-    .isLength({ max: 1000 }) // specify the maximum length for the answer
-    .withMessage(validationMessage.general.answerLength),
 ];

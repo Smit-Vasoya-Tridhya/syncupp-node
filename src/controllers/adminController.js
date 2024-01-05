@@ -10,21 +10,21 @@ exports.login = catchAsyncError(async (req, res, next) => {
   sendResponse(
     res,
     true,
-    returnMessage("admin", "loggedIn"),
+    returnMessage("auth", "loggedIn"),
     admin,
     statusCode.success
   );
 });
 
-// getUsers
+// getAdmin
 
-exports.getAdmins = catchAsyncError(async (req, res, next) => {
-  const admin = await adminService.getAdmins();
+exports.getAdmin = catchAsyncError(async (req, res, next) => {
+  const admin = await adminService.getAdmin(req?.user?._id);
   if (admin) {
     sendResponse(
       res,
       true,
-      `Users fetched successfully `,
+      returnMessage("admin", "adminFetched"),
       admin,
       statusCode.success
     );
@@ -61,7 +61,7 @@ exports.resetPassword = catchAsyncError(async (req, res, next) => {
 //Update password
 
 exports.changePassword = catchAsyncError(async (req, res, next) => {
-  await adminService.changePassword(req.body);
+  await adminService.changePassword(req.body, req?.user?._id);
 
   sendResponse(
     res,

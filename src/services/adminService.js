@@ -60,9 +60,19 @@ class AdminService {
     }
   };
 
-  getAdmins = async (payload) => {
-    const admins = await Admin.find({});
-    return admins;
+  getAdmin = async (payload) => {
+    try {
+      const admin_id = payload;
+      const admin = await Admin.find({ _id: admin_id });
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "adminNotFound"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while get Admin, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
   };
 
   forgotPassword = async (payload) => {
@@ -74,8 +84,8 @@ class AdminService {
       }
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
-
-      const link = `${process.env.CLIENT_RESETPASSWORD_PATH}?token=${reset_password_token}&email=${encode}`;
+      console.log(reset_password_token);
+      const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
       await sendEmail({
@@ -128,7 +138,7 @@ class AdminService {
   changePassword = async (payload, teamId) => {
     try {
       const { newPassword, oldPassword } = payload;
-      const admin = await Admin.findById(teamId);
+      const admin = await Admin.findById({ _id: teamId });
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }
@@ -137,7 +147,7 @@ class AdminService {
       if (!is_match) {
         return throwError(returnMessage("admin", "passwordNotMatch"));
       }
-      const hash_password = await bcrypt.hash(newPassword, 10);
+      const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
       await admin.save();
     } catch (error) {
@@ -147,6 +157,7 @@ class AdminService {
   };
 
   // update Agency profile
+  // update Team Member agency
   updateAdmin = async (payload, admin_id) => {
     try {
       const admin = await Admin.findByIdAndUpdate(
