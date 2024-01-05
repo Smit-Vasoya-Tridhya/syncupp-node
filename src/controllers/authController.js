@@ -32,10 +32,7 @@ exports.agencyGoogleSignUp = catchAsyncError(async (req, res, next) => {
 });
 
 exports.agencyFacebookSignUp = catchAsyncError(async (req, res, next) => {
-  const { code } = req.query;
-  if (!code || code !== "")
-    return throwError(returnMessage("auth", "facebookAuthTokenNotFound"));
-  const agencyFacebookSignUp = await authService.facebookSignIn(code);
+  const agencyFacebookSignUp = await authService.facebookSignIn(req.body);
   return sendResponse(
     res,
     true,
