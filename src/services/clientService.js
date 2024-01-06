@@ -7,27 +7,14 @@ const {
   invitationEmail,
   returnMessage,
 } = require("../utils/utils");
-const crypto = require("crypto");
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
 const authService = new AuthService();
+const statusCode = require("../messages/statusCodes.json");
 
 class ClientService {
-  invitationTokenGenerator = () => {
-    try {
-      const token = crypto.randomBytes(20).toString("hex");
-      const hash_token = crypto
-        .createHash("sha256")
-        .update(token)
-        .digest("hex");
-      return { token, hash_token };
-    } catch (error) {
-      logger.error(`Error while generating invitation token: ${error}`);
-      return throwError(error?.message, error?.statusCode);
-    }
-  };
-
+  // create client for the agency
   createClient = async (payload, agency) => {
     try {
       const { name, email, company_name } = payload;
@@ -76,6 +63,7 @@ class ClientService {
           status: "confirm_pending",
         };
         await Authentication.create(client_auth_obj);
+        link = link + "&redirect=false";
       } else {
         const already_exist = client_exist?.agency_ids.filter(
           (id) =>
@@ -102,10 +90,11 @@ class ClientService {
       return true;
     } catch (error) {
       logger.error(`Error while creating client: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
+  // verify client that was invitd by any agency
   verifyClient = async (payload) => {
     try {
       const { email, password, first_name, last_name, redirect, agency_id } =
@@ -138,8 +127,9 @@ class ClientService {
           return throwError(returnMessage("default", "default"));
 
         await Client.updateOne(
-          { "agency_ids.agency": agency?._id },
-          { $set: { "agency_ids.$.status": "active" } }
+          { _id: client?._id, "agency_ids.agency": agency?._id },
+          { $set: { "agency_ids.$.status": "active" } },
+          { new: true }
         );
 
         return authService.tokenGenerator(client_auth);
@@ -150,11 +140,107 @@ class ClientService {
         "email",
         "first_name",
         "last_name",
+        "agency_id",
       ]);
-      const client_exist = await Authentication.findOne({ email });
+
+      if (!validateEmail(email))
+        return throwError(returnMessage("auth", "invalidEmail"));
+
+      if (!passwordValidation(password))
+        return throwError(returnMessage("auth", "invalidPassword"));
+
+      const client_exist = await Authentication.findOne({
+        email,
+        is_deleted: false,
+        status: "confirm_pending",
+        role: role?._id,
+      });
+
+      if (!client_exist) return throwError(returnMessage("default", "default"));
+
+      const client = await Client.findById(client_exist?.reference_id).lean();
+
+      const agency_exist = client?.agency_ids.filter(
+        (id) => id?.agency_id?.toString() == agency?._id
+      );
+
+      if (agency_exist.length == 0)
+        return throwError(returnMessage("default", "default"));
+
+      const hash_password = await authService.passwordEncryption({ password });
+
+      await Client.updateOne(
+        { _id: client?._id, "agency_ids.agency": agency?._id },
+        { $set: { "agency_ids.$.status": "active" } },
+        { new: true }
+      );
+      client_exist.first_name = first_name;
+      client_exist.last_name = last_name;
+      client_exist.status = "confirmed";
+      client_exist.password = hash_password;
+      await client_exist.save();
+
+      return authService.tokenGenerator(client_exist);
     } catch (error) {
       logger.error(`Error while verifying client: ${error}`);
-      return throwError(error?.message, error?.statusCode);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // delete the client for the particuar agency
+  deleteClient = async (client_id, agency) => {
+    try {
+      const client = await Client.findById(client_id).lean();
+      if (!client)
+        return throwError(
+          returnMessage("client", "clientNotFound"),
+          statusCode.notFound
+        );
+
+      const agency_exist = client?.agency_ids.filter(
+        (id) => id?.agency_id?.toString() == agency?._id
+      );
+
+      if (agency_exist.length == 0)
+        return throwError(
+          returnMessage("agency", "agencyNotFound"),
+          statusCode.notFound
+        );
+
+      await Client.updateOne(
+        { _id: client?._id, "agency_ids.agency": agency?._id },
+        { $set: { "agency_ids.$.status": "inactive" } },
+        { new: true }
+      );
+      return true;
+    } catch (error) {
+      logger.error(`Error while deleting the client for agency: ${error}`);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // Get the client ist for the Agency
+  clientList = async (agency) => {
+    try {
+      return await Client.find({
+        agency_ids: {
+          $elemMatch: { agency_id: agency?._id, status: "active" },
+        },
+      }).lean();
+    } catch (error) {
+      logger.error(
+        `Error While fetching list of client for the agency: ${error}`
+      );
+      return throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // Update the client details by client it self
+  updateClient = async (payload, client) => {
+    try {
+    } catch (error) {
+      logger.error(`Error While update client details: ${error}`);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 }

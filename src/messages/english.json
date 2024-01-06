@@ -35,12 +35,19 @@
     "agencyRegistered": "Agency registered successfully.",
     "agencyInactive": "Agency is in-active.",
     "clientCreated": "Invitation mail sent to the client.",
-    "clientExist": "Client already exist."
+    "clientExist": "Client already exist.",
+    "agencyNotFound": "Agency does not exist."
   },
 
   "emailTemplate": {
     "forgotPasswordSubject": "Reset your password now.",
     "invitation": "Join to SyncUpp"
+  },
+
+  "client": {
+    "clientNotFound": "Client does not exist.",
+    "clientVerified": "Verified successfully.",
+    "clientDeleted": "Client deleted successfully."
   },
 
   "default": { "default": "Something went wrong." }
