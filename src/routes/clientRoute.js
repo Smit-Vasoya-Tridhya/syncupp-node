@@ -1,8 +1,15 @@
 const clientRoute = require("express").Router();
-const { protect } = require("../middlewares/authMiddleware");
+const { protect, authorizeRole } = require("../middlewares/authMiddleware");
 const clientController = require("../controllers/clientController");
 
 clientRoute.post("/verify-client", clientController.verifyClient);
 clientRoute.use(protect);
+
+clientRoute.get("/", authorizeRole("client"), clientController.getClient);
+clientRoute.patch(
+  "/update",
+  authorizeRole("client"),
+  clientController.updateClient
+);
 
 module.exports = clientRoute;

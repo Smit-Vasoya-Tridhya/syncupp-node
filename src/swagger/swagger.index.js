@@ -1,5 +1,7 @@
 const adminRoutes = require("./swagger_helper/admin.swagger");
 const authRoutes = require("./swagger_helper/auth.swagger");
+const agencyRoutes = require("./swagger_helper/agency.swagger");
+const clientRoutes = require("./swagger_helper/client.swagger");
 
 const swaggerDoc = {
   openapi: "3.0.0",
@@ -38,6 +40,8 @@ const swaggerDoc = {
   paths: {
     ...adminRoutes,
     ...authRoutes,
+    ...agencyRoutes,
+    ...clientRoutes,
   },
 };
 module.exports = swaggerDoc;

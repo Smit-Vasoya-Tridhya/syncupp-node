@@ -238,8 +238,54 @@ class ClientService {
   // Update the client details by client it self
   updateClient = async (payload, client) => {
     try {
+      await Client.findByIdAndUpdate(
+        client?.reference_id,
+        {
+          company_name: payload?.company_name,
+          company_website: payload?.company_website,
+          state: payload?.state,
+          city: payload?.city,
+          country: payload?.country,
+          pincode: payload?.pincode,
+          address: payload?.address,
+        },
+        { new: true }
+      );
+
+      await Authentication.findByIdAndUpdate(
+        client?._id,
+        {
+          first_name: payload?.first_name,
+          last_name: payload?.last_name,
+        },
+        { new: true }
+      );
+
+      return true;
     } catch (error) {
       logger.error(`Error While update client details: ${error}`);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  getClientDetail = async (client) => {
+    try {
+      const [client_auth, client_data] = await Promise.all([
+        Authentication.findById(client?._id)
+          .select("-password -reset_password_token")
+          .lean(),
+        Client.findById(client?.reference_id)
+          .select("-agency_ids")
+          .populate("city", "label")
+          .populate("country", "label")
+          .populate("state", "label")
+          .lean(),
+      ]);
+
+      client_auth["client"] = client_data;
+      return client_auth;
+    } catch (error) {
+      logger.error(`Error while fetching client detail: ${error}`);
       return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };

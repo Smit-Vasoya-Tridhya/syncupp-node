@@ -17,7 +17,9 @@
     "unAuthorized": "You are un-authorized to perform this action.",
     "passwordRequired": "Old and new passwords are required.",
     "incorrectOldPassword": "Old password does not match.",
-    "insufficientPermission": "In-sufficient permission."
+    "insufficientPermission": "In-sufficient permission.",
+    "profileFetched": "Profile fetched.",
+    "profileUpdated": "Profile updated."
   },
 
   "admin": {

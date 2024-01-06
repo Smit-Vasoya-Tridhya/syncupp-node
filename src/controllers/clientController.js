@@ -32,7 +32,7 @@ exports.deleteClient = catchAsyncError(async (req, res, next) => {
   if (!req.params?.clientId)
     return throwError(returnMessage("default", "default"));
 
-  await clientService.deleteClient(client_id, req.user);
+  await clientService.deleteClient(req.params?.clientId, req.user);
   sendResponse(
     res,
     true,
@@ -45,4 +45,27 @@ exports.deleteClient = catchAsyncError(async (req, res, next) => {
 exports.clients = catchAsyncError(async (req, res, next) => {
   const clients = await clientService.clientList(req.user);
   sendResponse(res, true, null, clients, statusCode.success);
+});
+
+// below functions are used for the Client only
+exports.getClient = catchAsyncError(async (req, res, next) => {
+  const client = await clientService.getClientDetail(req.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("auth", "profileFetched"),
+    client,
+    statusCode.success
+  );
+});
+
+exports.updateClient = catchAsyncError(async (req, res, next) => {
+  await clientService.updateClient(req.body, req.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("auth", "profileUpdated"),
+    {},
+    statusCode.success
+  );
 });
