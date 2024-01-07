@@ -7,12 +7,12 @@ const statusCode = require("../messages/statusCodes.json");
 const { throwError } = require("../helpers/errorUtil");
 
 exports.createClient = catchAsyncError(async (req, res, next) => {
-  const new_client = await clientService.createClient(req.body, req.user);
+  await clientService.createClient(req.body, req.user);
   sendResponse(
     res,
     true,
     returnMessage("agency", "clientCreated"),
-    new_client,
+    {},
     statusCode.success
   );
 });

@@ -7,6 +7,8 @@ const {
   invitationEmail,
   returnMessage,
   paginationObject,
+  validateEmail,
+  passwordValidation,
 } = require("../utils/utils");
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
@@ -52,7 +54,7 @@ class ClientService {
           country: payload?.country,
           pincode: payload?.pincode,
           title: payload?.title,
-          agency_id: [{ agency_id: agency?._id, status: "inactive" }],
+          agency_ids: [{ agency_id: agency?._id, status: "inactive" }],
         };
         const new_client = await Client.create(client_obj);
         const client_auth_obj = {
@@ -66,7 +68,8 @@ class ClientService {
         await Authentication.create(client_auth_obj);
         link = link + "&redirect=false";
       } else {
-        const already_exist = client_exist?.agency_ids.filter(
+        const client = await Client.findById(client_exist?.reference_id);
+        const already_exist = client?.agency_ids.filter(
           (id) =>
             id?.agency_id?.toString() == agency?._id && id?.status == "inactive"
         );
@@ -75,11 +78,14 @@ class ClientService {
           return throwError(returnMessage("agency", "clientExist"));
 
         link = link + "&redirect=true";
-        client_exist.agency_ids = client_exist?.agency_ids?.unshift({
-          agency_id: agency?._id,
-          status: "inactive",
-        });
-        await client_exist.save();
+        client.agency_ids = [
+          ...client?.agency_ids,
+          {
+            agency_id: agency?._id,
+            status: "inactive",
+          },
+        ];
+        await client.save();
       }
       const invitation_mail = invitationEmail(link, name);
 
@@ -121,14 +127,14 @@ class ClientService {
         const client = await Client.findById(client_auth?.reference_id).lean();
 
         const agency_exist = client?.agency_ids.filter(
-          (id) => id?.agency_id?.toString() == agency?._id
+          (id) => id?.agency_id?.toString() == agency_id
         );
 
         if (agency_exist.length == 0)
           return throwError(returnMessage("default", "default"));
 
         await Client.updateOne(
-          { _id: client?._id, "agency_ids.agency": agency?._id },
+          { _id: client?._id, "agency_ids.agency_id": agency_id },
           { $set: { "agency_ids.$.status": "active" } },
           { new: true }
         );
@@ -162,7 +168,7 @@ class ClientService {
       const client = await Client.findById(client_exist?.reference_id).lean();
 
       const agency_exist = client?.agency_ids.filter(
-        (id) => id?.agency_id?.toString() == agency?._id
+        (id) => id?.agency_id?.toString() == agency_id
       );
 
       if (agency_exist.length == 0)
@@ -171,7 +177,7 @@ class ClientService {
       const hash_password = await authService.passwordEncryption({ password });
 
       await Client.updateOne(
-        { _id: client?._id, "agency_ids.agency": agency?._id },
+        { _id: client?._id, "agency_ids.agency_id": agency_id },
         { $set: { "agency_ids.$.status": "active" } },
         { new: true }
       );
@@ -183,7 +189,7 @@ class ClientService {
 
       return authService.tokenGenerator(client_exist);
     } catch (error) {
-      logger.error(`Error while verifying client: ${error}`);
+      console.log(`Error while verifying client`, error);
       return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
@@ -209,7 +215,7 @@ class ClientService {
         );
 
       await Client.updateOne(
-        { _id: client?._id, "agency_ids.agency": agency?._id },
+        { _id: client?._id, "agency_ids.agency_id": agency?._id },
         { $set: { "agency_ids.$.status": "inactive" } },
         { new: true }
       );

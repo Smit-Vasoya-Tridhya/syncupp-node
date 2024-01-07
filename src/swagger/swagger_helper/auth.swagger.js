@@ -2,7 +2,6 @@ const registerAgency = {
   tags: ["CRM Panel"],
   description: "",
   summary: "Register Agency.",
-  security: [],
   requestBody: {
     content: {
       "application/json": {

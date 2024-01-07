@@ -27,10 +27,8 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-exports.authorizeRole = (requiredRole) =>
-  catchAsyncErrors((req, res, next) => {
-    if (req?.user?.role?.name !== requiredRole)
-      return throwError(returnMessage("auth", "insufficientPermission"), 403);
-
-    next();
-  });
+exports.authorizeRole = (requiredRole) => (req, res, next) => {
+  if (req?.user?.role?.name !== requiredRole)
+    return throwError(returnMessage("auth", "insufficientPermission"), 403);
+  next();
+};

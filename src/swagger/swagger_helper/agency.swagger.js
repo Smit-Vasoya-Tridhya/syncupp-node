@@ -2,7 +2,6 @@ const addClient = {
   tags: ["Agency - CRM Panel"],
   description: "",
   summary: "Create or Register client",
-  security: [],
   requestBody: {
     content: {
       "application/json": {
@@ -80,7 +79,6 @@ const deleteClient = {
   tags: ["Agency - CRM Panel"],
   description: "",
   summary: "Delete client",
-  security: [],
   parameters: [
     {
       name: "clientId",
@@ -108,8 +106,6 @@ const clientList = {
   tags: ["Agency - CRM Panel"],
   description: "",
   summary: "Get all clients",
-  security: [],
-
   requestBody: {
     content: {
       "application/json": {
@@ -163,7 +159,7 @@ const agencyRoutes = {
   "/api/v1/agency/create-client": {
     post: addClient,
   },
-  "/api/v1/agency/delete-client/:clientId": {
+  "/api/v1/agency/delete-client/{clientId}": {
     delete: deleteClient,
   },
   "/api/v1/agency/clients": {
