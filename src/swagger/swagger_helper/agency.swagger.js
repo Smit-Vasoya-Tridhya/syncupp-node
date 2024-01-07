@@ -110,6 +110,41 @@ const clientList = {
   summary: "Get all clients",
   security: [],
 
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            page: {
+              type: "number",
+              description: "Enter page number.",
+              default: 1,
+            },
+            items_per_page: {
+              type: "number",
+              description: "Enter item per page.",
+              default: 10,
+            },
+            sort_order: {
+              type: "string",
+              description: "Enter order of sort asc or desc.",
+              default: "desc",
+            },
+            sort_field: {
+              type: "string",
+              description: "Enter field to sort.",
+              default: "createdAt",
+            },
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
   responses: {
     200: {
       descripition: "ok",
@@ -132,7 +167,7 @@ const agencyRoutes = {
     delete: deleteClient,
   },
   "/api/v1/agency/clients": {
-    get: clientList,
+    post: clientList,
   },
 };
 

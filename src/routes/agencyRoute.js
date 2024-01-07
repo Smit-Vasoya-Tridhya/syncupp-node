@@ -14,5 +14,5 @@ agencyRoute.delete(
   clientController.deleteClient
 );
 
-agencyRoute.get("/clients", authorizeRole("agency"), clientController.clients);
+agencyRoute.post("/clients", authorizeRole("agency"), clientController.clients);
 module.exports = agencyRoute;

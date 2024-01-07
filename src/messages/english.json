@@ -38,7 +38,8 @@
     "agencyInactive": "Agency is in-active.",
     "clientCreated": "Invitation mail sent to the client.",
     "clientExist": "Client already exist.",
-    "agencyNotFound": "Agency does not exist."
+    "agencyNotFound": "Agency does not exist.",
+    "agencyUpdated": "Updated successfully."
   },
 
   "emailTemplate": {

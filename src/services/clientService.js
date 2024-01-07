@@ -225,25 +225,39 @@ class ClientService {
     try {
       const pagination = paginationObject(payload);
 
-      const [client, totalClients] = await Promise.all([
-        Client.find({
-          agency_ids: {
-            $elemMatch: { agency_id: agency?._id, status: "active" },
+      const clients = await Client.distinct("_id", {
+        agency_ids: {
+          $elemMatch: { agency_id: agency?._id, status: "active" },
+        },
+      }).lean();
+
+      const query_obj = { reference_id: { $in: clients }, is_deleted: false };
+
+      if (payload?.search && payload?.search !== " ") {
+        query_obj["$or"] = [
+          {
+            first_name: { $regex: searchObj.search, $options: "i" },
           },
-        })
+          {
+            last_name: { $regex: searchObj.search, $options: "i" },
+          },
+          {
+            email: { $regex: searchObj.search, $options: "i" },
+          },
+        ];
+      }
+      const [client, totalClients] = await Promise.all([
+        Authentication.find(query_obj)
+          .select("first_name last_name email name")
           .sort(pagination.sort)
           .skip(pagination.skip)
-          .limit(pagination.resultPerPage)
+          .limit(pagination.result_per_page)
           .lean(),
-        Client.countDocuments({
-          agency_ids: {
-            $elemMatch: { agency_id: agency?._id, status: "active" },
-          },
-        }),
+        Authentication.countDocuments(query_obj),
       ]);
       return {
         client,
-        pageCount: Math.ceil(totalClients / pagination.resultPerPage) || 0,
+        page_count: Math.ceil(totalClients / pagination.result_per_page) || 0,
       };
     } catch (error) {
       logger.error(

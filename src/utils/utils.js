@@ -165,15 +165,25 @@ exports.invitationEmail = (link, name) => {
 
 exports.paginationObject = (paginationObject) => {
   const page = paginationObject.page || 1;
-  const resultPerPage = paginationObject.itemsPerPage || 10;
-  const skip = resultPerPage * (page - 1);
-  const sortOrder = paginationObject.sortOrder === "asc" ? 1 : -1;
+  const result_per_page = paginationObject.items_per_page || 10;
+  const skip = result_per_page * (page - 1);
+  const sort_order = paginationObject.sort_order === "asc" ? 1 : -1;
   const sortField =
-    paginationObject.sortField && paginationObject.sortField !== ""
-      ? paginationObject.sortField
+    paginationObject.sort_field && paginationObject.sort_field !== ""
+      ? paginationObject.sort_field
       : "createdAt";
   const sort = {};
-  sort[sortField] = sortOrder;
+  sort[sortField] = sort_order;
 
-  return { page, skip, resultPerPage, sort };
+  return { page, skip, result_per_page, sort };
+};
+
+exports.getKeywordType = (keyword) => {
+  if (!isNaN(keyword)) {
+    return "number";
+  } else if (Date.parse(keyword)) {
+    return "date";
+  } else {
+    return "string";
+  }
 };

@@ -43,7 +43,7 @@ exports.deleteClient = catchAsyncError(async (req, res, next) => {
 });
 
 exports.clients = catchAsyncError(async (req, res, next) => {
-  const clients = await clientService.clientList(req.user);
+  const clients = await clientService.clientList(req.body, req.user);
   sendResponse(res, true, null, clients, statusCode.success);
 });
 
