@@ -6,6 +6,7 @@ const {
   validateRequestFields,
   invitationEmail,
   returnMessage,
+  paginationObject,
 } = require("../utils/utils");
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
@@ -220,13 +221,30 @@ class ClientService {
   };
 
   // Get the client ist for the Agency
-  clientList = async (agency) => {
+  clientList = async (payload, agency) => {
     try {
-      return await Client.find({
-        agency_ids: {
-          $elemMatch: { agency_id: agency?._id, status: "active" },
-        },
-      }).lean();
+      const pagination = paginationObject(payload);
+
+      const [client, totalClients] = await Promise.all([
+        Client.find({
+          agency_ids: {
+            $elemMatch: { agency_id: agency?._id, status: "active" },
+          },
+        })
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.resultPerPage)
+          .lean(),
+        Client.countDocuments({
+          agency_ids: {
+            $elemMatch: { agency_id: agency?._id, status: "active" },
+          },
+        }),
+      ]);
+      return {
+        client,
+        pageCount: Math.ceil(totalClients / pagination.resultPerPage) || 0,
+      };
     } catch (error) {
       logger.error(
         `Error While fetching list of client for the agency: ${error}`
