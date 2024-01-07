@@ -69,7 +69,7 @@ class AdminService {
   getAdmin = async (payload) => {
     try {
       const admin_id = payload;
-      const admin = await Admin.find({ _id: admin_id });
+      const admin = await Admin.find({ _id: admin_id }).lean();
 
       if (!admin) {
         return throwError(returnMessage("admin", "adminNotFound"));
@@ -77,7 +77,7 @@ class AdminService {
       return admin;
     } catch (error) {
       logger.error(`Error while get Admin, ${error}`);
-      throwError(error?.message, error?.statusCode);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -132,7 +132,7 @@ class AdminService {
 
       const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
-      admin.reset_password_token = undefined;
+      admin.reset_password_token = null;
       await admin.save();
       return;
     } catch (error) {
@@ -162,8 +162,7 @@ class AdminService {
     }
   };
 
-  // update Agency profile
-  // update Team Member agency
+  // updateAdmin
   updateAdmin = async (payload, admin_id) => {
     try {
       const admin = await Admin.findByIdAndUpdate(
@@ -180,7 +179,7 @@ class AdminService {
       return admin;
     } catch (error) {
       logger.error(`Error while Admin update, ${error}`);
-      throwError(error?.message, error?.status);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -192,18 +191,18 @@ class AdminService {
       return faq;
     } catch (error) {
       logger.error(`Error while Admin add FQA, ${error}`);
-      throwError(error?.message, error?.status);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
   // GET All FQA
   getAllFaq = async (payload) => {
     try {
-      const faqs = await AdminFqa.find({ is_deleted: false });
+      const faqs = await AdminFqa.find({ is_deleted: false }).lean();
       return faqs;
     } catch (error) {
       logger.error(`Error while Admin FQA Listing, ${error}`);
-      throwError(error?.message, error?.status);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -218,7 +217,7 @@ class AdminService {
       return deletedFaqs;
     } catch (error) {
       logger.error(`Error while Deleting FQA, ${error}`);
-      throwError(error?.message, error?.status);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -236,7 +235,7 @@ class AdminService {
       return faq;
     } catch (error) {
       logger.error(`Error while updating FQA, ${error}`);
-      throwError(error?.message, error?.status);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
   // GET FQA
@@ -246,11 +245,11 @@ class AdminService {
       const faq = await AdminFqa.findById({
         _id: faqId,
         is_deleted: false,
-      });
+      }).lean();
       return faq;
     } catch (error) {
       logger.error(`Error while Get FQA, ${error}`);
-      throwError(error?.message, error?.status);
+      throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 }

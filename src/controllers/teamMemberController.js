@@ -7,7 +7,7 @@ const teamMemberService = new TeamMemberService();
 
 // Team Member add
 exports.add = catchAsyncError(async (req, res, next) => {
-  const user_id = req.user.reference_id;
+  const user_id = req.user._id;
   const teamMember = await teamMemberService.add(req.body, user_id);
   sendResponse(
     res,
@@ -45,8 +45,10 @@ exports.login = catchAsyncError(async (req, res, next) => {
 //  Get one Team Member
 
 exports.getMember = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  const teamMember = await teamMemberService.getMember(id);
+  const teamMember = await teamMemberService.getMember(
+    req?.user?._id,
+    req?.params?.id
+  );
   sendResponse(
     res,
     true,

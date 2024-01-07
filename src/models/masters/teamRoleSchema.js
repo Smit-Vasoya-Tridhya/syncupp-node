@@ -3,9 +3,13 @@ const { crm_connection } = require("../../config/connection");
 
 const teamRoleMasterSchema = new mongoose.Schema(
   {
-    role: {
+    name: {
       type: String,
       enum: ["team_member", "admin"],
+    },
+    is_deleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

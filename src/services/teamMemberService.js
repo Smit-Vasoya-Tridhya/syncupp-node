@@ -15,6 +15,7 @@ const Team_Agency = require("../models/teamAgencySchema");
 const { paginationObject, getKeywordType } = require("./commonSevice");
 const Team_Role_Master = require("../models/masters/teamRoleSchema");
 const Team_Client = require("../models/teamClientSchema");
+const { ObjectId } = require("mongodb");
 
 class TeamMemberService {
   // Token generate
@@ -41,19 +42,21 @@ class TeamMemberService {
       const { email, name, contact_number, role } = payload;
       const isEmail = await Authentication.findOne({
         email: email,
-        is_deleted: true,
-      });
+        is_deleted: false,
+      }).lean();
       if (isEmail) {
         return throwError(returnMessage("teamMember", "emailExist"));
       }
 
       const teamMember = await Authentication.findOne({
-        reference_id: user_id,
-        is_deleted: true,
-      }).populate({
-        path: "role",
-        model: "role_master",
-      });
+        _id: user_id,
+        is_deleted: false,
+      })
+        .populate({
+          path: "role",
+          model: "role_master",
+        })
+        .lean();
 
       let roleKey;
       let TeamModelName;
@@ -68,19 +71,24 @@ class TeamMemberService {
         TeamModelName = Team_Client;
         memberOf = "client_id";
       }
+
+      // Create Role master
       const newMasterRole = await Role_Master.create({
         name: roleKey,
       });
 
+      // Create Team Role master
       const teamRole = await Team_Role_Master.create({
-        role: role,
+        name: role,
       });
 
+      // Create Team Member schema data
       const teamModel = await TeamModelName.create({
         role: teamRole._id,
-        [memberOf]: user_id,
+        [memberOf]: teamMember.reference_id,
       });
 
+      // Create new Team Member
       const newTeamMember = await Authentication.create({
         email,
         name,
@@ -109,8 +117,6 @@ class TeamMemberService {
 
       newTeamMember.invitation_token = hash_token;
       await newTeamMember.save();
-
-      console.log(newTeamMember);
     } catch (error) {
       logger.error(`Error while Team Member register, ${error}`);
       throwError(error?.message, error?.status);
@@ -130,27 +136,27 @@ class TeamMemberService {
 
       const teamMember = await Authentication.findOne({
         email: email,
-        is_deleted: true,
+        is_deleted: false,
         invitation_token: hash_token,
-      });
+      }).lean();
 
       if (!teamMember) {
         return throwError(returnMessage("teamMember", "invalidToken"));
       }
       const hash_password = await bcrypt.hash(password, 14);
       await Authentication.findOneAndUpdate(
-        { email: email, is_deleted: true },
+        { email: email, is_deleted: false },
         {
           first_name,
           last_name,
           email,
           password: hash_password,
-          invitation_token: undefined,
+          invitation_token: null,
         }
       );
     } catch (error) {
       logger.error(`Error while Team Member verify , ${error}`);
-      throwError(error?.message, error?.status);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -190,18 +196,17 @@ class TeamMemberService {
       return this.tokenGenerator(member_exist);
     } catch (error) {
       logger.error(`Error while Team Member  login, ${error}`);
-      throwError(error?.message, error?.status);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
   // getMember Team Member
 
-  getMember = async (payload) => {
+  getMember = async (user_id, memberId) => {
     try {
-      const memberId = payload;
-      const teamMember = await Authentication.findOne(
+      const teamMemberInfo = await Authentication.findOne(
         {
-          _id: memberId,
+          _id: user_id,
           is_deleted: false,
         },
         { password: 0 }
@@ -211,25 +216,97 @@ class TeamMemberService {
           model: "role_master",
           select: "-createdAt -updatedAt",
         })
-        .populate({
-          path: "reference_id",
-          model: "team_agency",
-          select: "-createdAt -updatedAt",
+        .lean();
 
-          populate: {
-            path: "role",
-            model: "team_role_master",
-            select: "-createdAt -updatedAt",
+      let memberOf;
+      let teamMemberSchemaName;
+      if (teamMemberInfo.role.name === "agency") {
+        memberOf = "agency_id";
+        teamMemberSchemaName = "team_agencies";
+      }
+      if (teamMemberInfo.role.name === "client") {
+        memberOf = "client_id";
+        teamMemberSchemaName = "team_clients";
+      }
+
+      const pipeLine = [
+        {
+          $match: {
+            _id: new ObjectId(memberId),
+            is_deleted: false,
           },
-        });
+        },
 
+        {
+          $lookup: {
+            from: "role_masters",
+            localField: "role",
+            foreignField: "_id",
+            as: "user_type",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $addFields: {
+            log_after_match: "$$ROOT", // Create a new field for logging
+          },
+        },
+        {
+          $unwind: "$user_type",
+        },
+        {
+          $lookup: {
+            from: teamMemberSchemaName,
+            localField: "reference_id",
+            foreignField: "_id",
+            as: "member_data",
+            pipeline: [{ $project: { role: 1, [memberOf]: 1 } }],
+          },
+        },
+
+        {
+          $unwind: "$member_data",
+        },
+
+        {
+          $lookup: {
+            from: "team_role_masters",
+            localField: "member_data.role",
+            foreignField: "_id",
+            as: "member_role",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$member_role",
+        },
+
+        {
+          $project: {
+            _id: 1,
+            email: 1,
+            user_type: "$user_type.name",
+            [memberOf]: "$member_data." + memberOf,
+            member_role: "$member_role.name",
+            createdAt: 1,
+            updatedAt: 1,
+            first_name: 1,
+            last_name: 1,
+            contact_number: 1,
+            image_url: 1,
+            status: 1,
+          },
+        },
+      ];
+
+      const teamMember = await Authentication.aggregate(pipeLine);
       if (!teamMember) {
         return throwError(returnMessage("teamMember", "invalidId"));
       }
       return teamMember;
     } catch (error) {
       logger.error(`Error while get team member, ${error}`);
-      throwError(error?.message, error?.status);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -241,23 +318,25 @@ class TeamMemberService {
       const teamMember = await Authentication.findOne({
         _id: user_id,
         is_deleted: false,
-      }).populate({
-        path: "role",
-        model: "role_master",
-      });
+      })
+        .populate({
+          path: "role",
+          model: "role_master",
+        })
+        .lean();
 
-      let roleKey;
       let TeamModelName;
       let memberOf;
+      let teamMemberSchemaName;
       if (teamMember.role.name === "agency") {
-        roleKey = "team_agency";
         TeamModelName = Team_Agency;
         memberOf = "agency_id";
+        teamMemberSchemaName = "team_agencies";
       }
       if (teamMember.role.name === "client") {
-        roleKey = "team_agency";
         TeamModelName = Team_Client;
         memberOf = "client_id";
+        teamMemberSchemaName = "team_clients";
       }
 
       const user = await Authentication.findOne({
@@ -267,11 +346,9 @@ class TeamMemberService {
 
       const teamMemberData = await TeamModelName.distinct("_id", {
         [memberOf]: user.reference_id,
-      });
+      }).lean();
 
-      const teamMemberIdData = teamMemberData.map((id) => id.toHexString());
-
-      const queryObj = { reference_id: teamMemberIdData, is_deleted: false };
+      const queryObj = {};
 
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
@@ -293,39 +370,106 @@ class TeamMemberService {
       }
 
       const pagination = paginationObject(searchObj);
-      const teamMemberList = await Authentication.find(queryObj)
-        .populate({
-          path: "role",
-          model: "role_master",
-        })
-        .populate({
-          path: "reference_id",
-          model: roleKey,
-          populate: {
-            path: "role",
-            model: "team_role_master",
+
+      const pipeLine = [
+        {
+          $match: {
+            reference_id: { $in: teamMemberData },
+            is_deleted: false,
+            ...queryObj,
           },
-        })
+        },
+        {
+          $lookup: {
+            from: "role_masters",
+            localField: "role",
+            foreignField: "_id",
+            as: "user_type",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+
+        {
+          $unwind: "$user_type",
+        },
+        {
+          $lookup: {
+            from: teamMemberSchemaName,
+            localField: "reference_id",
+            foreignField: "_id",
+            as: "member_data",
+            pipeline: [{ $project: { role: 1, [memberOf]: 1 } }],
+          },
+        },
+
+        {
+          $unwind: "$member_data",
+        },
+
+        {
+          $lookup: {
+            from: "team_role_masters",
+            localField: "member_data.role",
+            foreignField: "_id",
+            as: "member_role",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$member_role",
+        },
+
+        {
+          $project: {
+            _id: 1,
+            email: 1,
+            user_type: "$user_type.name",
+            [memberOf]: "$member_data." + memberOf,
+            member_role: "$member_role.name",
+            createdAt: 1,
+            updatedAt: 1,
+            first_name: 1,
+            last_name: 1,
+            contact_number: 1,
+            image_url: 1,
+            status: 1,
+          },
+        },
+      ];
+
+      const teamMemberList = await Authentication.aggregate(pipeLine)
         .skip(pagination.skip)
         .limit(pagination.resultPerPage)
-        .sort(pagination.sort)
-        .lean();
+        .sort(pagination.sort);
 
-      const count = await Authentication.countDocuments(queryObj); // Counting the total documents
+      const countResult = await Authentication.aggregate(pipeLine).count(
+        "count"
+      );
 
-      const pages = Math.ceil(count / pagination.resultPerPage); // Calculating total pages
+      const count = countResult[0] && countResult[0].count;
 
+      if (count !== undefined) {
+        // Calculating total pages
+        const pages = Math.ceil(count / pagination.resultPerPage);
+
+        return {
+          teamMemberList,
+          pagination: {
+            current_page: pagination.page,
+            total_pages: pages,
+          },
+        };
+      }
       return {
         teamMemberList,
         pagination: {
-          page: pagination.page,
-          pages: pages,
-          count: count,
+          current_page: pagination.page,
+          total_pages: 0,
         },
       };
     } catch (error) {
       logger.error(`Error while Team members, Listing ${error}`);
-      throwError(error?.message, error?.status);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -334,9 +478,51 @@ class TeamMemberService {
   deleteMember = async (payload) => {
     try {
       const memberId = payload;
+      const teamMember = await Authentication.findOne({
+        _id: memberId,
+        is_deleted: false,
+      })
+        .populate({
+          path: "role",
+          model: "role_master",
+        })
+        .populate({
+          path: "reference_id",
+          model: "team_agency",
+          populate: {
+            path: "role",
+            model: "team_role_master",
+          },
+        })
+        .lean();
 
-      const teamMember = await Authentication.updateOne(
+      let TeamModelName;
+      if (teamMember.role.name === "team_agency") {
+        TeamModelName = Team_Agency;
+      }
+      if (teamMember.role.name === "team_client") {
+        TeamModelName = Team_Client;
+      }
+
+      // Step 1: Delete from Authentication collection
+      await Authentication.findByIdAndUpdate(
         { _id: memberId },
+        { $set: { is_deleted: true } }
+      );
+      // Step 2: Delete references in role_master collection
+      await Role_Master.findByIdAndUpdate(
+        { _id: teamMember?.role?._id },
+        { $set: { is_deleted: true } }
+      );
+      // Step 3: Delete references in team_role_master collection
+      await TeamModelName.findByIdAndUpdate(
+        { _id: teamMember?.reference_id?._id },
+        { $set: { is_deleted: true } }
+      );
+
+      // Step 4: Delete references in team_role_master collection
+      await Team_Role_Master.findByIdAndUpdate(
+        { _id: teamMember?.reference_id?.role?._id },
         { $set: { is_deleted: true } }
       );
 
@@ -346,7 +532,7 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error while Team member  delete, ${error}`);
-      throwError(error?.message, error?.status);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 
@@ -371,7 +557,7 @@ class TeamMemberService {
       return teamMember;
     } catch (error) {
       logger.error(`Error while Team member Edit, ${error}`);
-      throwError(error?.message, error?.status);
+      return throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
 }

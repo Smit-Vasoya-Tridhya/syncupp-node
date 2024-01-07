@@ -13,6 +13,10 @@ const teamAgencySchema = new mongoose.Schema(
       ref: "agency_type_master",
       required: true,
     },
+    is_deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

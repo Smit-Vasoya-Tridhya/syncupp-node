@@ -340,14 +340,10 @@ class AuthService {
       if (!data) return throwError(returnMessage("auth", "invalidToken"));
 
       const hased_password = await this.passwordEncryption({ password });
-      await Authentication.findByIdAndUpdate(
-        data?._id,
-        {
-          password: hased_password,
-          reset_password_token: undefined,
-        },
-        { new: true }
-      );
+      await Authentication.findByIdAndUpdate(data?._id, {
+        password: hased_password,
+        reset_password_token: null,
+      });
       return true;
     } catch (error) {
       logger.error(`Error while resetting password: ${error}`);
@@ -375,7 +371,7 @@ class AuthService {
         password: new_password,
       });
 
-      user.reset_password_token = undefined;
+      user.reset_password_token = null;
       user.password = hash_password;
       await user.save();
 

@@ -13,6 +13,10 @@ const teamClientSchema = new mongoose.Schema(
       ref: "team_role_master",
       required: true,
     },
+    is_deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
