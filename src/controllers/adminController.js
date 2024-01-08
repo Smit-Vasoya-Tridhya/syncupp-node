@@ -101,13 +101,14 @@ exports.addFaq = catchAsyncError(async (req, res, next) => {
 // get All FQA
 
 exports.getAllFaq = catchAsyncError(async (req, res, next) => {
-  const allFaq = await adminService.getAllFaq();
+  const { faqs, pagination } = await adminService.getAllFaq(req.body);
   sendResponse(
     res,
     true,
     returnMessage("admin", "getAllFaq"),
-    allFaq,
-    statusCode.success
+    faqs,
+    statusCode.success,
+    pagination
   );
 });
 

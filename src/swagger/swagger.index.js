@@ -1,6 +1,7 @@
 const adminRoutes = require("./swagger_helper/admin.swagger");
 const authRoutes = require("./swagger_helper/auth.swagger");
 const teamMembersRoutes = require("./swagger_helper/teamMember.swagger");
+const agenciesRoutes = require("./swagger_helper/agency.swagger");
 
 const swaggerDoc = {
   openapi: "3.0.0",
@@ -42,6 +43,7 @@ const swaggerDoc = {
     ...adminRoutes,
     ...teamMembersRoutes,
     ...authRoutes,
+    ...agenciesRoutes,
   },
 };
 module.exports = swaggerDoc;

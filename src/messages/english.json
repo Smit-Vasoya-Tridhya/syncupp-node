@@ -65,7 +65,9 @@
   "agency": {
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",
-    "agencyInactive": "Agency is in-active."
+    "agencyInactive": "Agency is in-active.",
+    "agencyGet": "Agency  profile fetched successfully.",
+    "agencyUpdate": "Agency  profile updated successfully."
   },
 
   "emailTemplate": {

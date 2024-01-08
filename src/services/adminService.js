@@ -11,6 +11,7 @@ const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
+const { paginationObject, getKeywordType } = require("./commonSevice");
 
 class AdminService {
   tokenGenerator = (payload) => {
@@ -196,10 +197,47 @@ class AdminService {
   };
 
   // GET All FQA
-  getAllFaq = async (payload) => {
+  getAllFaq = async (searchObj) => {
     try {
-      const faqs = await AdminFqa.find({ is_deleted: false }).lean();
-      return faqs;
+      const queryObj = { is_deleted: false };
+
+      if (searchObj.search && searchObj.search !== "") {
+        queryObj["$or"] = [
+          {
+            question: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+        ];
+
+        const keywordType = getKeywordType(searchObj.search);
+        if (keywordType === "number") {
+          const numericKeyword = parseInt(searchObj.search);
+          queryObj["$or"].push({
+            contact_number: numericKeyword,
+          });
+        }
+      }
+
+      const pagination = paginationObject(searchObj);
+      const faqs = await AdminFqa.find(queryObj)
+        .skip(pagination.skip)
+        .limit(pagination.resultPerPage)
+        .sort(pagination.sort);
+
+      const totalFaqsCount = await AdminFqa.countDocuments(queryObj);
+
+      // Calculating total pages
+      const pages = Math.ceil(totalFaqsCount / pagination.resultPerPage);
+
+      return {
+        faqs,
+        pagination: {
+          current_page: pagination.page,
+          total_pages: pages,
+        },
+      };
     } catch (error) {
       logger.error(`Error while Admin FQA Listing, ${error}`);
       throwError(returnMessage("default", "default"), error?.statusCode);

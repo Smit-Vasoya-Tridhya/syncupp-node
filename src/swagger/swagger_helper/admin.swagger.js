@@ -267,14 +267,47 @@ const addFaqAdmin = {
 
 const getAllFaq = {
   tags: ["Admin Panel"],
-  description: "",
+  description:
+    "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
   summary: "Get All FAQ ",
   security: [
     {
       bearerAuth: [],
     },
   ],
-  requestBody: {},
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            sortField: {
+              type: "string",
+              description: "Enter sortField",
+              required: true,
+            },
+            sortOrder: {
+              type: "string",
+              description: "Enter sortOrder",
+              required: true,
+            },
+            page: {
+              type: "number",
+              description: "Enter page number",
+              required: true,
+            },
+            itemsPerPage: {
+              type: "number",
+              description: "Enter itemsPerPage",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
   responses: {
     200: {
       description: "ok",
