@@ -1,3 +1,4 @@
+const faqRoutes = require("./swagger_helper/faq.swagger");
 const adminRoutes = require("./swagger_helper/admin.swagger");
 const authRoutes = require("./swagger_helper/auth.swagger");
 const teamMembersRoutes = require("./swagger_helper/teamMember.swagger");
@@ -43,6 +44,7 @@ const swaggerDoc = {
     ...adminRoutes,
     ...teamMembersRoutes,
     ...authRoutes,
+    ...faqRoutes,
     ...agenciesRoutes,
   },
 };

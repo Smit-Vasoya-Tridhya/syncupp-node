@@ -1,7 +1,7 @@
-const loginAdmin = {
+const addFaqAdmin = {
   tags: ["Admin Panel"],
   description: "",
-  summary: "Login Admin ",
+  summary: "Add FAQ ",
   security: [
     {
       bearerAuth: [],
@@ -14,103 +14,13 @@ const loginAdmin = {
           type: "object",
 
           properties: {
-            email: {
+            question: {
               type: "string",
-              description: "Enter email id",
-              required: true,
+              description: "Enter question",
             },
-            password: {
+            answer: {
               type: "string",
-              description: "Enter password",
-              required: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-const forgotAdminPassword = {
-  tags: ["Admin Panel"],
-  description: "",
-  summary: "Admin Forgot Password ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            email: {
-              type: "string",
-              description: "Enter email id",
-              required: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-const resetAdminPassword = {
-  tags: ["Admin Panel"],
-  description: "",
-  summary: "Reset Admin Password ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            email: {
-              type: "string",
-              description: "Enter email id",
-              required: true,
-            },
-            newPassword: {
-              type: "string",
-              description: "Enter password",
-              required: true,
-            },
-            token: {
-              type: "string",
-              description: "Enter token",
-              required: true,
+              description: "Enter answer",
             },
           },
         },
@@ -131,10 +41,11 @@ const resetAdminPassword = {
   },
 };
 
-const updateAdminPassword = {
+const getAllFaq = {
   tags: ["Admin Panel"],
-  description: "",
-  summary: "Update Admin Password ",
+  description:
+    "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
+  summary: "Get All FAQ ",
   security: [
     {
       bearerAuth: [],
@@ -147,62 +58,65 @@ const updateAdminPassword = {
           type: "object",
 
           properties: {
-            oldPassword: {
+            sortField: {
               type: "string",
-              description: "Enter email id",
+              description: "Enter sortField",
               required: true,
             },
-            newPassword: {
+            sortOrder: {
               type: "string",
-              description: "Enter password",
+              description: "Enter sortOrder",
               required: true,
             },
-          },
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-
-const updateAdminProfile = {
-  tags: ["Admin Panel"],
-  description: "",
-  summary: "Update Admin Profile ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            first_name: {
-              type: "string",
-              description: "Enter first name",
-            },
-            last_name: {
-              type: "string",
-              description: "Enter last name",
-            },
-            contact_no: {
+            page: {
               type: "number",
-              description: "Enter contact number",
+              description: "Enter page number",
+              required: true,
+            },
+            itemsPerPage: {
+              type: "number",
+              description: "Enter itemsPerPage",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const deleteFaq = {
+  tags: ["Admin Panel"],
+  description:
+    'Pass data like this {"faqIdsToDelete" : ["6597aeb9528e7bc34319c6f7" , "6597b11b248ca49192fcb7b9"]}',
+  summary: "Delete FAQ ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            faqIdsToDelete: {
+              type: "array",
+              description: "Enter FQA IDS to be deleted",
             },
           },
         },
@@ -223,22 +137,111 @@ const updateAdminProfile = {
   },
 };
 
-const adminRoutes = {
-  "/api/v1/admin/login": {
-    post: loginAdmin,
+const updateFaqAdmin = {
+  tags: ["Admin Panel"],
+  description: "",
+  summary: "Update FAQ ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            question: {
+              type: "string",
+              description: "Enter question",
+            },
+            answer: {
+              type: "string",
+              description: "Enter answer",
+            },
+          },
+        },
+      },
+    },
   },
-  "/api/v1/admin/forgotPassword": {
-    post: forgotAdminPassword,
-  },
-  "/api/v1/admin/resetPassword": {
-    post: resetAdminPassword,
-  },
-  "/api/v1/admin/updatePassword": {
-    put: updateAdminPassword,
-  },
-  "/api/v1/admin/updateProfile": {
-    put: updateAdminProfile,
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "string", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
   },
 };
 
-module.exports = adminRoutes;
+const getFaqAdmin = {
+  tags: ["Admin Panel"],
+  description: "",
+  summary: "Get FAQ ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {},
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of the team member",
+      required: true,
+      schema: {
+        type: "string", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const faqRoutes = {
+  "/api/v1/admin/add-faq": {
+    post: addFaqAdmin,
+  },
+  "/api/v1/admin/get-all-faq": {
+    get: getAllFaq,
+  },
+  "/api/v1/admin/delete-faq": {
+    delete: deleteFaq,
+  },
+  "/api/v1/admin/get-faq/{id}": {
+    get: getFaqAdmin,
+  },
+  "/api/v1/admin/update-faq/{id}": {
+    put: updateFaqAdmin,
+  },
+};
+
+module.exports = faqRoutes;

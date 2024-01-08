@@ -6,11 +6,6 @@ const {
   changePassword,
   getAdmin,
   updateAdmin,
-  addFaq,
-  getAllFaq,
-  deleteFaq,
-  updateFaq,
-  getFaq,
 } = require("../controllers/adminController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
@@ -18,11 +13,20 @@ const {
   loginAdminValidator,
   forgotPasswordValidator,
   updatePasswordValidator,
-  deleteFaqValidator,
-  addFaqValidator,
-  updateFaqValidator,
 } = require("../validators/admin.validator");
 const { protect } = require("../middlewares/authAdminMiddleware");
+const {
+  addFaq,
+  getAllFaq,
+  deleteFaq,
+  updateFaq,
+  getFaq,
+} = require("../controllers/faqController");
+const {
+  deleteFaqValidator,
+  updateFaqValidator,
+  addFaqValidator,
+} = require("../validators/faq.validator");
 
 // this route is used for the ADMIN panel Login
 adminRoute.post("/login", login);
