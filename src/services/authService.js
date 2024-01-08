@@ -35,7 +35,7 @@ class AuthService {
       return { token, user: payload };
     } catch (error) {
       logger.error(`Error while token generate: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -44,7 +44,7 @@ class AuthService {
       return await bcrypt.compare(payload.password, payload.encrypted_password);
     } catch (error) {
       logger.error(`Error while password verification: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -53,7 +53,7 @@ class AuthService {
       return await bcrypt.hash(payload.password, 14);
     } catch (error) {
       logger.error(`Error while password encryption: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -74,6 +74,8 @@ class AuthService {
 
       if (!passwordValidation(password))
         return throwError(returnMessage("auth", "invalidPassword"));
+
+        if(isNaN(contact_number)) return throwError(returnMessage("auth","invalidContactNumber"))
 
       const agency_exist = await Authentication.findOne({
         email,
@@ -120,7 +122,7 @@ class AuthService {
       });
     } catch (error) {
       logger.error(`Error while agency signup: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -165,7 +167,7 @@ class AuthService {
       }
     } catch (error) {
       logger.error("Error while google sign In", error);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -217,7 +219,7 @@ class AuthService {
       }
     } catch (error) {
       logger.error(`Error while facebook signup:${error.message}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -259,7 +261,7 @@ class AuthService {
       });
     } catch (error) {
       logger.error(`Error while login: ${error.message}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -273,7 +275,7 @@ class AuthService {
       return { token, hash_token };
     } catch (error) {
       logger.error(`Error while generating reset password token: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -313,7 +315,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error with forget password: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -351,7 +353,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error while resetting password: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -382,7 +384,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error while changing password: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

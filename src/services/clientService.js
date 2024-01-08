@@ -242,13 +242,13 @@ class ClientService {
       if (payload?.search && payload?.search !== " ") {
         query_obj["$or"] = [
           {
-            first_name: { $regex: searchObj.search, $options: "i" },
+            first_name: { $regex: payload.search, $options: "i" },
           },
           {
-            last_name: { $regex: searchObj.search, $options: "i" },
+            last_name: { $regex: payload.search, $options: "i" },
           },
           {
-            email: { $regex: searchObj.search, $options: "i" },
+            email: { $regex: payload.search, $options: "i" },
           },
         ];
       }

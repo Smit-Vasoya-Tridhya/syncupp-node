@@ -4,8 +4,12 @@ const { crm_connection } = require("../../config/connection");
 const country_master_schema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    label: { type: String, required: true },
-    state: [{ type: mongoose.Schema.Types.ObjectId, ref: "state_master" }],
+    callingCodes: [],
+    latlang: [],
+    timezones: [],
+    flag: { type: String },
+    alpha2Code: { type: String },
+    alpha3Code: { type: String },
   },
   { timestamps: true }
 );

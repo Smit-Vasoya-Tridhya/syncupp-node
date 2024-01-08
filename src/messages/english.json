@@ -19,7 +19,8 @@
     "incorrectOldPassword": "Old password does not match.",
     "insufficientPermission": "In-sufficient permission.",
     "profileFetched": "Profile fetched.",
-    "profileUpdated": "Profile updated."
+    "profileUpdated": "Profile updated.",
+    "invalidContactNumber":"Contact number is invalid."
   },
 
   "admin": {

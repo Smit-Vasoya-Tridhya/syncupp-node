@@ -7,6 +7,9 @@ const statusCode = require("../messages/statusCodes.json");
 const Admin = require("../models/adminSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const Agency_Type_Master = require("../models/masters/agencyTypeMasterSchema");
+// const Country_Master = require("../models/masters/countryMasterSchema");
+// const State_Master = require("../models/masters/stateMasterSchema");
+// const City_Master = require("../models/masters/cityMasterSchema");
 
 const admin_data = JSON.parse(
   fs.readFileSync(`${__dirname}/seeder-data/admin.json`, "utf-8")
@@ -18,6 +21,16 @@ const role_master_data = JSON.parse(
 const agency_type_master_data = JSON.parse(
   fs.readFileSync(`${__dirname}/seeder-data/agency_type_master.json`, "utf-8")
 );
+
+// const state_master_data = JSON.parse(
+//   fs.readFileSync(`${__dirname}/seeder-data/state_master.json`, "utf-8")
+// );
+// const country_master_data = JSON.parse(
+//   fs.readFileSync(`${__dirname}/seeder-data/country_master.json`, "utf-8")
+// );
+// const city_master_data = JSON.parse(
+//   fs.readFileSync(`${__dirname}/seeder-data/city_master.json`, "utf-8")
+// );
 
 exports.insertData = async () => {
   try {
@@ -41,6 +54,17 @@ exports.insertData = async () => {
       // promiseArray.push(Agency_Type_Master.deleteMany());
       promiseArray.push(Agency_Type_Master.create(agency_type_master_data));
     }
+
+    // if (countries === 0) {
+    //   await Country_Master.create(country_master_data);
+    // }
+    // if (states === 0) {
+    //   await State_Master.create(state_master_data);
+    // }
+
+    // if (cities === 0) {
+    //   await City_Master.create(city_master_data);
+    // }
 
     await Promise.all(promiseArray).then(() => console.log("data imported"));
   } catch (error) {

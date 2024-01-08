@@ -4,8 +4,7 @@ const { crm_connection } = require("../../config/connection");
 const state_master_schema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    label: { type: String, required: true },
-    city: [{ type: mongoose.Schema.Types.ObjectId, ref: "city_master" }],
+    country: { type: mongoose.Schema.Types.ObjectId, ref: "country_master" },
   },
   { timestamps: true }
 );
