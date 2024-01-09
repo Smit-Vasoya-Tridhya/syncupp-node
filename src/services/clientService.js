@@ -97,7 +97,7 @@ class ClientService {
       return true;
     } catch (error) {
       logger.error(`Error while creating client: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -190,7 +190,7 @@ class ClientService {
       return authService.tokenGenerator(client_exist);
     } catch (error) {
       console.log(`Error while verifying client`, error);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -222,7 +222,7 @@ class ClientService {
       return true;
     } catch (error) {
       logger.error(`Error while deleting the client for agency: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -269,7 +269,7 @@ class ClientService {
       logger.error(
         `Error While fetching list of client for the agency: ${error}`
       );
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -302,7 +302,7 @@ class ClientService {
       return true;
     } catch (error) {
       logger.error(`Error While update client details: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -324,7 +324,7 @@ class ClientService {
       return client_auth;
     } catch (error) {
       logger.error(`Error while fetching client detail: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

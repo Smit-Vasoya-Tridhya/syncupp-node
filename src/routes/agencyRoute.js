@@ -5,8 +5,6 @@ const {
   getAgencyProfile,
   updateAgencyProfile,
 } = require("../controllers/agencyController");
-const { upload } = require("../helpers/multer");
-const { protect } = require("../middlewares/authMiddleware");
 
 agencyRoute.use(protect);
 agencyRoute.post(

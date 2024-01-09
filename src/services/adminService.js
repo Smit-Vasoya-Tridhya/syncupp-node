@@ -27,7 +27,7 @@ class AdminService {
       return { token, user: payload };
     } catch (error) {
       logger.error(`Error while token generate, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -61,7 +61,7 @@ class AdminService {
       return this.tokenGenerator({ ...admin_exist, rememberMe });
     } catch (error) {
       logger.error(`Error while admin login, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -76,7 +76,7 @@ class AdminService {
       return admin;
     } catch (error) {
       logger.error(`Error while get Admin, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -108,7 +108,7 @@ class AdminService {
       return;
     } catch (error) {
       logger.error(`Error while admin forgotpassword, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -136,7 +136,7 @@ class AdminService {
       return;
     } catch (error) {
       logger.error(`Error while admin resetPassword, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -157,7 +157,7 @@ class AdminService {
       await admin.save();
     } catch (error) {
       logger.error(`Error while admin updatePassword, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -178,7 +178,7 @@ class AdminService {
       return admin;
     } catch (error) {
       logger.error(`Error while Admin update, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 }

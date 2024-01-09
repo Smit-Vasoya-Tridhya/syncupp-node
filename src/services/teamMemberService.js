@@ -156,7 +156,7 @@ class TeamMemberService {
       );
     } catch (error) {
       logger.error(`Error while Team Member verify , ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -196,7 +196,7 @@ class TeamMemberService {
       return this.tokenGenerator(member_exist);
     } catch (error) {
       logger.error(`Error while Team Member  login, ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -306,7 +306,7 @@ class TeamMemberService {
       return teamMember;
     } catch (error) {
       logger.error(`Error while get team member, ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -469,7 +469,7 @@ class TeamMemberService {
       };
     } catch (error) {
       logger.error(`Error while Team members, Listing ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -532,7 +532,7 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error while Team member  delete, ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -557,7 +557,7 @@ class TeamMemberService {
       return teamMember;
     } catch (error) {
       logger.error(`Error while Team member Edit, ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

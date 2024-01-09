@@ -12,7 +12,7 @@ class FaqService {
       return faq;
     } catch (error) {
       logger.error(`Error while Admin add FQA, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -60,7 +60,7 @@ class FaqService {
       };
     } catch (error) {
       logger.error(`Error while Admin FQA Listing, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -75,7 +75,7 @@ class FaqService {
       return deletedFaqs;
     } catch (error) {
       logger.error(`Error while Deleting FQA, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -93,7 +93,7 @@ class FaqService {
       return faq;
     } catch (error) {
       logger.error(`Error while updating FQA, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
   // GET FQA
@@ -107,7 +107,7 @@ class FaqService {
       return faq;
     } catch (error) {
       logger.error(`Error while Get FQA, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 }

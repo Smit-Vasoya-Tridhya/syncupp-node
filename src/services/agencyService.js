@@ -16,7 +16,7 @@ class AgencyService {
       return await Agency.create(payload);
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -94,7 +94,7 @@ class AgencyService {
       };
     } catch (error) {
       logger.error(`Error while getting agency list: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -115,7 +115,7 @@ class AgencyService {
       return true;
     } catch (error) {
       logger.error(`Error while updating an agency status: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -147,7 +147,7 @@ class AgencyService {
       return agency;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -196,7 +196,7 @@ class AgencyService {
       return;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

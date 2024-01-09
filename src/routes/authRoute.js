@@ -1,5 +1,4 @@
 const authRoute = require("express").Router();
-const { upload } = require("../helpers/multer");
 const authController = require("../controllers/authController");
 const { protect } = require("../middlewares/authMiddleware");
 

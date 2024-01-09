@@ -2,7 +2,6 @@ const verifyClient = {
   tags: ["Client - CRM Panel"],
   description: "",
   summary: "Verify client",
-  security: [],
   requestBody: {
     content: {
       "application/json": {
@@ -126,7 +125,6 @@ const getClientProfile = {
   tags: ["Client - CRM Panel"],
   description: "",
   summary: "Get client profile",
-  security: [],
   responses: {
     200: {
       descripition: "ok",
