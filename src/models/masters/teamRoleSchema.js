@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 const { crm_connection } = require("../../config/connection");
 
-const roleMasterSchema = new mongoose.Schema(
+const teamRoleMasterSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      enum: ["agency", "client", "team_agency", "team_client"],
+      enum: ["team_member", "admin"],
     },
     is_deleted: {
       type: Boolean,
@@ -15,6 +15,9 @@ const roleMasterSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Role_Master = crm_connection.model("role_master", roleMasterSchema);
+const Team_Role_Master = crm_connection.model(
+  "team_role_master",
+  teamRoleMasterSchema
+);
 
-module.exports = Role_Master;
+module.exports = Team_Role_Master;

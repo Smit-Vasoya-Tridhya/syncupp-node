@@ -16,15 +16,15 @@ exports.login = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// getUsers
+// getAdmin
 
-exports.getAdmins = catchAsyncError(async (req, res, next) => {
-  const admin = await adminService.getAdmins();
+exports.getAdmin = catchAsyncError(async (req, res, next) => {
+  const admin = await adminService.getAdmin(req?.user?._id);
   if (admin) {
     sendResponse(
       res,
       true,
-      `Users fetched successfully `,
+      returnMessage("admin", "adminFetched"),
       admin,
       statusCode.success
     );
@@ -61,13 +61,91 @@ exports.resetPassword = catchAsyncError(async (req, res, next) => {
 //Update password
 
 exports.changePassword = catchAsyncError(async (req, res, next) => {
-  await adminService.changePassword(req.body);
+  await adminService.changePassword(req.body, req?.user?._id);
 
   sendResponse(
     res,
     true,
     returnMessage("admin", "passwordUpdated"),
     null,
+    statusCode.success
+  );
+});
+
+//  Get All Team Member
+
+exports.updateAdmin = catchAsyncError(async (req, res, next) => {
+  const admin = await adminService.updateAdmin(req.body, req?.user?._id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "updated"),
+    admin,
+    statusCode.success
+  );
+});
+
+// Add FAQ
+
+exports.addFaq = catchAsyncError(async (req, res, next) => {
+  const addedFaq = await adminService.addFaq(req.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "faqAdded"),
+    addedFaq,
+    statusCode.success
+  );
+});
+
+// get All FQA
+
+exports.getAllFaq = catchAsyncError(async (req, res, next) => {
+  const allFaq = await adminService.getAllFaq();
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "getAllFaq"),
+    allFaq,
+    statusCode.success
+  );
+});
+
+// delete FQA
+
+exports.deleteFaq = catchAsyncError(async (req, res, next) => {
+  await adminService.deleteFaq(req?.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "deleteFaq"),
+    null,
+    statusCode.success
+  );
+});
+
+// Update FQA
+
+exports.updateFaq = catchAsyncError(async (req, res, next) => {
+  const updatedFaq = await adminService.updateFaq(req.body, req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "faqUpdated"),
+    updatedFaq,
+    statusCode.success
+  );
+});
+
+// Get FQA
+
+exports.getFaq = catchAsyncError(async (req, res, next) => {
+  const getFaq = await adminService.getFaq(req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "getFaq"),
+    getFaq,
     statusCode.success
   );
 });

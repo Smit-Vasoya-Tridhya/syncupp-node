@@ -1,11 +1,26 @@
 {
-"admin": {
-   "invalidPassword" : "Password should be at least 6 characters long and include at least one letter, one number, and one special character.",
-   "passwordRequired" : "Password is required",
-   "invalidEmail": "Branch email is not valid.",
-   "emailRequired" : "Email is required",
-   "tokenRequired" : "Token is required"
-}
-
-
+  "admin": {
+    "invalidPassword": "Password should be at least 6 characters long and include at least one letter, one number, and one special character.",
+    "passwordRequired": "Password is required",
+    "invalidEmail": "Branch email is not valid.",
+    "emailRequired": "Email is required",
+    "tokenRequired": "Token is required"
+  },
+  "general": {
+    "invalidPassword": "Password should be at least 6 characters long and include at least one letter, one number, and one special character.",
+    "passwordRequired": "Password is required",
+    "invalidEmail": "Email is not valid.",
+    "emailRequired": "Email is required",
+    "tokenRequired": "Token is required",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "roleRequired": "Role is required",
+    "contactNoRequired": "Contact Number is required",
+    "nameRequired": "Name is required",
+    "questionRequired": "Question required",
+    "answerRequired": "Answer required",
+    "questionLength": "Question must not exceed 100 characters",
+    "answerLength": "Answer must not exceed 1000 characters",
+    "faqIdsReq": "faqIdsToDelete key required"
+  }
 }

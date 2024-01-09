@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/adminSchema");
+const AdminFqa = require("../models/adminFaqSchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const {
@@ -65,9 +66,19 @@ class AdminService {
     }
   };
 
-  getAdmins = async (payload) => {
-    const admins = await Admin.find({});
-    return admins;
+  getAdmin = async (payload) => {
+    try {
+      const admin_id = payload;
+      const admin = await Admin.find({ _id: admin_id }).lean();
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "adminNotFound"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while get Admin, ${error}`);
+      throwError(returnMessage("default", "default"), error?.statusCode);
+    }
   };
 
   forgotPassword = async (payload) => {
@@ -79,7 +90,7 @@ class AdminService {
       }
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
-
+      console.log(reset_password_token);
       const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
@@ -121,7 +132,7 @@ class AdminService {
 
       const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
-      admin.reset_password_token = undefined;
+      admin.reset_password_token = null;
       await admin.save();
       return;
     } catch (error) {
@@ -133,7 +144,7 @@ class AdminService {
   changePassword = async (payload, teamId) => {
     try {
       const { newPassword, oldPassword } = payload;
-      const admin = await Admin.findById(teamId);
+      const admin = await Admin.findById({ _id: teamId });
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }
@@ -142,11 +153,102 @@ class AdminService {
       if (!is_match) {
         return throwError(returnMessage("admin", "passwordNotMatch"));
       }
-      const hash_password = await bcrypt.hash(newPassword, 10);
+      const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
       await admin.save();
     } catch (error) {
       logger.error(`Error while admin updatePassword, ${error}`);
+      throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // updateAdmin
+  updateAdmin = async (payload, admin_id) => {
+    try {
+      const admin = await Admin.findByIdAndUpdate(
+        {
+          _id: admin_id,
+        },
+        payload,
+        { new: true, useFindAndModify: false }
+      );
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "invalidId"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while Admin update, ${error}`);
+      throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // Add   FQA
+
+  addFaq = async (payload) => {
+    try {
+      const faq = await AdminFqa.create(payload);
+      return faq;
+    } catch (error) {
+      logger.error(`Error while Admin add FQA, ${error}`);
+      throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // GET All FQA
+  getAllFaq = async (payload) => {
+    try {
+      const faqs = await AdminFqa.find({ is_deleted: false }).lean();
+      return faqs;
+    } catch (error) {
+      logger.error(`Error while Admin FQA Listing, ${error}`);
+      throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // Delete FQA
+  deleteFaq = async (payload) => {
+    const { faqIdsToDelete } = payload;
+    try {
+      const deletedFaqs = await AdminFqa.updateMany(
+        { _id: { $in: faqIdsToDelete } },
+        { $set: { is_deleted: true } }
+      );
+      return deletedFaqs;
+    } catch (error) {
+      logger.error(`Error while Deleting FQA, ${error}`);
+      throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+
+  // Add   FQA
+
+  updateFaq = async (payload, faqId) => {
+    try {
+      const faq = await AdminFqa.findByIdAndUpdate(
+        {
+          _id: faqId,
+        },
+        payload,
+        { new: true, useFindAndModify: false }
+      );
+      return faq;
+    } catch (error) {
+      logger.error(`Error while updating FQA, ${error}`);
+      throwError(returnMessage("default", "default"), error?.statusCode);
+    }
+  };
+  // GET FQA
+
+  getFaq = async (faqId) => {
+    try {
+      const faq = await AdminFqa.findById({
+        _id: faqId,
+        is_deleted: false,
+      }).lean();
+      return faq;
+    } catch (error) {
+      logger.error(`Error while Get FQA, ${error}`);
       throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
