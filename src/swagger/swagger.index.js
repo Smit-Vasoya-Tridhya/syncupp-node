@@ -1,3 +1,4 @@
+const faqRoutes = require("./swagger_helper/faq.swagger");
 const adminRoutes = require("./swagger_helper/admin.swagger");
 const authRoutes = require("./swagger_helper/auth.swagger");
 const agencyRoutes = require("./swagger_helper/agency.swagger");
@@ -55,6 +56,7 @@ const swaggerDoc = {
     ...authRoutes,
     ...agencyRoutes,
     ...clientRoutes,
+    ...faqRoutes,
   },
 };
 module.exports = swaggerDoc;

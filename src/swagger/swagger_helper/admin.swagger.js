@@ -222,53 +222,10 @@ const updateAdminProfile = {
     },
   },
 };
-const addFaqAdmin = {
+const getAdminProfile = {
   tags: ["Admin Panel"],
   description: "",
-  summary: "Add FAQ ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            question: {
-              type: "string",
-              description: "Enter question",
-            },
-            answer: {
-              type: "string",
-              description: "Enter answer",
-            },
-          },
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-
-const getAllFaq = {
-  tags: ["Admin Panel"],
-  description: "",
-  summary: "Get All FAQ ",
+  summary: "Get Admin Profile ",
   security: [
     {
       bearerAuth: [],
@@ -525,6 +482,105 @@ const updateAgencyStatus = {
     },
   },
 };
+const addFaqAdmin = {
+  tags: ["Admin Panel"],
+  description: "",
+  summary: "Add FAQ ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            question: {
+              type: "string",
+              description: "Enter question",
+            },
+            answer: {
+              type: "string",
+              description: "Enter answer",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const getAllFaq = {
+  tags: ["Admin Panel"],
+  description:
+    "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
+  summary: "Get All FAQ ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            sortField: {
+              type: "string",
+              description: "Enter sortField",
+              required: true,
+            },
+            sortOrder: {
+              type: "string",
+              description: "Enter sortOrder",
+              required: true,
+            },
+            page: {
+              type: "number",
+              description: "Enter page number",
+              required: true,
+            },
+            itemsPerPage: {
+              type: "number",
+              description: "Enter itemsPerPage",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
 
 const adminRoutes = {
   "/api/v1/admin/login": {
@@ -538,6 +594,9 @@ const adminRoutes = {
   },
   "/api/v1/admin/updatePassword": {
     put: updateAdminPassword,
+  },
+  "/api/v1/admin/getProfile": {
+    get: getAdminProfile,
   },
   "/api/v1/admin/updateProfile": {
     put: updateAdminProfile,

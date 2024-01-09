@@ -75,7 +75,9 @@
     "clientCreated": "Invitation mail sent to the client.",
     "clientExist": "Client already exist.",
     "agencyNotFound": "Agency does not exist.",
-    "agencyUpdated": "Updated successfully."
+    "agencyUpdated": "Updated successfully.",
+    "agencyGet": "Agency  profile fetched successfully.",
+    "agencyUpdate": "Agency  profile updated successfully."
   },
 
   "emailTemplate": {

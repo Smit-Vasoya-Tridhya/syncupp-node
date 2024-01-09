@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/adminSchema");
-const AdminFqa = require("../models/adminFaqSchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const {
@@ -179,76 +178,6 @@ class AdminService {
       return admin;
     } catch (error) {
       logger.error(`Error while Admin update, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
-    }
-  };
-
-  // Add   FQA
-
-  addFaq = async (payload) => {
-    try {
-      const faq = await AdminFqa.create(payload);
-      return faq;
-    } catch (error) {
-      logger.error(`Error while Admin add FQA, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
-    }
-  };
-
-  // GET All FQA
-  getAllFaq = async (payload) => {
-    try {
-      const faqs = await AdminFqa.find({ is_deleted: false }).lean();
-      return faqs;
-    } catch (error) {
-      logger.error(`Error while Admin FQA Listing, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
-    }
-  };
-
-  // Delete FQA
-  deleteFaq = async (payload) => {
-    const { faqIdsToDelete } = payload;
-    try {
-      const deletedFaqs = await AdminFqa.updateMany(
-        { _id: { $in: faqIdsToDelete } },
-        { $set: { is_deleted: true } }
-      );
-      return deletedFaqs;
-    } catch (error) {
-      logger.error(`Error while Deleting FQA, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
-    }
-  };
-
-  // Add   FQA
-
-  updateFaq = async (payload, faqId) => {
-    try {
-      const faq = await AdminFqa.findByIdAndUpdate(
-        {
-          _id: faqId,
-        },
-        payload,
-        { new: true, useFindAndModify: false }
-      );
-      return faq;
-    } catch (error) {
-      logger.error(`Error while updating FQA, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
-    }
-  };
-  // GET FQA
-
-  getFaq = async (faqId) => {
-    try {
-      const faq = await AdminFqa.findById({
-        _id: faqId,
-        is_deleted: false,
-      }).lean();
-      return faq;
-    } catch (error) {
-      logger.error(`Error while Get FQA, ${error}`);
       throwError(returnMessage("default", "default"), error?.statusCode);
     }
   };
