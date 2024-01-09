@@ -21,6 +21,15 @@
     "answerRequired": "Answer required",
     "questionLength": "Question must not exceed 100 characters",
     "answerLength": "Answer must not exceed 1000 characters",
-    "faqIdsReq": "faqIdsToDelete key required"
+    "faqIdsReq": "faqIdsToDelete key required",
+    "dateRequired": "Date is required"
+  },
+  "agreement": {
+    "clientIdReuired": "Client ID is required",
+    "titleRequired": "Agreements title required.",
+    "descRequired": "Agreements description required.",
+    "statusRequired": "Agreements status required.",
+    "descLength": "Answer must not exceed 1000 characters",
+    "titleLength": "Question must not exceed 100 characters"
   }
 }

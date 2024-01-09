@@ -79,6 +79,15 @@
     "agencyGet": "Agency  profile fetched successfully.",
     "agencyUpdate": "Agency  profile updated successfully."
   },
+  "agreement": {
+    "agreementAdded": "Agreement added successfully.",
+    "deleteAgreement": "Agreement deleted successfully.",
+    "agreementUpdated": "Agreement updated successfully.",
+    "getAgreement": "Agreement fetched successfully.",
+    "getAllAgreement": "Agreements fetched successfully.",
+    "canNotDelete": "Agreement already agreed.",
+    "agreementStatusUpdated": "Agreement status updated."
+  },
 
   "emailTemplate": {
     "forgotPasswordSubject": "Reset your password now.",
