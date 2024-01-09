@@ -156,7 +156,7 @@ const clientList = {
 };
 
 const getAgencyProfile = {
-  tags: ["Agency"],
+  tags: ["Agency - CRM Panel"],
   description: "",
   summary: "Get agency profile ",
   security: [
@@ -180,7 +180,7 @@ const getAgencyProfile = {
 };
 
 const updateAgencyProfile = {
-  tags: ["Agency"],
+  tags: ["Agency - CRM Panel"],
   description: "",
   summary: "Update agency profile ",
   security: [
