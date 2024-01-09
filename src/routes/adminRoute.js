@@ -53,7 +53,7 @@ adminRoute.put(
   validatorFunc,
   changePassword
 );
-adminRoute.get("/details", getAdmin);
+adminRoute.get("/getProfile", getAdmin);
 adminRoute.put("/updateProfile", updateAdmin);
 adminRoute.post("/add-faq", addFaqValidator, validatorFunc, addFaq);
 adminRoute.get("/get-all-faq", getAllFaq);

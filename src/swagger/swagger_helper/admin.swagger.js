@@ -222,6 +222,29 @@ const updateAdminProfile = {
     },
   },
 };
+const getAdminProfile = {
+  tags: ["Admin Panel"],
+  description: "",
+  summary: "Get Admin Profile ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {},
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
 
 const adminRoutes = {
   "/api/v1/admin/login": {
@@ -235,6 +258,9 @@ const adminRoutes = {
   },
   "/api/v1/admin/updatePassword": {
     put: updateAdminPassword,
+  },
+  "/api/v1/admin/getProfile": {
+    get: getAdminProfile,
   },
   "/api/v1/admin/updateProfile": {
     put: updateAdminProfile,
