@@ -71,7 +71,7 @@ class AgencyService {
         }
       }
 
-      const [agencyList, totalAgency] = await Promise.all([
+      const [agencyList, total_agencies] = await Promise.all([
         Authentication.find(query_obj)
           .populate({ path: "reference_id", model: "agency" })
           .sort(pagination.sort)
@@ -89,7 +89,7 @@ class AgencyService {
       return {
         agencyList,
         page_count:
-          Math.ceil(totalAgency.length / pagination.result_per_page) || 0,
+          Math.ceil(total_agencies.length / pagination.result_per_page) || 0,
       };
     } catch (error) {
       logger.error(`Error while getting agency list: ${error}`);

@@ -85,3 +85,22 @@ exports.changePassword = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.countriesList = catchAsyncError(async (req, res, next) => {
+  const countries = await authService.countryList(req.body);
+  return sendResponse(res, true, undefined, countries, statusCode.success);
+});
+
+exports.statesList = catchAsyncError(async (req, res, next) => {
+  if (!req.params.countryId)
+    return throwError(returnMessage("auth", "countryIdRequired"));
+  const states = await authService.statesList(req.params.countryId, req.body);
+  return sendResponse(res, true, undefined, states, statusCode.success);
+});
+
+exports.citiesList = catchAsyncError(async (req, res, next) => {
+  if (!req.params.stateId)
+    return throwError(returnMessage("auth", "stateIdRequired"));
+  const cities = await authService.countryList(req.params.stateId, req.body);
+  return sendResponse(res, true, undefined, cities, statusCode.success);
+});

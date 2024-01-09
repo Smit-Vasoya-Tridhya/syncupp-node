@@ -6,6 +6,7 @@ const {
   validateEmail,
   passwordValidation,
   forgotPasswordEmailTemplate,
+  paginationObject,
 } = require("../utils/utils");
 const bcrypt = require("bcrypt");
 const { throwError } = require("../helpers/errorUtil");
@@ -18,6 +19,9 @@ const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
 const axios = require("axios");
 require("dotenv").config();
+const Country_Master = require("../models/masters/countryMasterSchema");
+const City_Master = require("../models/masters/cityMasterSchema");
+const State_Master = require("../models/masters/stateMasterSchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
@@ -75,7 +79,8 @@ class AuthService {
       if (!passwordValidation(password))
         return throwError(returnMessage("auth", "invalidPassword"));
 
-        if(isNaN(contact_number)) return throwError(returnMessage("auth","invalidContactNumber"))
+      if (isNaN(contact_number))
+        return throwError(returnMessage("auth", "invalidContactNumber"));
 
       const agency_exist = await Authentication.findOne({
         email,
@@ -384,6 +389,100 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error while changing password: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  countryList = async (payload) => {
+    try {
+      const pagination = paginationObject(payload);
+      const query_obj = {};
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+
+      const [countries, total_countries] = await Promise.all([
+        Country_Master.find(query_obj)
+          .select("name")
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
+          .lean(),
+        Country_Master.countDocuments(query_obj),
+      ]);
+      return {
+        countries,
+        page_count:
+          Math.ceil(total_countries / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while fectching countries list: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  statesList = async (country_id, payload) => {
+    try {
+      const pagination = paginationObject(payload);
+      const query_obj = { country: country_id };
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+
+      const [states, total_states] = await Promise.all([
+        State_Master.find(query_obj)
+          .select("name")
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
+          .lean(),
+        State_Master.countDocuments(query_obj),
+      ]);
+      return {
+        states,
+        page_count: Math.ceil(total_states / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while fectching states: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  citiesList = async (state_id, payload) => {
+    try {
+      const pagination = paginationObject(payload);
+      const query_obj = { state: state_id };
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+
+      const [cities, total_cities] = await Promise.all([
+        City_Master.find(query_obj)
+          .select("name")
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
+          .lean(),
+        City_Master.countDocuments(query_obj),
+      ]);
+      return {
+        cities,
+        page_count: Math.ceil(total_cities / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while fectching cities list: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };

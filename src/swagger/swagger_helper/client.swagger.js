@@ -60,7 +60,6 @@ const updateClient = {
   tags: ["Client - CRM Panel"],
   description: "",
   summary: "Update client",
-  security: [],
   requestBody: {
     content: {
       "application/json": {
