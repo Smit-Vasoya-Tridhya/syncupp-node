@@ -101,6 +101,6 @@ exports.statesList = catchAsyncError(async (req, res, next) => {
 exports.citiesList = catchAsyncError(async (req, res, next) => {
   if (!req.params.stateId)
     return throwError(returnMessage("auth", "stateIdRequired"));
-  const cities = await authService.countryList(req.params.stateId, req.body);
+  const cities = await authService.citiesList(req.params.stateId, req.body);
   return sendResponse(res, true, undefined, cities, statusCode.success);
 });

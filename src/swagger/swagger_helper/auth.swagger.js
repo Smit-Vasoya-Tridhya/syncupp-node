@@ -302,7 +302,7 @@ const changePassword = {
 };
 
 const countriesList = {
-  tags: ["CRM Panel"],
+  tags: ["Master table - CRM Panel"],
   description: "",
   summary: "Get all Countries",
   requestBody: {
@@ -311,26 +311,6 @@ const countriesList = {
         schema: {
           type: "object",
           properties: {
-            page: {
-              type: "number",
-              description: "Enter page number.",
-              default: 1,
-            },
-            items_per_page: {
-              type: "number",
-              description: "Enter item per page.",
-              default: 10,
-            },
-            sort_order: {
-              type: "string",
-              description: "Enter order of sort asc or desc.",
-              default: "desc",
-            },
-            sort_field: {
-              type: "string",
-              description: "Enter field to sort.",
-              default: "createdAt",
-            },
             search: {
               type: "string",
               description: "Enter value of search",
@@ -355,7 +335,7 @@ const countriesList = {
 };
 
 const statesList = {
-  tags: ["CRM Panel"],
+  tags: ["Master table - CRM Panel"],
   description: "",
   summary: "Get all states",
   parameters: [
@@ -372,26 +352,6 @@ const statesList = {
         schema: {
           type: "object",
           properties: {
-            page: {
-              type: "number",
-              description: "Enter page number.",
-              default: 1,
-            },
-            items_per_page: {
-              type: "number",
-              description: "Enter item per page.",
-              default: 10,
-            },
-            sort_order: {
-              type: "string",
-              description: "Enter order of sort asc or desc.",
-              default: "desc",
-            },
-            sort_field: {
-              type: "string",
-              description: "Enter field to sort.",
-              default: "createdAt",
-            },
             search: {
               type: "string",
               description: "Enter value of search",
@@ -416,7 +376,7 @@ const statesList = {
 };
 
 const citiesList = {
-  tags: ["CRM Panel"],
+  tags: ["Master table - CRM Panel"],
   description: "",
   summary: "Get all cities",
   parameters: [
@@ -433,26 +393,6 @@ const citiesList = {
         schema: {
           type: "object",
           properties: {
-            page: {
-              type: "number",
-              description: "Enter page number.",
-              default: 1,
-            },
-            items_per_page: {
-              type: "number",
-              description: "Enter item per page.",
-              default: 10,
-            },
-            sort_order: {
-              type: "string",
-              description: "Enter order of sort asc or desc.",
-              default: "desc",
-            },
-            sort_field: {
-              type: "string",
-              description: "Enter field to sort.",
-              default: "createdAt",
-            },
             search: {
               type: "string",
               description: "Enter value of search",

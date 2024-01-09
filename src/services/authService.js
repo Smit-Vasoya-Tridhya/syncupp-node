@@ -395,7 +395,6 @@ class AuthService {
 
   countryList = async (payload) => {
     try {
-      const pagination = paginationObject(payload);
       const query_obj = {};
 
       if (payload.search && payload.search !== "") {
@@ -406,19 +405,7 @@ class AuthService {
         ];
       }
 
-      const [countries, total_countries] = await Promise.all([
-        Country_Master.find(query_obj)
-          .select("name")
-          .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean(),
-        Country_Master.countDocuments(query_obj),
-      ]);
-      return {
-        countries,
-        page_count:
-          Math.ceil(total_countries / pagination.result_per_page) || 0,
-      };
+      return await Country_Master.find(query_obj).select("name").lean();
     } catch (error) {
       logger.error(`Error while fectching countries list: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -427,7 +414,6 @@ class AuthService {
 
   statesList = async (country_id, payload) => {
     try {
-      const pagination = paginationObject(payload);
       const query_obj = { country: country_id };
 
       if (payload.search && payload.search !== "") {
@@ -437,19 +423,7 @@ class AuthService {
           },
         ];
       }
-
-      const [states, total_states] = await Promise.all([
-        State_Master.find(query_obj)
-          .select("name")
-          .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean(),
-        State_Master.countDocuments(query_obj),
-      ]);
-      return {
-        states,
-        page_count: Math.ceil(total_states / pagination.result_per_page) || 0,
-      };
+      return await State_Master.find(query_obj).select("name").lean();
     } catch (error) {
       logger.error(`Error while fectching states: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -458,7 +432,6 @@ class AuthService {
 
   citiesList = async (state_id, payload) => {
     try {
-      const pagination = paginationObject(payload);
       const query_obj = { state: state_id };
 
       if (payload.search && payload.search !== "") {
@@ -469,18 +442,7 @@ class AuthService {
         ];
       }
 
-      const [cities, total_cities] = await Promise.all([
-        City_Master.find(query_obj)
-          .select("name")
-          .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean(),
-        City_Master.countDocuments(query_obj),
-      ]);
-      return {
-        cities,
-        page_count: Math.ceil(total_cities / pagination.result_per_page) || 0,
-      };
+      return await City_Master.find(query_obj).select("name").lean();
     } catch (error) {
       logger.error(`Error while fectching cities list: ${error}`);
       return throwError(error?.message, error?.statusCode);
