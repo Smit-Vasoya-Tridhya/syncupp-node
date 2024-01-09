@@ -2,7 +2,6 @@ const registerAgency = {
   tags: ["CRM Panel"],
   description: "",
   summary: "Register Agency.",
-  security: [],
   requestBody: {
     content: {
       "application/json": {
@@ -302,6 +301,121 @@ const changePassword = {
   },
 };
 
+const countriesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all Countries",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const statesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all states",
+  parameters: [
+    {
+      name: "countryId",
+      in: "path",
+      description: "provide the country id",
+      required: true,
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const citiesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all cities",
+  parameters: [
+    {
+      name: "stateId",
+      in: "path",
+      description: "provide the state id",
+      required: true,
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const authRoutes = {
   "/api/v1/auth/signup": {
     post: registerAgency,
@@ -323,6 +437,15 @@ const authRoutes = {
   },
   "/api/v1/auth/change-password": {
     post: changePassword,
+  },
+  "/api/v1/auth/countries": {
+    post: countriesList,
+  },
+  "/api/v1/auth/states/{countryId}": {
+    post: statesList,
+  },
+  "/api/v1/auth/cities/{stateId}": {
+    post: citiesList,
   },
 };
 

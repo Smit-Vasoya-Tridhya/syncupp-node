@@ -1,5 +1,5 @@
 const loginTeamMember = {
-  tags: ["Team Member"],
+  tags: ["Team Member - CRM Panel"],
   description: "",
   summary: "Login team Member ",
   security: [
@@ -44,7 +44,7 @@ const loginTeamMember = {
 };
 
 const verifyTeamMember = {
-  tags: ["Team Member"],
+  tags: ["Team Member - CRM Panel"],
   description: "",
   summary: "Team Member Verify Password ",
   security: [
@@ -104,7 +104,7 @@ const verifyTeamMember = {
 };
 
 const addTeamMember = {
-  tags: ["Team Member"],
+  tags: ["Team Member - CRM Panel"],
   description: "",
   summary: "Team Member Forgot Password ",
   security: [
@@ -159,7 +159,7 @@ const addTeamMember = {
 };
 
 const getTeamMember = {
-  tags: ["Team Member"],
+  tags: ["Team Member - CRM Panel"],
   description: "",
   summary: "Get team member ",
   security: [
@@ -193,7 +193,7 @@ const getTeamMember = {
 };
 
 const getAllTeamMember = {
-  tags: ["Team Member"],
+  tags: ["Team Member - CRM Panel"],
   description:
     "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
   summary: "Get All Team Member Member ",
@@ -249,7 +249,7 @@ const getAllTeamMember = {
   },
 };
 const deleteTeamMember = {
-  tags: ["Team Member"],
+  tags: ["Team Member - CRM Panel"],
   description: "",
   summary: "Delete Team Member ",
   security: [
@@ -283,7 +283,7 @@ const deleteTeamMember = {
 };
 
 const editTeamMember = {
-  tags: ["Team Member"],
+  tags: ["Team Member - CRM Panel"],
   description: "",
   summary: "Edit Team Member ",
   security: [

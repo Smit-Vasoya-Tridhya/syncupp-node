@@ -2,7 +2,6 @@ const {
   verify,
   login,
   add,
-  getOne,
   deleteMember,
   getAll,
   editMember,

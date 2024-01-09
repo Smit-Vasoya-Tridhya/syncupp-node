@@ -16,7 +16,13 @@
     "passwordChanged": "Password changed successfully.",
     "unAuthorized": "You are un-authorized to perform this action.",
     "passwordRequired": "Old and new passwords are required.",
-    "incorrectOldPassword": "Old password does not match"
+    "incorrectOldPassword": "Old password does not match.",
+    "insufficientPermission": "In-sufficient permission.",
+    "profileFetched": "Profile fetched.",
+    "profileUpdated": "Profile updated.",
+    "invalidContactNumber": "Contact number is invalid.",
+    "countryIdRequired": "Country id is required.",
+    "stateIdRequired": "State id is required."
   },
 
   "admin": {
@@ -66,12 +72,23 @@
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",
     "agencyInactive": "Agency is in-active.",
+    "clientCreated": "Invitation mail sent to the client.",
+    "clientExist": "Client already exist.",
+    "agencyNotFound": "Agency does not exist.",
+    "agencyUpdated": "Updated successfully.",
     "agencyGet": "Agency  profile fetched successfully.",
     "agencyUpdate": "Agency  profile updated successfully."
   },
 
   "emailTemplate": {
-    "forgotPasswordSubject": "Reset your password now."
+    "forgotPasswordSubject": "Reset your password now.",
+    "invitation": "Join to SyncUpp"
+  },
+
+  "client": {
+    "clientNotFound": "Client does not exist.",
+    "clientVerified": "Verified successfully.",
+    "clientDeleted": "Client deleted successfully."
   },
 
   "default": { "default": "Something went wrong." }

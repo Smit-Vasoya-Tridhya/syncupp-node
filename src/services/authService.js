@@ -6,6 +6,7 @@ const {
   validateEmail,
   passwordValidation,
   forgotPasswordEmailTemplate,
+  paginationObject,
 } = require("../utils/utils");
 const bcrypt = require("bcrypt");
 const { throwError } = require("../helpers/errorUtil");
@@ -18,6 +19,9 @@ const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
 const axios = require("axios");
 require("dotenv").config();
+const Country_Master = require("../models/masters/countryMasterSchema");
+const City_Master = require("../models/masters/cityMasterSchema");
+const State_Master = require("../models/masters/stateMasterSchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
@@ -35,7 +39,7 @@ class AuthService {
       return { token, user: payload };
     } catch (error) {
       logger.error(`Error while token generate: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -44,7 +48,7 @@ class AuthService {
       return await bcrypt.compare(payload.password, payload.encrypted_password);
     } catch (error) {
       logger.error(`Error while password verification: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -53,7 +57,7 @@ class AuthService {
       return await bcrypt.hash(payload.password, 14);
     } catch (error) {
       logger.error(`Error while password encryption: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -74,6 +78,9 @@ class AuthService {
 
       if (!passwordValidation(password))
         return throwError(returnMessage("auth", "invalidPassword"));
+
+      if (isNaN(contact_number))
+        return throwError(returnMessage("auth", "invalidContactNumber"));
 
       const agency_exist = await Authentication.findOne({
         email,
@@ -120,7 +127,7 @@ class AuthService {
       });
     } catch (error) {
       logger.error(`Error while agency signup: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -165,7 +172,7 @@ class AuthService {
       }
     } catch (error) {
       logger.error("Error while google sign In", error);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -217,7 +224,7 @@ class AuthService {
       }
     } catch (error) {
       logger.error(`Error while facebook signup:${error.message}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -259,7 +266,7 @@ class AuthService {
       });
     } catch (error) {
       logger.error(`Error while login: ${error.message}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -273,7 +280,7 @@ class AuthService {
       return { token, hash_token };
     } catch (error) {
       logger.error(`Error while generating reset password token: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -313,7 +320,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error with forget password: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -347,7 +354,7 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error while resetting password: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -378,7 +385,63 @@ class AuthService {
       return true;
     } catch (error) {
       logger.error(`Error while changing password: ${error}`);
-      return throwError(returnMessage("default", "default"), error?.statusCode);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  countryList = async (payload) => {
+    try {
+      const query_obj = {};
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+
+      return await Country_Master.find(query_obj).select("name").lean();
+    } catch (error) {
+      logger.error(`Error while fectching countries list: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  statesList = async (country_id, payload) => {
+    try {
+      const query_obj = { country: country_id };
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+      return await State_Master.find(query_obj).select("name").lean();
+    } catch (error) {
+      logger.error(`Error while fectching states: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  citiesList = async (state_id, payload) => {
+    try {
+      const query_obj = { state: state_id };
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+
+      return await City_Master.find(query_obj).select("name").lean();
+    } catch (error) {
+      logger.error(`Error while fectching cities list: ${error}`);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

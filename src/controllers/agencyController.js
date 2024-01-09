@@ -32,3 +32,19 @@ exports.updateAgencyProfile = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.getAllAgency = catchAsyncError(async (req, res, next) => {
+  const agencies = await agencyService.allAgencies(req.body);
+  sendResponse(res, true, null, agencies, statusCode.success);
+});
+
+exports.updateAgency = catchAsyncError(async (req, res, next) => {
+  await agencyService.updateAgencyStatus(req.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("agency", "agencyUpdated"),
+    {},
+    statusCode.success
+  );
+});

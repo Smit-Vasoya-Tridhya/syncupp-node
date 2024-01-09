@@ -1,8 +1,9 @@
 const faqRoutes = require("./swagger_helper/faq.swagger");
 const adminRoutes = require("./swagger_helper/admin.swagger");
 const authRoutes = require("./swagger_helper/auth.swagger");
+const agencyRoutes = require("./swagger_helper/agency.swagger");
+const clientRoutes = require("./swagger_helper/client.swagger");
 const teamMembersRoutes = require("./swagger_helper/teamMember.swagger");
-const agenciesRoutes = require("./swagger_helper/agency.swagger");
 
 const swaggerDoc = {
   openapi: "3.0.0",
@@ -19,11 +20,20 @@ const swaggerDoc = {
       description: "Development server",
     },
   ],
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
   components: {
     securitySchemes: {
       bearerAuth: {
         type: "http",
+        in: "header",
+        name: "Authorization",
+        description: "Bearer token to access these api endpoints",
         scheme: "bearer",
+        bearerFormat: "JWT",
       },
     },
   },
@@ -44,8 +54,9 @@ const swaggerDoc = {
     ...adminRoutes,
     ...teamMembersRoutes,
     ...authRoutes,
+    ...agencyRoutes,
+    ...clientRoutes,
     ...faqRoutes,
-    ...agenciesRoutes,
   },
 };
 module.exports = swaggerDoc;

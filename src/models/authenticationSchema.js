@@ -5,6 +5,7 @@ const authenticationSchema = new mongoose.Schema(
   {
     first_name: { type: String },
     last_name: { type: String },
+    name: { type: String },
     email: { type: String, required: true },
     password: { type: String },
     contact_number: { type: Number },
@@ -34,7 +35,6 @@ const authenticationSchema = new mongoose.Schema(
         "agency_inactive",
       ],
     },
-    name: { type: String },
   },
   { timestamps: true }
 );

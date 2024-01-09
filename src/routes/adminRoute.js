@@ -8,6 +8,7 @@ const {
   updateAdmin,
 } = require("../controllers/adminController");
 const validatorFunc = require("../utils/validatorFunction.helper");
+const agencyController = require("../controllers/agencyController");
 const {
   resetPasswordValidator,
   loginAdminValidator,
@@ -53,7 +54,7 @@ adminRoute.put(
   validatorFunc,
   changePassword
 );
-adminRoute.get("/details", getAdmin);
+adminRoute.get("/getProfile", getAdmin);
 adminRoute.put("/updateProfile", updateAdmin);
 adminRoute.post("/add-faq", addFaqValidator, validatorFunc, addFaq);
 adminRoute.get("/get-all-faq", getAllFaq);
@@ -61,4 +62,6 @@ adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
 adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
 adminRoute.get("/get-faq/:id", getFaq);
 
+adminRoute.post("/agencies", agencyController.getAllAgency);
+adminRoute.patch("/update-agency", agencyController.updateAgency);
 module.exports = adminRoute;
