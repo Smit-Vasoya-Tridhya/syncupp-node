@@ -72,19 +72,18 @@ class TeamMemberService {
         memberOf = "client_id";
       }
 
-      // Create Role master
-      const newMasterRole = await Role_Master.create({
+      const getRoleData = await Role_Master.findOne({
         name: roleKey,
-      });
+      }).lean();
 
-      // Create Team Role master
-      const teamRole = await Team_Role_Master.create({
+      // Get Team Role master
+      const getTeamMemberRoleData = await Team_Role_Master.findOne({
         name: role,
-      });
+      }).lean();
 
       // Create Team Member schema data
       const teamModel = await TeamModelName.create({
-        role: teamRole._id,
+        role: getTeamMemberRoleData._id,
         [memberOf]: teamMember.reference_id,
       });
 
@@ -93,8 +92,10 @@ class TeamMemberService {
         email,
         name,
         contact_number,
-        role: newMasterRole._id,
+        role: getRoleData._id,
         reference_id: teamModel._id,
+        is_deleted: true,
+        status: "confirm_pending",
       });
 
       const invitation_token = crypto.randomBytes(32).toString("hex");
