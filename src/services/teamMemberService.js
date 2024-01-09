@@ -72,6 +72,7 @@ class TeamMemberService {
         memberOf = "client_id";
       }
 
+      // Get  Role master data
       const getRoleData = await Role_Master.findOne({
         name: roleKey,
       }).lean();
@@ -134,27 +135,26 @@ class TeamMemberService {
         .createHash("sha256")
         .update(token)
         .digest("hex");
-
       const teamMember = await Authentication.findOne({
         email: email,
-        is_deleted: false,
         invitation_token: hash_token,
-      }).lean();
+      });
 
       if (!teamMember) {
         return throwError(returnMessage("teamMember", "invalidToken"));
       }
       const hash_password = await bcrypt.hash(password, 14);
-      await Authentication.findOneAndUpdate(
-        { email: email, is_deleted: false },
-        {
-          first_name,
-          last_name,
-          email,
-          password: hash_password,
-          invitation_token: null,
-        }
-      );
+
+      teamMember.first_name = first_name;
+      teamMember.last_name = last_name;
+      teamMember.email = email;
+      teamMember.password = hash_password;
+      teamMember.invitation_token = null;
+      teamMember.password = hash_password;
+      teamMember.is_deleted = false;
+      teamMember.status = "confirmed";
+
+      await teamMember.save();
     } catch (error) {
       logger.error(`Error while Team Member verify , ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -427,6 +427,7 @@ class TeamMemberService {
             user_type: "$user_type.name",
             [memberOf]: "$member_data." + memberOf,
             member_role: "$member_role.name",
+            member_role_id: "$member_role._id",
             createdAt: 1,
             updatedAt: 1,
             first_name: 1,
@@ -434,6 +435,7 @@ class TeamMemberService {
             contact_number: 1,
             image_url: 1,
             status: 1,
+            name: 1,
           },
         },
       ];
