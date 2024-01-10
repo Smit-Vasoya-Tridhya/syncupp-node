@@ -5,6 +5,7 @@ const {
   getAgencyProfile,
   updateAgencyProfile,
 } = require("../controllers/agencyController");
+const agencyController = require("../controllers/agencyController");
 
 agencyRoute.use(protect);
 agencyRoute.post(
@@ -13,9 +14,15 @@ agencyRoute.post(
   clientController.createClient
 );
 agencyRoute.delete(
-  "/delete-client/:clientId",
+  "/delete-client",
   authorizeRole("agency"),
   clientController.deleteClient
+);
+
+agencyRoute.patch(
+  "/update-client/:clientId",
+  authorizeRole("agency"),
+  agencyController.updateClient
 );
 
 agencyRoute.post("/clients", authorizeRole("agency"), clientController.clients);
