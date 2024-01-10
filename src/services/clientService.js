@@ -232,7 +232,7 @@ class ClientService {
 
       const clients = await Client.distinct("_id", {
         agency_ids: {
-          $elemMatch: { agency_id: agency?.reference_id, status: "active" },
+          $elemMatch: { agency_id: agency?.reference_id },
         },
       }).lean();
 
@@ -249,11 +249,34 @@ class ClientService {
           {
             email: { $regex: payload.search, $options: "i" },
           },
+          {
+            "reference_id.company_name": {
+              $regex: payload.search,
+              $options: "i",
+            },
+          },
+          {
+            "reference_id.company_website": {
+              $regex: payload.search,
+              $options: "i",
+            },
+          },
         ];
+
+        if (!isNaN(payload?.search)) {
+          query_obj["$or"].push({ contact_number: payload.search });
+        }
       }
       const [client, totalClients] = await Promise.all([
         Authentication.find(query_obj)
-          .select("first_name last_name email name")
+          .select(
+            "first_name last_name email name contact_number createdAt reference_id"
+          )
+          .populate({
+            path: "reference_id",
+            model: "client",
+            select: "company_name company_website",
+          })
           .sort(pagination.sort)
           .skip(pagination.skip)
           .limit(pagination.result_per_page)
