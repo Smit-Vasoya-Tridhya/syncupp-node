@@ -97,7 +97,8 @@
   "client": {
     "clientNotFound": "Client does not exist.",
     "clientVerified": "Verified successfully.",
-    "clientDeleted": "Client deleted successfully."
+    "clientDeleted": "Client deleted successfully.",
+    "agenciesFetched": "Agencies fetched successfully."
   },
 
   "default": { "default": "Something went wrong." }

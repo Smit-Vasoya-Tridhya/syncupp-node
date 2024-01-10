@@ -69,3 +69,14 @@ exports.updateClient = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.getAgencies = catchAsyncError(async (req, res, next) => {
+  const agencies = await clientService.getAgencies(req.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("client", "agenciesFetched"),
+    agencies,
+    statusCode.success
+  );
+});

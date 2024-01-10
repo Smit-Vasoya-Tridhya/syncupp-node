@@ -139,6 +139,24 @@ const getClientProfile = {
   },
 };
 
+const getClientAgencies = {
+  tags: ["Client - CRM Panel"],
+  description: "",
+  summary: "Get client agencies",
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const clientRoutes = {
   "/api/v1/client/verify-client": {
     post: verifyClient,
@@ -148,6 +166,9 @@ const clientRoutes = {
   },
   "/api/v1/client": {
     get: getClientProfile,
+  },
+  "/api/v1/client/get-agencies": {
+    get: getClientAgencies,
   },
 };
 

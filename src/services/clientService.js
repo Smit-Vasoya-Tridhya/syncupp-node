@@ -327,6 +327,19 @@ class ClientService {
       return throwError(error?.message, error?.statusCode);
     }
   };
+
+  getAgencies = async (client) => {
+    try {
+      const { reference_id } = client;
+
+      const findClient = await Client.findById(reference_id);
+
+      return findClient.agency_ids;
+    } catch (error) {
+      logger.error(`Error while fetching agencies: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
 }
 
 module.exports = ClientService;

@@ -26,3 +26,7 @@ clientRoute.put(
   agreementController.updateAgreementStatus
 );
 module.exports = clientRoute;
+
+// Get Agencies
+
+clientRoute.get("/get-agencies", clientController.getAgencies);
