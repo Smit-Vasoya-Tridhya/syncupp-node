@@ -6,10 +6,6 @@ exports.addMemberValidator = [
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.nameRequired),
-  body("role")
-    .not()
-    .isEmpty()
-    .withMessage(validationMessage.general.roleRequired),
   body("contact_number")
     .not()
     .isEmpty()

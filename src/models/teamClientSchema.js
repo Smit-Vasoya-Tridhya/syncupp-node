@@ -8,10 +8,16 @@ const teamClientSchema = new mongoose.Schema(
       ref: "client",
       required: true,
     },
+
+    agency_ids: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "agency",
+      },
+    ],
     role: {
       type: mongoose.Types.ObjectId,
       ref: "team_role_master",
-      required: true,
     },
     is_deleted: {
       type: Boolean,

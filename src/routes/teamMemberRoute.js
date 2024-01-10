@@ -18,7 +18,7 @@ const teamMemberRoute = require("express").Router();
 
 // this route is used for the Team Agency Route.
 
-teamMemberRoute.post("/verify", verifyValidator, validatorFunc, verify);
+teamMemberRoute.post("/verify", verify);
 teamMemberRoute.post("/login", loginTeamMemberValidator, validatorFunc, login);
 
 teamMemberRoute.use(protect);
