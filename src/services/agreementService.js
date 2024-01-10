@@ -72,7 +72,7 @@ class AgreementService {
         is_deleted: false,
       }).lean();
 
-      if (agreement.status !== "agreed") {
+      if (agreement.status === "draft") {
         await Agreement.updateOne(
           { _id: agreementIdToDelete },
           { $set: { is_deleted: true } }
@@ -96,7 +96,7 @@ class AgreementService {
         is_deleted: false,
       }).lean();
 
-      if (agreement.status !== "agreed") {
+      if (agreement.status === "draft") {
         const updatedAgreement = await Agreement.findByIdAndUpdate(
           {
             _id: agreementId,
