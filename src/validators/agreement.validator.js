@@ -12,7 +12,8 @@ exports.addAgreementValidator = [
     .withMessage(validationMessage.agreement.titleRequired)
     .isLength({ max: 100 }) // specify the maximum length for the question
     .withMessage(validationMessage.general.titleLength),
-  body("description")
+  body("receiver").not().isEmpty().withMessage("Receiver name required"),
+  body("agreement_content")
     .not()
     .isEmpty()
     .withMessage(validationMessage.agreement.descRequired)
@@ -31,7 +32,7 @@ exports.updateAgreementValidator = [
   body("title")
     .isLength({ max: 100 }) // specify the maximum length for the question
     .withMessage(validationMessage.general.questionLength),
-  body("description")
+  body("agreement_content")
     .isLength({ max: 1000 }) // specify the maximum length for the answer
     .withMessage(validationMessage.general.answerLength),
 ];

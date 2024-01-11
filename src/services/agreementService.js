@@ -20,9 +20,9 @@ class AgreementService {
   };
 
   // GET All Agreement
-  getAllAgreement = async (searchObj) => {
+  getAllAgreement = async (searchObj, user_id) => {
     try {
-      const queryObj = { is_deleted: false };
+      const queryObj = { is_deleted: false, agency_id: user_id };
 
       const pagination = paginationObject(searchObj);
       const agreements = await Agreement.find(queryObj)

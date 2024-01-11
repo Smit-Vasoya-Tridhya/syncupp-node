@@ -28,7 +28,8 @@ exports.addAgreement = catchAsyncError(async (req, res, next) => {
 
 exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
   const { agreements, pagination } = await agreementService.getAllAgreement(
-    req.body
+    req.body,
+    req?.user?._id
   );
   sendResponse(
     res,

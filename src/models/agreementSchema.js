@@ -22,7 +22,11 @@ const agreementSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    description: {
+    receiver: {
+      type: String,
+      required: true,
+    },
+    agreement_content: {
       type: String,
       required: true,
     },
