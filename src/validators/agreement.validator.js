@@ -10,14 +10,14 @@ exports.addAgreementValidator = [
     .not()
     .isEmpty()
     .withMessage(validationMessage.agreement.titleRequired)
-    .isLength({ max: 100 }) // specify the maximum length for the question
+    .isLength({ max: 100 }) // specify the maximum length for the title
     .withMessage(validationMessage.general.titleLength),
   body("receiver").not().isEmpty().withMessage("Receiver name required"),
   body("agreement_content")
     .not()
     .isEmpty()
     .withMessage(validationMessage.agreement.descRequired)
-    .isLength({ max: 1000 }) // specify the maximum length for the answer
+    .isLength({ max: 1000 }) // specify the maximum length for the agreement_content
     .withMessage(validationMessage.general.descLength),
   body("status")
     .not()
@@ -30,9 +30,9 @@ exports.addAgreementValidator = [
 ];
 exports.updateAgreementValidator = [
   body("title")
-    .isLength({ max: 100 }) // specify the maximum length for the question
-    .withMessage(validationMessage.general.questionLength),
+    .isLength({ max: 100 }) // specify the maximum length for the title
+    .withMessage(validationMessage.general.titleLength),
   body("agreement_content")
-    .isLength({ max: 1000 }) // specify the maximum length for the answer
-    .withMessage(validationMessage.general.answerLength),
+    .isLength({ max: 1000 }) // specify the maximum length for the description
+    .withMessage(validationMessage.general.descriptionLength),
 ];

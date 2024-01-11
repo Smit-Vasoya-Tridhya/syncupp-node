@@ -24,7 +24,7 @@ class FaqService {
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
           {
-            question: {
+            title: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },

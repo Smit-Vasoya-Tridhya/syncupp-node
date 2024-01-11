@@ -17,10 +17,10 @@
     "roleRequired": "Role is required",
     "contactNoRequired": "Contact Number is required",
     "nameRequired": "Name is required",
-    "questionRequired": "Question required",
-    "answerRequired": "Answer required",
-    "questionLength": "Question must not exceed 100 characters",
-    "answerLength": "Answer must not exceed 1000 characters",
+    "titleRequired": "Title required",
+    "descriptionRequired": "Description required",
+    "titleLength": "Title must not exceed 100 characters",
+    "descriptionLength": "Description must not exceed 1000 characters",
     "faqIdsReq": "faqIdsToDelete key required",
     "dateRequired": "Date is required"
   },
@@ -29,7 +29,7 @@
     "titleRequired": "Agreements title required.",
     "descRequired": "Agreements description required.",
     "statusRequired": "Agreements status required.",
-    "descLength": "Answer must not exceed 1000 characters",
-    "titleLength": "Question must not exceed 100 characters"
+    "descLength": "Description must not exceed 1000 characters",
+    "titleLength": "Title must not exceed 100 characters"
   }
 }

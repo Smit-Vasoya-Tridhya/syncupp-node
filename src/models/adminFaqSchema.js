@@ -3,8 +3,8 @@ const { admin_connection } = require("../config/connection");
 
 const adminFaqSchema = new mongoose.Schema(
   {
-    question: { type: String, requried: true },
-    answer: { type: String, required: true },
+    title: { type: String, requried: true },
+    description: { type: String, required: true },
     is_deleted: { type: Boolean, default: false },
   },
   { timestamps: true }

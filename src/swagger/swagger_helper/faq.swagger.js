@@ -14,13 +14,13 @@ const addFaqAdmin = {
           type: "object",
 
           properties: {
-            question: {
+            title: {
               type: "string",
-              description: "Enter question",
+              description: "Enter title",
             },
-            answer: {
+            description: {
               type: "string",
-              description: "Enter answer",
+              description: "Enter description",
             },
           },
         },
@@ -153,13 +153,13 @@ const updateFaqAdmin = {
           type: "object",
 
           properties: {
-            question: {
+            title: {
               type: "string",
-              description: "Enter question",
+              description: "Enter title",
             },
-            answer: {
+            description: {
               type: "string",
-              description: "Enter answer",
+              description: "Enter description",
             },
           },
         },
