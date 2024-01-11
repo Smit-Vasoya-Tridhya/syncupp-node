@@ -1,6 +1,6 @@
 const { throwError } = require("../helpers/errorUtil");
 const logger = require("../logger");
-const Client = require("../models/cllientSchema");
+const Client = require("../models/clientSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const {
   validateRequestFields,
@@ -14,7 +14,6 @@ const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
 const authService = new AuthService();
-const statusCode = require("../messages/statusCodes.json");
 
 class ClientService {
   // create client for the agency
