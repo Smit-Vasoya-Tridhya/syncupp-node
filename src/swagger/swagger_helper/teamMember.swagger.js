@@ -195,8 +195,7 @@ const getTeamMember = {
 const getAllTeamMember = {
   tags: ["Team Member - CRM Panel"],
   description:
-    "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
-  summary: "Get All Team Member Member ",
+    "For Agency \n\n\n- sortOrder: (asc, desc)\n- sortField: (name, email, contact_no  ,member_role  ,createdAt)\n- search : (string)\n- page: (number)\n- itemsPerPage: (number) \n\nFor Client   \n\n- sortOrder: (asc, desc)\n- sortField: (name, email, contact_no ,createdAt )\n- page: (number)\n- search : (string)\n- agency_id : (string)\n- itemsPerPage: (number)",
   security: [
     {
       bearerAuth: [],
@@ -361,8 +360,8 @@ const teamMembersRoutes = {
     post: addTeamMember,
   },
 
-  "/api/v1/agency/team-member": {
-    get: getAllTeamMember,
+  "/api/v1/agency/team-member/get-all": {
+    post: getAllTeamMember,
   },
   "/api/v1/agency/team-member/details/{id}": {
     get: getTeamMember,
@@ -377,8 +376,8 @@ const teamMembersRoutes = {
   "/api/v1/client/team-member/add": {
     post: addTeamMember,
   },
-  "/api/v1/client/team-member": {
-    get: getAllTeamMember,
+  "/api/v1/client/team-member/get-all": {
+    post: getAllTeamMember,
   },
   "/api/v1/client/team-member/details/{id}": {
     get: getTeamMember,
