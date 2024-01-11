@@ -47,7 +47,7 @@ class ClientService {
       if (!client_exist) {
         const client_obj = {
           company_name,
-          copany_website: payload?.company_website,
+          company_website: payload?.company_website,
           address: payload?.address,
           city: payload?.city,
           state: payload?.state,
