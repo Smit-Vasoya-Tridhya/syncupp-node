@@ -95,8 +95,8 @@ class AuthService {
         image_url = "uploads/" + files?.filename;
       }
       const agency_object = {
-        comapny_name: payload?.comapny_name,
-        comapny_website: payload?.comapny_website,
+        company_name: payload?.company_name,
+        company_website: payload?.company_website,
         no_of_people: payload?.no_of_people,
         industry: payload?.industry,
       };

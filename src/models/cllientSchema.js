@@ -5,7 +5,7 @@ const clientSchema = new mongoose.Schema(
   {
     title: { type: String },
     company_name: { type: String, required: true },
-    comapny_website: { type: String },
+    company_website: { type: String },
     address: { type: String },
     city: { type: mongoose.Schema.Types.ObjectId, ref: "city_master" },
     state: { type: mongoose.Schema.Types.ObjectId, ref: "state_master" },

@@ -19,6 +19,12 @@ agencyRoute.delete(
   clientController.deleteClient
 );
 
+agencyRoute.get(
+  "/get-client/:clientId",
+  authorizeRole("agency"),
+  agencyController.getClient
+);
+
 agencyRoute.patch(
   "/update-client/:clientId",
   authorizeRole("agency"),

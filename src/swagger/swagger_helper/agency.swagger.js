@@ -363,6 +363,32 @@ const updateClient = {
   },
 };
 
+const getClient = {
+  tags: ["Agency - CRM Panel"],
+  description: "",
+  summary: "Get Client client",
+  parameters: [
+    {
+      name: "clientId",
+      in: "path",
+      description: "provide the client id",
+      required: true,
+    },
+  ],
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const agenciesRoutes = {
   "/api/v1/agency/create-client": {
     post: addClient,
@@ -381,6 +407,9 @@ const agenciesRoutes = {
   },
   "/api/v1/agency/update-client/{clientId}": {
     patch: updateClient,
+  },
+  "/api/v1/agency/get-client/{clientId}": {
+    get: getClient,
   },
 };
 
