@@ -25,7 +25,7 @@ teamMemberRoute.use(protect);
 teamMemberRoute.post("/add", addMemberValidator, validatorFunc, add);
 teamMemberRoute.get("/details/:id", getMember);
 teamMemberRoute.delete("/delete/:id", deleteMember);
-teamMemberRoute.get("/get-all", getAll);
+teamMemberRoute.get("/", getAll);
 teamMemberRoute.put("/edit/:id", editMember);
 
 module.exports = teamMemberRoute;

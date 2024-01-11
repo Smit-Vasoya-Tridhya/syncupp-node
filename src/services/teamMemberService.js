@@ -506,6 +506,12 @@ class TeamMemberService {
 
       let teamMemberData;
       if (teamMember.role.name === "client") {
+        if (!agency_id)
+          return throwError(
+            returnMessage("teamMember", "agencyIdRequired"),
+            statusCode.notFound
+          );
+
         teamMemberData = await TeamModelName.distinct("_id", {
           [memberOf]: user.reference_id,
           agency_ids: { $in: [agency_id] },

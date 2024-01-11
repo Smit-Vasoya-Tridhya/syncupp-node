@@ -353,23 +353,40 @@ const teamMembersRoutes = {
   "/api/v1/team-member/login": {
     post: loginTeamMember,
   },
-
-  "/api/v1/team-member/add": {
-    post: addTeamMember,
-  },
   "/api/v1/team-member/verify": {
     post: verifyTeamMember,
   },
-  "/api/v1/team-member/get-all": {
+
+  "/api/v1/agency/team-member/add": {
+    post: addTeamMember,
+  },
+
+  "/api/v1/agency/team-member": {
     get: getAllTeamMember,
   },
-  "/api/v1/team-member/details/{id}": {
+  "/api/v1/agency/team-member/details/{id}": {
     get: getTeamMember,
   },
-  "/api/v1/team-member/delete/{id}": {
+  "/api/v1/agency/team-member/delete/{id}": {
     delete: deleteTeamMember,
   },
-  "/api/v1/team-member/edit/{id}": {
+  "/api/v1/agency/team-member/edit/{id}": {
+    put: editTeamMember,
+  },
+
+  "/api/v1/client/team-member/add": {
+    post: addTeamMember,
+  },
+  "/api/v1/client/team-member": {
+    get: getAllTeamMember,
+  },
+  "/api/v1/client/team-member/details/{id}": {
+    get: getTeamMember,
+  },
+  "/api/v1/client/team-member/delete/{id}": {
+    delete: deleteTeamMember,
+  },
+  "/api/v1/client/team-member/edit/{id}": {
     put: editTeamMember,
   },
 };
