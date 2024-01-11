@@ -235,7 +235,7 @@ class ClientService {
         },
       }).lean();
 
-      const query_obj = { reference_id: { $in: clients }, is_deleted: false };
+      const query_obj = {};
 
       if (payload?.search && payload?.search !== " ") {
         query_obj["$or"] = [
@@ -266,25 +266,46 @@ class ClientService {
           query_obj["$or"].push({ contact_number: payload.search });
         }
       }
+
+      const aggrage_array = [
+        { $match: { reference_id: { $in: clients }, is_deleted: false } },
+        {
+          $lookup: {
+            from: "clients",
+            localField: "reference_id",
+            foreignField: "_id",
+            as: "reference_id",
+            pipeline: [{ $project: { company_name: 1, company_website: 1 } }],
+          },
+        },
+        { $unwind: "$reference_id" },
+        { $match: query_obj },
+        {
+          $project: {
+            first_name: 1,
+            last_name: 1,
+            email: 1,
+            name: 1,
+            contact_number: 1,
+            createdAt: 1,
+            reference_id: {
+              company_name: 1,
+              company_website: 1,
+            },
+          },
+        },
+      ];
       const [client, totalClients] = await Promise.all([
-        Authentication.find(query_obj)
-          .select(
-            "first_name last_name email name contact_number createdAt reference_id"
-          )
-          .populate({
-            path: "reference_id",
-            model: "client",
-            select: "company_name company_website",
-          })
+        Authentication.aggregate(aggrage_array)
           .sort(pagination.sort)
           .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean(),
-        Authentication.countDocuments(query_obj),
+          .limit(pagination.result_per_page),
+        Authentication.aggregate(aggrage_array),
       ]);
       return {
         client,
-        page_count: Math.ceil(totalClients / pagination.result_per_page) || 0,
+        page_count:
+          Math.ceil(totalClients.length / pagination.result_per_page) || 0,
       };
     } catch (error) {
       logger.error(

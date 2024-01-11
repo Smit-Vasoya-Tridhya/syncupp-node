@@ -88,7 +88,8 @@
   "client": {
     "clientNotFound": "Client does not exist.",
     "clientVerified": "Verified successfully.",
-    "clientDeleted": "Client deleted successfully."
+    "clientDeleted": "Client deleted successfully.",
+    "clientsFetched": "Client list fetched successfully."
   },
 
   "default": { "default": "Something went wrong." }
