@@ -89,7 +89,6 @@ class AdminService {
       }
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
-      console.log(reset_password_token);
       const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 

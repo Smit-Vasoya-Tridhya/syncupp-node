@@ -10,7 +10,6 @@ const agreementService = new AgreementService();
 // Add Agreement
 
 exports.addAgreement = catchAsyncError(async (req, res, next) => {
-  console.log(req.body);
   const addedAgreement = await agreementService.addAgreement(
     req.body,
     req?.user?._id
@@ -44,7 +43,6 @@ exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
 // delete Agreement
 
 exports.deleteAgreement = catchAsyncError(async (req, res, next) => {
-  console.log(req?.params?.id);
   await agreementService.deleteAgreement(req?.params?.id);
   sendResponse(
     res,
