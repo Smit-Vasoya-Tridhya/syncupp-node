@@ -68,7 +68,7 @@ class AdminService {
   getAdmin = async (payload) => {
     try {
       const admin_id = payload;
-      const admin = await Admin.find({ _id: admin_id }).lean();
+      const admin = await Admin.findOne({ _id: admin_id }).lean();
 
       if (!admin) {
         return throwError(returnMessage("admin", "adminNotFound"));

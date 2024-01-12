@@ -49,7 +49,7 @@ const invoiceSchema = new mongoose.Schema(
         },
       },
     ],
-    is_delete: {
+    is_deleted: {
       type: Boolean,
       default: false,
     },

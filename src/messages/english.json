@@ -95,7 +95,11 @@
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",
     "invoiceNumberExists": "Invoice number already exists",
-    "clientFetched": "Client Fetched successfully"
+    "clientFetched": "Client Fetched successfully",
+    "getAllInvoices": "Invoices fetched successfully.",
+    "invoiceDeleted": "Invoice deleted successfully.",
+    "canNotDelete": "Invoice can not be deleted.",
+    "invoiceInfo": "Invoice information fetched successfully."
   },
 
   "emailTemplate": {

@@ -18,6 +18,20 @@ exports.getClients = catchAsyncError(async (req, res, next) => {
   );
 });
 
+// Get InvoiceInformation
+
+exports.getInvoiceInformation = catchAsyncError(async (req, res, next) => {
+  const { getAgencyData, getClientData } =
+    await invoiceService.getInvoiceInformation(req?.body, req?.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "invoiceInfo"),
+    [{ agencyData: getAgencyData }, { clientData: getClientData }],
+    statusCode.success
+  );
+});
+
 // Add Invoice
 
 exports.addInvoice = catchAsyncError(async (req, res, next) => {
@@ -34,36 +48,48 @@ exports.addInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// // get All Agreement
+// get All Invoice
 
-// exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
-//   const { agreements, pagination } = await agreementService.getAllAgreement(
-//     req.body,
-//     req?.user?._id
-//   );
-//   sendResponse(
-//     res,
-//     true,
-//     returnMessage("agreement", "getAllAgreement"),
-//     agreements,
-//     statusCode.success,
-//     pagination
-//   );
-// });
+exports.getAllInvoice = catchAsyncError(async (req, res, next) => {
+  const { invoices, pagination } = await invoiceService.getAllInvoice(
+    req.body,
+    req?.user?._id
+  );
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "getAllInvoices"),
+    invoices,
+    statusCode.success,
+    pagination
+  );
+});
 
-// // delete Agreement
+// Get Agreement
 
-// exports.deleteAgreement = catchAsyncError(async (req, res, next) => {
-//   console.log(req?.params?.id);
-//   await agreementService.deleteAgreement(req?.params?.id);
-//   sendResponse(
-//     res,
-//     true,
-//     returnMessage("agreement", "deleteAgreement"),
-//     null,
-//     statusCode.success
-//   );
-// });
+exports.getInvoice = catchAsyncError(async (req, res, next) => {
+  const getInvoice = await invoiceService.getInvoice(req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "getAllInvoices"),
+    getInvoice,
+    statusCode.success
+  );
+});
+
+// delete Invoice
+
+exports.deleteInvoice = catchAsyncError(async (req, res, next) => {
+  await invoiceService.deleteInvoice(req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "invoiceDeleted"),
+    null,
+    statusCode.success
+  );
+});
 
 // // Update Agreement
 
@@ -77,19 +103,6 @@ exports.addInvoice = catchAsyncError(async (req, res, next) => {
 //     true,
 //     returnMessage("agreement", "agreementUpdated"),
 //     updatedAgreement,
-//     statusCode.success
-//   );
-// });
-
-// // Get Agreement
-
-// exports.getAgreement = catchAsyncError(async (req, res, next) => {
-//   const getAgreement = await agreementService.getAgreement(req?.params?.id);
-//   sendResponse(
-//     res,
-//     true,
-//     returnMessage("agreement", "getAgreement"),
-//     getAgreement,
 //     statusCode.success
 //   );
 // });

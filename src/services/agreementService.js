@@ -15,7 +15,7 @@ class AgreementService {
       return agreement;
     } catch (error) {
       logger.error(`Error while Admin add Agreement, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -44,7 +44,7 @@ class AgreementService {
       };
     } catch (error) {
       logger.error(`Error while Admin Agreement Listing, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -59,7 +59,7 @@ class AgreementService {
       return agreement;
     } catch (error) {
       logger.error(`Error while Get Agreement, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -83,7 +83,7 @@ class AgreementService {
       }
     } catch (error) {
       logger.error(`Error while Deleting Agreement, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -110,7 +110,7 @@ class AgreementService {
       }
     } catch (error) {
       logger.error(`Error while updating Agreement, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -130,7 +130,7 @@ class AgreementService {
       return agreement;
     } catch (error) {
       logger.error(`Error while updating Agreement, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -164,7 +164,7 @@ class AgreementService {
       };
     } catch (error) {
       logger.error(`Error while Admin Agreement Listing, ${error}`);
-      throwError(returnMessage("default", "default"), error?.statusCode);
+      throwError(error?.message, error?.statusCode);
     }
   };
 }
