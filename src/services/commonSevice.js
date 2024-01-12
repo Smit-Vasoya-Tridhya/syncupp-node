@@ -24,3 +24,23 @@ exports.getKeywordType = (keyword) => {
     return "string";
   }
 };
+
+exports.calculateInvoice = (invoice_content) => {
+  let total = 0;
+  const totalData = invoice_content.map((item) => {
+    return item.qty * item.rate * (1 + item.tax / 100);
+  });
+  totalData.forEach((item) => (total += item));
+
+  let sub_total = 0;
+  const subTotalData = invoice_content.map((item) => {
+    return item.qty * item.rate;
+  });
+  subTotalData.forEach((item) => (sub_total += item));
+
+  // Round off to 0 digits after the decimal point
+  total = total.toFixed(0);
+  sub_total = sub_total.toFixed(0);
+
+  return { total, sub_total };
+};

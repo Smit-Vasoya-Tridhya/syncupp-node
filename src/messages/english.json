@@ -84,13 +84,18 @@
     "agencyUpdate": "Agency  profile updated successfully."
   },
   "agreement": {
-    "agreementAdded": "Agreement added successfully.",
+    "agreementAdded": "Agreement created successfully.",
     "deleteAgreement": "Agreement deleted successfully.",
     "agreementUpdated": "Agreement updated successfully.",
     "getAgreement": "Agreement fetched successfully.",
     "getAllAgreement": "Agreements fetched successfully.",
     "canNotDelete": "Agreement already agreed.",
     "agreementStatusUpdated": "Agreement status updated."
+  },
+  "invoice": {
+    "invoiceCreated": "Invoice created successfully.",
+    "invoiceNumberExists": "Invoice number already exists",
+    "clientFetched": "Client Fetched successfully"
   },
 
   "emailTemplate": {
