@@ -131,9 +131,9 @@ class TeamMemberService {
 
         let link = `${
           process.env.REACT_APP_URL
-        }/verify?name=${encodeURIComponent(
+        }/team/verify?name=${encodeURIComponent(
           teamMember?.name
-        )}&email=${encodeURIComponent(email)}&clientId = ${encodeURIComponent(
+        )}&email=${encodeURIComponent(email)}&clientId=${encodeURIComponent(
           user_id
         )}&agencyId=${encodeURIComponent(agency_id)}`;
         if (!isEmail) {

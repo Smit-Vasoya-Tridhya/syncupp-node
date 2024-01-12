@@ -37,7 +37,7 @@ class ClientService {
 
       let link = `${
         process.env.REACT_APP_URL
-      }/verify-client?name=${encodeURIComponent(
+      }/client/verify?name=${encodeURIComponent(
         agency?.first_name + " " + agency?.last_name
       )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
         agency?.reference_id
