@@ -79,14 +79,22 @@ const deleteClient = {
   tags: ["Agency - CRM Panel"],
   description: "",
   summary: "Delete client",
-  parameters: [
-    {
-      name: "clientId",
-      in: "path",
-      description: "provide the client id",
-      required: true,
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            client_ids: {
+              type: "array",
+              description: "Enter ids of client",
+              default: [],
+            },
+          },
+        },
+      },
     },
-  ],
+  },
 
   responses: {
     200: {
@@ -275,11 +283,117 @@ const updateAgencyProfile = {
   },
 };
 
+const updateClient = {
+  tags: ["Agency - CRM Panel"],
+  description: "",
+  summary: "Update client",
+  parameters: [
+    {
+      name: "clientId",
+      in: "path",
+      description: "provide the client id",
+      required: true,
+    },
+  ],
+
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              descripition: "Enter name of client.",
+            },
+            company_name: {
+              type: "string",
+              descripition: "Enter company name of client.",
+              required: true,
+            },
+            company_website: {
+              type: "string",
+              descripition: "Enter company website of client.",
+            },
+            address: {
+              type: "string",
+              descripition: "Enter address of client.",
+            },
+            city: {
+              type: "string",
+              descripition: "Enter city object Id of client.",
+            },
+            state: {
+              type: "string",
+              descripition: "Enter state object Id of client.",
+            },
+            country: {
+              type: "string",
+              descripition: "Enter country object id of client.",
+            },
+            pincode: {
+              type: "number",
+              descripition: "Enter pincode of client.",
+            },
+            title: {
+              type: "string",
+              descripition: "Enter title of client.",
+            },
+            contact_number: {
+              type: "number",
+              descripition: "Enter contact number of client.",
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const getClient = {
+  tags: ["Agency - CRM Panel"],
+  description: "",
+  summary: "Get Client client",
+  parameters: [
+    {
+      name: "clientId",
+      in: "path",
+      description: "provide the client id",
+      required: true,
+    },
+  ],
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const agenciesRoutes = {
   "/api/v1/agency/create-client": {
     post: addClient,
   },
-  "/api/v1/agency/delete-client/{clientId}": {
+  "/api/v1/agency/delete-client": {
     delete: deleteClient,
   },
   "/api/v1/agency/clients": {
@@ -290,6 +404,12 @@ const agenciesRoutes = {
   },
   "/api/v1/agency/update-profile": {
     put: updateAgencyProfile,
+  },
+  "/api/v1/agency/update-client/{clientId}": {
+    patch: updateClient,
+  },
+  "/api/v1/agency/get-client/{clientId}": {
+    get: getClient,
   },
 };
 

@@ -1,6 +1,6 @@
 const { throwError } = require("../helpers/errorUtil");
 const logger = require("../logger");
-const Client = require("../models/cllientSchema");
+const Client = require("../models/clientSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const {
   validateRequestFields,
@@ -14,7 +14,6 @@ const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
 const authService = new AuthService();
-const statusCode = require("../messages/statusCodes.json");
 
 class ClientService {
   // create client for the agency
@@ -41,20 +40,20 @@ class ClientService {
       }/verify-client?name=${encodeURIComponent(
         agency?.first_name + " " + agency?.last_name
       )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
-        agency?._id
+        agency?.reference_id
       )}`;
 
       if (!client_exist) {
         const client_obj = {
           company_name,
-          copany_website: payload?.company_website,
+          company_website: payload?.company_website,
           address: payload?.address,
           city: payload?.city,
           state: payload?.state,
           country: payload?.country,
           pincode: payload?.pincode,
           title: payload?.title,
-          agency_ids: [{ agency_id: agency?._id, status: "inactive" }],
+          agency_ids: [{ agency_id: agency?.reference_id, status: "inactive" }],
         };
         const new_client = await Client.create(client_obj);
         const client_auth_obj = {
@@ -70,8 +69,7 @@ class ClientService {
       } else {
         const client = await Client.findById(client_exist?.reference_id);
         const already_exist = client?.agency_ids.filter(
-          (id) =>
-            id?.agency_id?.toString() == agency?._id && id?.status == "inactive"
+          (id) => id?.agency_id?.toString() == agency?.reference_id
         );
 
         if (already_exist.length > 0)
@@ -81,7 +79,7 @@ class ClientService {
         client.agency_ids = [
           ...client?.agency_ids,
           {
-            agency_id: agency?._id,
+            agency_id: agency?.reference_id,
             status: "inactive",
           },
         ];
@@ -194,28 +192,28 @@ class ClientService {
     }
   };
 
-  // delete the client for the particuar agency
-  deleteClient = async (client_id, agency) => {
+  // delete the client from the particuar agency
+  deleteClient = async (client_ids, agency) => {
     try {
-      const client = await Client.findById(client_id).lean();
-      if (!client)
-        return throwError(
-          returnMessage("client", "clientNotFound"),
-          statusCode.notFound
-        );
+      // const client = await Client.findById(client_id).lean();
+      // if (!client)
+      //   return throwError(
+      //     returnMessage("client", "clientNotFound"),
+      //     statusCode.notFound
+      //   );
 
-      const agency_exist = client?.agency_ids.filter(
-        (id) => id?.agency_id?.toString() == agency?._id
-      );
+      // const agency_exist = client?.agency_ids.filter(
+      //   (id) => id?.agency_id?.toString() == agency?._id
+      // );
 
-      if (agency_exist.length == 0)
-        return throwError(
-          returnMessage("agency", "agencyNotFound"),
-          statusCode.notFound
-        );
+      // if (agency_exist.length == 0)
+      //   return throwError(
+      //     returnMessage("agency", "agencyNotFound"),
+      //     statusCode.notFound
+      //   );
 
-      await Client.updateOne(
-        { _id: client?._id, "agency_ids.agency_id": agency?._id },
+      await Client.updateMany(
+        { _id: { $in: client_ids }, "agency_ids.agency_id": agency?._id },
         { $set: { "agency_ids.$.status": "inactive" } },
         { new: true }
       );
@@ -233,11 +231,11 @@ class ClientService {
 
       const clients = await Client.distinct("_id", {
         agency_ids: {
-          $elemMatch: { agency_id: agency?._id, status: "active" },
+          $elemMatch: { agency_id: agency?.reference_id },
         },
       }).lean();
 
-      const query_obj = { reference_id: { $in: clients }, is_deleted: false };
+      const query_obj = {};
 
       if (payload?.search && payload?.search !== " ") {
         query_obj["$or"] = [
@@ -250,20 +248,64 @@ class ClientService {
           {
             email: { $regex: payload.search, $options: "i" },
           },
+          {
+            "reference_id.company_name": {
+              $regex: payload.search,
+              $options: "i",
+            },
+          },
+          {
+            "reference_id.company_website": {
+              $regex: payload.search,
+              $options: "i",
+            },
+          },
         ];
+
+        if (!isNaN(payload?.search)) {
+          query_obj["$or"].push({ contact_number: payload.search });
+        }
       }
+
+      const aggrage_array = [
+        { $match: { reference_id: { $in: clients }, is_deleted: false } },
+        {
+          $lookup: {
+            from: "clients",
+            localField: "reference_id",
+            foreignField: "_id",
+            as: "reference_id",
+            pipeline: [{ $project: { company_name: 1, company_website: 1 } }],
+          },
+        },
+        { $unwind: "$reference_id" },
+        { $match: query_obj },
+        {
+          $project: {
+            first_name: 1,
+            last_name: 1,
+            email: 1,
+            name: 1,
+            contact_number: 1,
+            createdAt: 1,
+            reference_id: {
+              company_name: 1,
+              company_website: 1,
+            },
+          },
+        },
+      ];
       const [client, totalClients] = await Promise.all([
-        Authentication.find(query_obj)
-          .select("first_name last_name email name")
+        Authentication.aggregate(aggrage_array)
           .sort(pagination.sort)
           .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean(),
-        Authentication.countDocuments(query_obj),
+          .limit(pagination.result_per_page),
+        Authentication.aggregate(aggrage_array),
       ]);
       return {
         client,
-        page_count: Math.ceil(totalClients / pagination.result_per_page) || 0,
+        page_count:
+          Math.ceil(totalClients.length / pagination.result_per_page) || 0,
       };
     } catch (error) {
       logger.error(
@@ -295,6 +337,7 @@ class ClientService {
         {
           first_name: payload?.first_name,
           last_name: payload?.last_name,
+          name: payload?.name,
         },
         { new: true }
       );

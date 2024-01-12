@@ -67,11 +67,11 @@ const updateClient = {
           properties: {
             company_name: {
               type: "string",
-              descripition: "Enter comapny name.",
+              descripition: "Enter company name.",
             },
-            comapny_website: {
+            company_website: {
               type: "string",
-              descripition: "Enter comapny website.",
+              descripition: "Enter company website.",
             },
             state: {
               type: "string",

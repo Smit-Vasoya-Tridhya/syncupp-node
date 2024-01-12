@@ -3,7 +3,7 @@ const Invoice_Status_Master = require("../models/masters/invoiceStatusMaster");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const { returnMessage } = require("../utils/utils");
-const Client = require("../models/cllientSchema");
+const Client = require("../models/clientSchema");
 const { ObjectId } = require("mongodb");
 
 const {

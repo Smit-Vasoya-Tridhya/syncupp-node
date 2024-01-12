@@ -2,8 +2,12 @@ const catchAsyncError = require("../helpers/catchAsyncError");
 const { returnMessage } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const AgencyService = require("../services/agencyService");
+const ClientService = require("../services/clientService");
 const { sendResponse } = require("../utils/sendResponse");
+const Authentication = require("../models/authenticationSchema");
+const { throwError } = require("../helpers/errorUtil");
 const agencyService = new AgencyService();
+const clientService = new ClientService();
 
 // Agency get Profile
 exports.getAgencyProfile = catchAsyncError(async (req, res, next) => {
@@ -45,6 +49,50 @@ exports.updateAgency = catchAsyncError(async (req, res, next) => {
     true,
     returnMessage("agency", "agencyUpdated"),
     {},
+    statusCode.success
+  );
+});
+
+exports.updateClient = catchAsyncError(async (req, res, next) => {
+  if (!req.params?.clientId)
+    return throwError(returnMessage("default", "default"));
+
+  const client_exist = await Authentication.findById(
+    req.params?.clientId
+  ).lean();
+  if (!client_exist)
+    return throwError(
+      returnMessage("client", "clientNotFound"),
+      statusCode.notFound
+    );
+  await clientService.updateClient(req.body, client_exist);
+  sendResponse(
+    res,
+    true,
+    returnMessage("auth", "profileUpdated"),
+    {},
+    statusCode.success
+  );
+});
+
+exports.getClient = catchAsyncError(async (req, res, next) => {
+  if (!req.params?.clientId)
+    return throwError(returnMessage("default", "default"));
+
+  const client_exist = await Authentication.findById(
+    req.params?.clientId
+  ).lean();
+  if (!client_exist)
+    return throwError(
+      returnMessage("client", "clientNotFound"),
+      statusCode.notFound
+    );
+  const client = await clientService.getClientDetail(client_exist);
+  sendResponse(
+    res,
+    true,
+    returnMessage("auth", "profileFetched"),
+    client,
     statusCode.success
   );
 });
