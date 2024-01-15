@@ -99,7 +99,9 @@
     "getAllInvoices": "Invoices fetched successfully.",
     "invoiceDeleted": "Invoice deleted successfully.",
     "canNotDelete": "Invoice can not be deleted.",
-    "invoiceInfo": "Invoice information fetched successfully."
+    "invoiceInfo": "Invoice information fetched successfully.",
+    "invoiceStatusUpdated": "Invoice status updated successfully.",
+    "invoiceUpdated": "Invoice updated successfully."
   },
 
   "emailTemplate": {
