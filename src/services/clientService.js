@@ -357,9 +357,9 @@ class ClientService {
           .lean(),
         Client.findById(client?.reference_id)
           .select("-agency_ids")
-          .populate("city", "label")
-          .populate("country", "label")
-          .populate("state", "label")
+          .populate("city", "name")
+          .populate("country", "name")
+          .populate("state", "name")
           .lean(),
       ]);
 
