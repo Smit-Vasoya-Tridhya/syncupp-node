@@ -534,15 +534,21 @@ class TeamMemberService {
               $options: "i",
             },
           },
+          {
+            contact_number: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
         ];
 
-        const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
-          queryObj["$or"].push({
-            contact_number: numericKeyword,
-          });
-        }
+        // const keywordType = getKeywordType(searchObj.search);
+        // if (keywordType === "number") {
+        //   const numericKeyword = parseInt(searchObj.search);
+        //   queryObj["$or"].push({
+        //     contact_number: numericKeyword,
+        //   });
+        // }
       }
 
       const pagination = paginationObject(searchObj);

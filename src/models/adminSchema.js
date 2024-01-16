@@ -8,7 +8,7 @@ const adminSchema = new mongoose.Schema(
     first_name: { type: String, required: true },
     last_name: { type: String, required: true },
     reset_password_token: { type: String },
-    contact_number: { type: Number },
+    contact_number: { type: String },
     is_deleted: { type: Boolean, default: false },
     remember_me: { type: Boolean, default: false },
   },

@@ -249,6 +249,9 @@ class ClientService {
             email: { $regex: payload.search, $options: "i" },
           },
           {
+            contact_number: { $regex: payload.search, $options: "i" },
+          },
+          {
             "reference_id.company_name": {
               $regex: payload.search,
               $options: "i",
@@ -262,9 +265,9 @@ class ClientService {
           },
         ];
 
-        if (!isNaN(payload?.search)) {
-          query_obj["$or"].push({ contact_number: payload.search });
-        }
+        // if (!isNaN(payload?.search)) {
+        //   query_obj["$or"].push({ contact_number: payload.search });
+        // }
       }
 
       const aggrage_array = [

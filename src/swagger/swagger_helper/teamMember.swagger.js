@@ -130,7 +130,7 @@ const addTeamMember = {
               required: true,
             },
             contact_number: {
-              type: "number",
+              type: "string",
               description: "Enter contact number",
               required: true,
             },
@@ -303,7 +303,7 @@ const editTeamMember = {
               required: true,
             },
             contact_number: {
-              type: "number",
+              type: "string",
               description: "Enter contact number",
               required: true,
             },

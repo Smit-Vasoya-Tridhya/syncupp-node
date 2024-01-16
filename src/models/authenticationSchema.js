@@ -8,7 +8,7 @@ const authenticationSchema = new mongoose.Schema(
     name: { type: String },
     email: { type: String, required: true },
     password: { type: String },
-    contact_number: { type: Number },
+    contact_number: { type: String },
     is_google_signup: { type: Boolean, default: false },
     is_facebook_signup: { type: Boolean, default: false },
     reset_password_token: { type: String },

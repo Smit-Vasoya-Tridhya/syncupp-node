@@ -41,6 +41,9 @@ class AgencyService {
             email: { $regex: payload.search, $options: "i" },
           },
           {
+            contact_number: { $regex: payload.search, $options: "i" },
+          },
+          {
             "reference_id.company_name": {
               $regex: payload.search,
               $options: "i",
@@ -66,10 +69,10 @@ class AgencyService {
           },
         ];
 
-        const keyword_type = getKeywordType(payload.search);
-        if (keyword_type === "number") {
-          query_obj["$or"].push({ contact_number: parseInt(payload.search) });
-        }
+        // const keyword_type = getKeywordType(payload.search);
+        // if (keyword_type === "number") {
+        //   query_obj["$or"].push({ contact_number: parseInt(payload.search) });
+        // }
       }
 
       const [agencyList, total_agencies] = await Promise.all([
