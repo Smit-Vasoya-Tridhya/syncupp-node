@@ -47,21 +47,22 @@ class FaqService {
       }
 
       const pagination = paginationObject(searchObj);
-      const faqs = await AdminFqa.find(queryObj)
-        .skip(pagination.skip)
-        .limit(pagination.resultPerPage)
-        .sort(pagination.sort);
 
-      const totalFaqsCount = await AdminFqa.countDocuments(queryObj);
-
-      // Calculating total pages
-      const pages = Math.ceil(totalFaqsCount / pagination.resultPerPage);
+      const [faqs, totalFaqsCount] = await Promise.all([
+        AdminFqa.find(queryObj)
+          .select("title description")
+          .skip(pagination.skip)
+          .limit(pagination.resultPerPage)
+          .sort(pagination.sort)
+          .lean(),
+        AdminFqa.countDocuments(queryObj),
+      ]);
 
       return {
         faqs,
         pagination: {
           current_page: pagination.page,
-          total_pages: pages,
+          total_pages: Math.ceil(totalFaqsCount / pagination.resultPerPage),
         },
       };
     } catch (error) {

@@ -621,35 +621,18 @@ class TeamMemberService {
         },
       ];
 
-      const teamMemberList = await Authentication.aggregate(pipeLine)
-        .skip(pagination.skip)
-        .limit(pagination.resultPerPage)
-        .sort(pagination.sort);
+      const [teamMemberList, total_team_members] = await Promise.all([
+        Authentication.aggregate(pipeLine)
+          .skip(pagination.skip)
+          .limit(pagination.resultPerPage)
+          .sort(pagination.sort),
+        Authentication.aggregate(pipeLine),
+      ]);
 
-      const countResult = await Authentication.aggregate(pipeLine).count(
-        "count"
-      );
-
-      const count = countResult[0] && countResult[0].count;
-
-      if (count !== undefined) {
-        // Calculating total pages
-        const pages = Math.ceil(count / pagination.resultPerPage);
-
-        return {
-          teamMemberList,
-          pagination: {
-            current_page: pagination.page,
-            total_pages: pages,
-          },
-        };
-      }
       return {
         teamMemberList,
-        pagination: {
-          current_page: pagination.page,
-          total_pages: 0,
-        },
+        page_count:
+          Math.ceil(total_team_members.length / pagination.resultPerPage) || 0,
       };
     } catch (error) {
       logger.error(`Error while Team members, Listing ${error}`);
