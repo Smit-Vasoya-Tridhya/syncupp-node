@@ -460,7 +460,7 @@ const updateAgencyStatus = {
                 "Enter status of the agency. either active or inactive.",
               default: "inactive",
             },
-            is_deleted: {
+            delete: {
               type: "boolean",
               description: "Enter true or false.",
               default: false,

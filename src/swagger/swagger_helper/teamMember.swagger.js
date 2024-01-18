@@ -218,6 +218,10 @@ const getAllTeamMember = {
               description: "Enter sortOrder",
               required: true,
             },
+            search: {
+              type: "string",
+              description: "Enter search value",
+            },
             page: {
               type: "number",
               description: "Enter page number",
