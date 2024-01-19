@@ -227,6 +227,13 @@ class ClientService {
   // Get the client ist for the Agency
   clientList = async (payload, agency) => {
     try {
+      if (
+        payload.sort_field &&
+        (payload.sort_field === "company_name" ||
+          payload.sort_field === "company_website")
+      ) {
+        payload.sort_field = `reference_id.${payload.sort_field}`;
+      }
       const pagination = paginationObject(payload);
 
       const clients = await Client.distinct("_id", {
