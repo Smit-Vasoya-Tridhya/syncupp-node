@@ -20,12 +20,12 @@ exports.add = catchAsyncError(async (req, res, next) => {
 
 // Team Member Verification
 exports.verify = catchAsyncError(async (req, res, next) => {
-  await teamMemberService.verify(req.body);
+  const verify = await teamMemberService.verify(req.body);
   sendResponse(
     res,
     true,
     returnMessage("teamMember", "passwordSet"),
-    null,
+    verify,
     statusCode.success
   );
 });

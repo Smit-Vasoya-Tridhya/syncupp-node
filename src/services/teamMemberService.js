@@ -107,7 +107,7 @@ class TeamMemberService {
         console.log(invitation_token);
         const encode = encodeURIComponent(email);
 
-        const link = `${process.env.TEAM_MEMBER_SETPASSWORD_PATH}?token=${invitation_token}&email=${encode}`;
+        const link = `${process.env.TEAM_MEMBER_SETPASSWORD_PATH}?name=${name}&email=${encode}&redirect=false&agency=${user_id}`;
         const forgot_email_template = forgotPasswordEmailTemplate(link);
 
         await sendEmail({
@@ -123,6 +123,7 @@ class TeamMemberService {
 
         newTeamMember.invitation_token = hash_token;
         await newTeamMember.save();
+        return true;
       }
       if (teamMember.role.name === "client") {
         roleKey = "team_client";
@@ -253,20 +254,23 @@ class TeamMemberService {
           _id: client_id,
         });
 
-        if (!isClientExist)
-          return throwError(returnMessage("default", "default"));
+        // if (!isClientExist)
+        //   return throwError(returnMessage("default", "default"));
 
         const teamMemberExist = await Authentication.findOne({
           email,
           is_deleted: false,
         });
-        if (!teamMemberExist)
-          return throwError(returnMessage("default", "default"));
+        // if (!teamMemberExist)
+        //   return throwError(returnMessage("default", "default"));
 
-        const teamMember = await Team_Client.findOne({
+        // const teamMember = await Team_Client.findOne({
+        //   _id: teamMemberExist?.reference_id,
+        // });
+        const teamMember = await Team_Agency.findOne({
           _id: teamMemberExist?.reference_id,
         });
-        if (!teamMember) return throwError(returnMessage("default", "default"));
+        // if (!teamMember) return throwError(returnMessage("default", "default"));
 
         teamMemberExist.status = "confirmed";
         teamMember.agency_ids = teamMember.agency_ids || [];
@@ -285,8 +289,8 @@ class TeamMemberService {
           // name: name,
         });
 
-        if (!isClientExist)
-          return throwError(returnMessage("default", "default"));
+        // if (!isClientExist)
+        //   return throwError(returnMessage("default", "default"));
 
         const teamMemberExist = await Authentication.findOne({
           email,
@@ -296,10 +300,13 @@ class TeamMemberService {
         if (!teamMemberExist)
           return throwError(returnMessage("default", "default"));
 
-        const teamMember = await Team_Client.findOne({
+        // const teamMember = await Team_Client.findOne({
+        //   _id: teamMemberExist?.reference_id,
+        // });
+        const teamMember = await Team_Agency.findOne({
           _id: teamMemberExist?.reference_id,
         });
-        if (!teamMember) return throwError(returnMessage("default", "default"));
+        // if (!teamMember) return throwError(returnMessage("default", "default"));
 
         const hash_password = await bcrypt.hash(password, 14);
 
@@ -454,6 +461,8 @@ class TeamMemberService {
             contact_number: 1,
             image_url: 1,
             status: 1,
+            name: 1,
+            contact_number: 1,
           },
         },
       ];
@@ -479,10 +488,7 @@ class TeamMemberService {
         _id: user_id,
         is_deleted: false,
       })
-        .populate({
-          path: "role",
-          model: "role_master",
-        })
+        .populate("role", "name")
         .lean();
 
       let TeamModelName;
@@ -700,12 +706,16 @@ class TeamMemberService {
   editMember = async (payload, userId) => {
     try {
       const memberId = userId;
+      if (payload?.role && payload?.role !== "")
+        payload.role = await Team_Role_Master.findOne({ name: payload?.role })
+          .select("_id")
+          .lean();
+
       const teamMember = await Authentication.findOneAndUpdate(
         {
           _id: memberId,
           is_deleted: false,
         },
-
         payload,
         { new: true, useFindAndModify: false }
       );

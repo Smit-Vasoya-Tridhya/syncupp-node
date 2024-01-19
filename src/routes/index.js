@@ -10,7 +10,7 @@ const invoiceRoute = require("./invoiceRoute");
 router.use("/api/v1/auth", authRoute);
 router.use("/api/v1/admin", adminRoute);
 router.use("/api/v1/agency", agencyRoute);
-router.use("/api/v1/agency/team-member", teamMemberRoute);
+router.use("/api/v1/team-member", teamMemberRoute);
 router.use("/api/v1/agency/invoice", invoiceRoute);
 router.use("/api/v1/client/team-member", teamMemberRoute);
 router.use("/api/v1/agency", agencyRoute);
