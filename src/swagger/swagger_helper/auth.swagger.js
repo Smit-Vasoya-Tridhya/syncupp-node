@@ -2,7 +2,6 @@ const registerAgency = {
   tags: ["CRM Panel"],
   description: "",
   summary: "Register Agency.",
-  security: [],
   requestBody: {
     content: {
       "application/json": {
@@ -112,15 +111,22 @@ const facebookSignIn = {
   tags: ["CRM Panel"],
   description: "Agency Facebook SignIn",
   summary: "Agency Facebook SignIn",
-  parameters: [
-    {
-      name: "code",
-      in: "query",
-      description: "Code from the facebook signup",
-      required: true,
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            access_token: {
+              type: "string",
+              descripition: "Enter your token",
+              required: true,
+            },
+          },
+        },
+      },
     },
-  ],
-
+  },
   responses: {
     200: {
       descripition: "ok",
@@ -295,6 +301,121 @@ const changePassword = {
   },
 };
 
+const countriesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all Countries",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const statesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all states",
+  parameters: [
+    {
+      name: "countryId",
+      in: "path",
+      description: "provide the country id",
+      required: true,
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const citiesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all cities",
+  parameters: [
+    {
+      name: "stateId",
+      in: "path",
+      description: "provide the state id",
+      required: true,
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const authRoutes = {
   "/api/v1/auth/signup": {
     post: registerAgency,
@@ -303,7 +424,7 @@ const authRoutes = {
     post: googleSignIn,
   },
   "/api/v1/auth/facebook-signup": {
-    get: facebookSignIn,
+    post: facebookSignIn,
   },
   "/api/v1/auth/login": {
     post: login,
@@ -316,6 +437,15 @@ const authRoutes = {
   },
   "/api/v1/auth/change-password": {
     post: changePassword,
+  },
+  "/api/v1/auth/countries": {
+    post: countriesList,
+  },
+  "/api/v1/auth/states/{countryId}": {
+    post: statesList,
+  },
+  "/api/v1/auth/cities/{stateId}": {
+    post: citiesList,
   },
 };
 

@@ -6,8 +6,12 @@ const agencySchema = new mongoose.Schema(
     company_name: { type: String },
     company_website: { type: String },
     no_of_people: { type: String },
-    // industry: { type: mongoose.Types.ObjectId, ref: "agency_type_master" },
     industry: { type: String },
+    address: { type: String },
+    city: { type: String },
+    state: { type: String },
+    country: { type: String },
+    pin_code: { type: Number },
   },
   { timestamps: true }
 );

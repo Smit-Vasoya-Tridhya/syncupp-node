@@ -14,11 +14,14 @@ const sendEmail = require("../helpers/sendEmail");
 class AdminService {
   tokenGenerator = (payload) => {
     try {
+      const expiresIn = payload?.rememberMe
+        ? process.env.JWT_REMEMBER_EXPIRE
+        : process.env.JWT_EXPIRES_IN;
       const token = jwt.sign(
         { id: payload._id },
         process.env.JWT_ADMIN_SECRET_KEY,
         {
-          expiresIn: process.env.JWT_EXPIRES_IN,
+          expiresIn,
         }
       );
       return { token, user: payload };
@@ -30,7 +33,7 @@ class AdminService {
 
   login = async (payload) => {
     try {
-      const { email, password } = payload;
+      const { email, password, rememberMe } = payload;
 
       if (!email || !password)
         return throwError(
@@ -38,7 +41,10 @@ class AdminService {
           statusCode.badRequest
         );
 
-      const admin_exist = await Admin.findOne({ email }).lean();
+      const admin_exist = await Admin.findOne({
+        email,
+        is_deleted: false,
+      }).lean();
 
       if (!admin_exist)
         return throwError(
@@ -52,16 +58,26 @@ class AdminService {
       );
       if (!correct_password)
         return throwError(returnMessage("auth", "incorrectPassword"));
-      return this.tokenGenerator(admin_exist);
+      return this.tokenGenerator({ ...admin_exist, rememberMe });
     } catch (error) {
       logger.error(`Error while admin login, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };
 
-  getAdmins = async (payload) => {
-    const admins = await Admin.find({});
-    return admins;
+  getAdmin = async (payload) => {
+    try {
+      const admin_id = payload;
+      const admin = await Admin.findOne({ _id: admin_id }).lean();
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "adminNotFound"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while get Admin, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
   };
 
   forgotPassword = async (payload) => {
@@ -73,7 +89,6 @@ class AdminService {
       }
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
-
       const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
@@ -115,7 +130,7 @@ class AdminService {
 
       const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
-      admin.reset_password_token = undefined;
+      admin.reset_password_token = null;
       await admin.save();
       return;
     } catch (error) {
@@ -127,7 +142,7 @@ class AdminService {
   changePassword = async (payload, teamId) => {
     try {
       const { newPassword, oldPassword } = payload;
-      const admin = await Admin.findById(teamId);
+      const admin = await Admin.findById({ _id: teamId });
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }
@@ -136,11 +151,32 @@ class AdminService {
       if (!is_match) {
         return throwError(returnMessage("admin", "passwordNotMatch"));
       }
-      const hash_password = await bcrypt.hash(newPassword, 10);
+      const hash_password = await bcrypt.hash(newPassword, 14);
       admin.password = hash_password;
       await admin.save();
     } catch (error) {
       logger.error(`Error while admin updatePassword, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // updateAdmin
+  updateAdmin = async (payload, admin_id) => {
+    try {
+      const admin = await Admin.findByIdAndUpdate(
+        {
+          _id: admin_id,
+        },
+        payload,
+        { new: true, useFindAndModify: false }
+      );
+
+      if (!admin) {
+        return throwError(returnMessage("admin", "invalidId"));
+      }
+      return admin;
+    } catch (error) {
+      logger.error(`Error while Admin update, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };

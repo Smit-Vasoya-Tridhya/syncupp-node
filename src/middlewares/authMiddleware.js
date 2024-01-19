@@ -17,6 +17,7 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
       .where("is_deleted")
       .equals("false")
       .select("-password")
+      .populate("role", "name")
       .lean();
     if (!user) return throwError(returnMessage("auth", "unAuthorized"), 401);
     req.user = user;
@@ -25,3 +26,9 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
     return throwError(returnMessage("auth", "unAuthorized"), 401);
   }
 });
+
+exports.authorizeRole = (requiredRole) => (req, res, next) => {
+  if (req?.user?.role?.name !== requiredRole)
+    return throwError(returnMessage("auth", "insufficientPermission"), 403);
+  next();
+};

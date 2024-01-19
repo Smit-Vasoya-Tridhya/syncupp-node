@@ -16,27 +16,103 @@
     "passwordChanged": "Password changed successfully.",
     "unAuthorized": "You are un-authorized to perform this action.",
     "passwordRequired": "Old and new passwords are required.",
-    "incorrectOldPassword": "Old password does not match"
+    "incorrectOldPassword": "Old password does not match.",
+    "insufficientPermission": "In-sufficient permission.",
+    "profileFetched": "Profile fetched.",
+    "profileUpdated": "Profile updated.",
+    "invalidContactNumber": "Contact number is invalid.",
+    "countryIdRequired": "Country id is required.",
+    "stateIdRequired": "State id is required."
   },
 
   "admin": {
     "resetPassword": "Password reset successfully.",
     "emailSent": "Forgot password mail sent successfully.",
     "emailNotFound": "Email does not exist.",
-    "passwordNotMatch": "Old password does not match",
-    "passwordUpdated": "Password updated successfully",
+    "passwordNotMatch": "Old password does not match.",
+    "passwordUpdated": "Password updated successfully.",
     "invalidToken": "Token is invalid.",
-    "adminNotFound": "Admin not found."
+    "adminNotFound": "Admin not found.",
+    "adminFetched": "Admin details fetched successfully",
+    "invalidId": "invalidId.",
+    "updated": "Admin updated successfully.",
+    "faqAdded": "FAQ created successfully.",
+    "faqUpdated": "FAQ updated successfully.",
+    "getAllFaq": "FAQs fetched successfully.",
+    "deleteFaq": "FAQ deleted successfully.",
+    "getFaq": "FAQ fetched successfully."
   },
 
+  "teamMember": {
+    "memberNotFound": "Team member not found with this mail.",
+    "invalidId": "invalidId.",
+    "emailExist": "Email already registered.",
+    "passwordAlreadySet": "Password already set.",
+    "invitationSent": "Invitation email sent successfully.",
+    "accountCreated": "Account created successfully.",
+    "emailNotRegistered": "This email is not registered.",
+    "passwordReset": "Password reset successful.",
+    "tokenSent": "Token sent to your email successfully.",
+    "emailNotFound": "Email does not exist.",
+    "oldPasswordMismatch": "Old password does not match.",
+    "passwordUpdated": "Password updated successfully.",
+    "invalidToken": "Invalid token.",
+    "registerFirst": "Register first.",
+    "passwordSet": "Password set successfully.",
+    "resetPassword": "Password reset successfully.",
+    "emailSent": "Token sent to your email successfully.",
+    "passwordNotMatch": "Old password does not match.",
+    "memberGet": "Team member details fetched successfully.",
+    "deleted": "Team member deleted successfully.",
+    "TeamMemberFetched": "All team member fetched successfully.",
+    "noDataFound": "All team member fetched successfully.",
+    "updated": "Team member updated successfully.",
+    "agencyIdAlreadyExists": "Agency Id already exist for this teamMember.",
+    "fillAll": "Please fill all the required fields",
+    "agencyIdRequired": "Agencie Id required",
+    "roleRequired": "Role required"
+  },
   "agency": {
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",
-    "agencyInactive": "Agency is in-active."
+    "agencyInactive": "Agency is in-active.",
+    "clientCreated": "Invitation mail sent to the client.",
+    "clientExist": "Client already exist.",
+    "agencyNotFound": "Agency does not exist.",
+    "agencyUpdated": "Updated successfully.",
+    "agencyGet": "Agency  profile fetched successfully.",
+    "agencyUpdate": "Agency  profile updated successfully."
+  },
+  "agreement": {
+    "agreementAdded": "Agreement created successfully.",
+    "deleteAgreement": "Agreement deleted successfully.",
+    "agreementUpdated": "Agreement updated successfully.",
+    "getAgreement": "Agreement fetched successfully.",
+    "getAllAgreement": "Agreements fetched successfully.",
+    "canNotDelete": "Agreement already agreed.",
+    "agreementStatusUpdated": "Agreement status updated."
+  },
+  "invoice": {
+    "invoiceCreated": "Invoice created successfully.",
+    "invoiceNumberExists": "Invoice number already exists",
+    "clientFetched": "Client Fetched successfully",
+    "getAllInvoices": "Invoices fetched successfully.",
+    "invoiceDeleted": "Invoice deleted successfully.",
+    "canNotDelete": "Invoice can not be deleted.",
+    "invoiceInfo": "Invoice information fetched successfully."
   },
 
   "emailTemplate": {
-    "forgotPasswordSubject": "Reset your password now."
+    "forgotPasswordSubject": "Reset your password now.",
+    "invitation": "Join to SyncUpp"
+  },
+
+  "client": {
+    "clientNotFound": "Client does not exist.",
+    "clientVerified": "Verified successfully.",
+    "clientDeleted": "Client deleted successfully.",
+    "agenciesFetched": "Agencies fetched successfully.",
+    "clientsFetched": "Client list fetched successfully."
   },
 
   "default": { "default": "Something went wrong." }

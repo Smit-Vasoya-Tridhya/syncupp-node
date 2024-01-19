@@ -7,12 +7,12 @@ const sendEmail = async (payload) => {
     port: 465,
     service: "gmail",
     auth: {
-      user: process.env.MAIL,
+      user: process.env.EMAIL,
       pass: process.env.MAILPASSWORD,
     },
   });
   const mailOptions = {
-    from: process.env.MAIL,
+    from: process.env.EMAIL,
     to: payload.email,
     subject: payload.subject,
     html: payload.message,

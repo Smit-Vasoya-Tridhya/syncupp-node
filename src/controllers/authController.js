@@ -32,10 +32,7 @@ exports.agencyGoogleSignUp = catchAsyncError(async (req, res, next) => {
 });
 
 exports.agencyFacebookSignUp = catchAsyncError(async (req, res, next) => {
-  const { code } = req.query;
-  if (!code || code !== "")
-    return throwError(returnMessage("auth", "facebookAuthTokenNotFound"));
-  const agencyFacebookSignUp = await authService.facebookSignIn(code);
+  const agencyFacebookSignUp = await authService.facebookSignIn(req.body);
   return sendResponse(
     res,
     true,
@@ -87,4 +84,23 @@ exports.changePassword = catchAsyncError(async (req, res, next) => {
     {},
     statusCode.success
   );
+});
+
+exports.countriesList = catchAsyncError(async (req, res, next) => {
+  const countries = await authService.countryList(req.body);
+  return sendResponse(res, true, undefined, countries, statusCode.success);
+});
+
+exports.statesList = catchAsyncError(async (req, res, next) => {
+  if (!req.params.countryId)
+    return throwError(returnMessage("auth", "countryIdRequired"));
+  const states = await authService.statesList(req.params.countryId, req.body);
+  return sendResponse(res, true, undefined, states, statusCode.success);
+});
+
+exports.citiesList = catchAsyncError(async (req, res, next) => {
+  if (!req.params.stateId)
+    return throwError(returnMessage("auth", "stateIdRequired"));
+  const cities = await authService.citiesList(req.params.stateId, req.body);
+  return sendResponse(res, true, undefined, cities, statusCode.success);
 });

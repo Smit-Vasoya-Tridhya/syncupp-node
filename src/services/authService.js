@@ -6,6 +6,7 @@ const {
   validateEmail,
   passwordValidation,
   forgotPasswordEmailTemplate,
+  paginationObject,
 } = require("../utils/utils");
 const bcrypt = require("bcrypt");
 const { throwError } = require("../helpers/errorUtil");
@@ -16,15 +17,23 @@ const Role_Master = require("../models/masters/roleMasterSchema");
 const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
-
+const axios = require("axios");
+require("dotenv").config();
+const Country_Master = require("../models/masters/countryMasterSchema");
+const City_Master = require("../models/masters/cityMasterSchema");
+const State_Master = require("../models/masters/stateMasterSchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
+      const expiresIn = payload?.rememberMe
+        ? process.env.JWT_REMEMBER_EXPIRE
+        : process.env.JWT_EXPIRES_IN;
+
       const token = jwt.sign(
         { id: payload._id, reference: payload.reference_id },
         process.env.JWT_SECRET_KEY,
         {
-          expiresIn: process.env.JWT_EXPIRES_IN,
+          expiresIn,
         }
       );
       return { token, user: payload };
@@ -70,6 +79,9 @@ class AuthService {
       if (!passwordValidation(password))
         return throwError(returnMessage("auth", "invalidPassword"));
 
+      // if (isNaN(contact_number))
+      //   return throwError(returnMessage("auth", "invalidContactNumber"));
+
       const agency_exist = await Authentication.findOne({
         email,
         is_deleted: false,
@@ -83,8 +95,8 @@ class AuthService {
         image_url = "uploads/" + files?.filename;
       }
       const agency_object = {
-        comapny_name: payload?.comapny_name,
-        comapny_website: payload?.comapny_website,
+        company_name: payload?.company_name,
+        company_website: payload?.company_website,
         no_of_people: payload?.no_of_people,
         industry: payload?.industry,
       };
@@ -109,7 +121,10 @@ class AuthService {
       });
       agency_enroll = agency_enroll.toObject();
       agency_enroll.role = role;
-      return this.tokenGenerator(agency_enroll);
+      return this.tokenGenerator({
+        ...agency_enroll,
+        rememberMe: payload?.rememberMe,
+      });
     } catch (error) {
       logger.error(`Error while agency signup: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -131,7 +146,7 @@ class AuthService {
         .lean();
 
       if (!existing_agency) {
-        const [agency, role] = await Promise.resolve([
+        const [agency, role] = await Promise.all([
           agencyService.agencyRegistration({}),
           Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
@@ -141,16 +156,19 @@ class AuthService {
           last_name: decoded?.family_name,
           email: decoded?.email,
           reference_id: agency?._id,
-          remember_me: payload?.remember_me,
           role: role?._id,
           status: "payment_pending",
           is_google_signup: true,
         });
         agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
-        return this.tokenGenerator(agency_enroll);
+        return this.tokenGenerator({
+          ...agency_enroll,
+        });
       } else {
-        return this.tokenGenerator(existing_agency);
+        return this.tokenGenerator({
+          ...existing_agency,
+        });
       }
     } catch (error) {
       logger.error("Error while google sign In", error);
@@ -160,25 +178,13 @@ class AuthService {
 
   facebookSignIn = async (payload) => {
     try {
-      const redirect_uri = encodeURIComponent(
-        `${process.env.SERVER_URL}/api/v1/auth/facebook-signup`
-      );
-      const accessTokenUrl =
-        "https://graph.facebook.com/v6.0/oauth/access_token?" +
-        `client_id=${process.env.FACEBOOK_CLIENT_ID}&` +
-        `client_secret=${process.env.FACEBOOK_CLIENT_SECRET}&` +
-        `redirect_uri=${redirect_uri}&` +
-        `code=${encodeURIComponent(payload)}`;
-
-      const accessToken = await axios
-        .get(accessTokenUrl)
-        .then((res) => res.data["access_token"]);
+      const { access_token } = payload;
+      if (!access_token || access_token === "")
+        return throwError(returnMessage("auth", "facebookAuthTokenNotFound"));
 
       const data = await axios
         .get(
-          `https://graph.facebook.com/me?access_token=${encodeURIComponent(
-            accessToken
-          )}&fields=id,name,email,first_name,last_name`
+          `https://graph.facebook.com/me?access_token=${access_token}&fields=id,name,email,first_name,last_name`
         )
         .then((res) => res.data);
 
@@ -192,12 +198,12 @@ class AuthService {
         .lean();
 
       if (!existing_agency) {
-        const [agency, role] = await Promise.resolve([
+        const [agency, role] = await Promise.all([
           agencyService.agencyRegistration({}),
           Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
 
-        const agency_enroll = await Authentication.create({
+        let agency_enroll = await Authentication.create({
           first_name: data?.first_name,
           last_name: data?.last_name,
           email: data?.email,
@@ -208,9 +214,13 @@ class AuthService {
         });
         agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
-        return this.tokenGenerator(agency_enroll);
+        return this.tokenGenerator({
+          ...agency_enroll,
+        });
       } else {
-        return this.tokenGenerator(existing_agency);
+        return this.tokenGenerator({
+          ...existing_agency,
+        });
       }
     } catch (error) {
       logger.error(`Error while facebook signup:${error.message}`);
@@ -250,7 +260,10 @@ class AuthService {
       )
         return throwError(returnMessage("agency", "agencyInactive"));
 
-      return this.tokenGenerator(existing_Data);
+      return this.tokenGenerator({
+        ...existing_Data,
+        rememberMe: payload?.rememberMe,
+      });
     } catch (error) {
       logger.error(`Error while login: ${error.message}`);
       return throwError(error?.message, error?.statusCode);
@@ -334,14 +347,10 @@ class AuthService {
       if (!data) return throwError(returnMessage("auth", "invalidToken"));
 
       const hased_password = await this.passwordEncryption({ password });
-      await Authentication.findByIdAndUpdate(
-        data?._id,
-        {
-          password: hased_password,
-          reset_password_token: undefined,
-        },
-        { new: true }
-      );
+      await Authentication.findByIdAndUpdate(data?._id, {
+        password: hased_password,
+        reset_password_token: null,
+      });
       return true;
     } catch (error) {
       logger.error(`Error while resetting password: ${error}`);
@@ -369,13 +378,69 @@ class AuthService {
         password: new_password,
       });
 
-      user.reset_password_token = undefined;
+      user.reset_password_token = null;
       user.password = hash_password;
       await user.save();
 
       return true;
     } catch (error) {
       logger.error(`Error while changing password: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  countryList = async (payload) => {
+    try {
+      const query_obj = {};
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+
+      return await Country_Master.find(query_obj).select("name").lean();
+    } catch (error) {
+      logger.error(`Error while fectching countries list: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  statesList = async (country_id, payload) => {
+    try {
+      const query_obj = { country: country_id };
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+      return await State_Master.find(query_obj).select("name").lean();
+    } catch (error) {
+      logger.error(`Error while fectching states: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  citiesList = async (state_id, payload) => {
+    try {
+      const query_obj = { state: state_id };
+
+      if (payload.search && payload.search !== "") {
+        query_obj["$or"] = [
+          {
+            name: { $regex: payload.search, $options: "i" },
+          },
+        ];
+      }
+
+      return await City_Master.find(query_obj).select("name").lean();
+    } catch (error) {
+      logger.error(`Error while fectching cities list: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };
