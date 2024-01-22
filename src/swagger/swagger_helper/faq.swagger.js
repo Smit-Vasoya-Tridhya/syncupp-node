@@ -58,25 +58,29 @@ const getAllFaq = {
           type: "object",
 
           properties: {
-            sortField: {
-              type: "string",
-              description: "Enter sortField",
-              required: true,
-            },
-            sortOrder: {
-              type: "string",
-              description: "Enter sortOrder",
-              required: true,
-            },
             page: {
               type: "number",
-              description: "Enter page number",
-              required: true,
+              description: "Enter page number.",
+              default: 1,
             },
-            itemsPerPage: {
+            items_per_page: {
               type: "number",
-              description: "Enter itemsPerPage",
-              required: true,
+              description: "Enter item per page.",
+              default: 10,
+            },
+            sort_order: {
+              type: "string",
+              description: "Enter order of sort asc or desc.",
+              default: "desc",
+            },
+            sort_field: {
+              type: "string",
+              description: "Enter field to sort.",
+              default: "createdAt",
+            },
+            search: {
+              type: "string",
+              description: "Enter value of search",
             },
           },
         },
@@ -231,7 +235,7 @@ const faqRoutes = {
     post: addFaqAdmin,
   },
   "/api/v1/admin/get-all-faq": {
-    get: getAllFaq,
+    post: getAllFaq,
   },
   "/api/v1/admin/delete-faq": {
     delete: deleteFaq,

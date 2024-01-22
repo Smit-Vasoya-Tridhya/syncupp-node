@@ -1,8 +1,7 @@
 const AdminFqa = require("../models/adminFaqSchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const { returnMessage } = require("../utils/utils");
-const { paginationObject, getKeywordType } = require("./commonSevice");
+const { returnMessage, paginationObject } = require("../utils/utils");
 
 class FaqService {
   // Add   FQA
@@ -30,7 +29,7 @@ class FaqService {
             },
           },
           {
-            contact_number: {
+            description: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -51,9 +50,9 @@ class FaqService {
       const [faqs, totalFaqsCount] = await Promise.all([
         AdminFqa.find(queryObj)
           .select("title description")
-          .skip(pagination.skip)
-          .limit(pagination.resultPerPage)
           .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
           .lean(),
         AdminFqa.countDocuments(queryObj),
       ]);
@@ -62,7 +61,7 @@ class FaqService {
         faqs,
         pagination: {
           current_page: pagination.page,
-          total_pages: Math.ceil(totalFaqsCount / pagination.resultPerPage),
+          total_pages: Math.ceil(totalFaqsCount / pagination.result_per_page),
         },
       };
     } catch (error) {

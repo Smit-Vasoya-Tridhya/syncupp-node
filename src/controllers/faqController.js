@@ -21,14 +21,13 @@ exports.addFaq = catchAsyncError(async (req, res, next) => {
 // get All FQA
 
 exports.getAllFaq = catchAsyncError(async (req, res, next) => {
-  const { faqs, pagination } = await faqService.getAllFaq(req.body);
+  const faqs = await faqService.getAllFaq(req.body);
   sendResponse(
     res,
     true,
     returnMessage("admin", "getAllFaq"),
     faqs,
-    statusCode.success,
-    pagination
+    statusCode.success
   );
 });
 
