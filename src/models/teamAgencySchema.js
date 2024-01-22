@@ -10,7 +10,7 @@ const teamAgencySchema = new mongoose.Schema(
     },
     role: {
       type: mongoose.Types.ObjectId,
-      ref: "agency_type_master",
+      ref: "team_role_master",
       required: true,
     },
     is_deleted: {

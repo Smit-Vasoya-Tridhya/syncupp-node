@@ -150,7 +150,6 @@ class AgencyService {
           _id: user_id,
           is_deleted: false,
         },
-
         {
           is_facebook_signup: 0,
           is_google_signup: 0,

@@ -7,13 +7,12 @@ const teamMemberService = new TeamMemberService();
 
 // Team Member add
 exports.add = catchAsyncError(async (req, res, next) => {
-  const user_id = req.user._id;
-  const teamMember = await teamMemberService.add(req.body, user_id);
+  await teamMemberService.addTeamMember(req.body, req.user);
   sendResponse(
     res,
     true,
     returnMessage("teamMember", "invitationSent"),
-    teamMember,
+    {},
     statusCode.success
   );
 });

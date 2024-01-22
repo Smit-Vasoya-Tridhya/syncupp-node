@@ -6,7 +6,7 @@ const agreementValidator = require("../validators/agreement.validator");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const agencyController = require("../controllers/agencyController");
 
-// agencyRoute.use(protect);
+agencyRoute.use(protect);
 agencyRoute.post(
   "/create-client",
   authorizeRole("agency"),

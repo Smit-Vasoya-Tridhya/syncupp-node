@@ -69,9 +69,11 @@
     "updated": "Team member updated successfully.",
     "agencyIdAlreadyExists": "Agency Id already exist for this teamMember.",
     "fillAll": "Please fill all the required fields",
-    "agencyIdRequired": "Agencie Id required",
-    "roleRequired": "Role required"
+    "agencyIdRequired": "Agency Id required",
+    "roleRequired": "Role required",
+    "userNotFound": "User not found."
   },
+
   "agency": {
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",
