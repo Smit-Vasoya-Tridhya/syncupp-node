@@ -1,6 +1,6 @@
 const addAgreementAdmin = {
   tags: ["Agreement"],
-  description: "",
+  description: "status : [`draft` , `sent`]",
   summary: "Add Agreement ",
   security: [
     {
@@ -16,6 +16,16 @@ const addAgreementAdmin = {
           properties: {
             client_id: {
               type: "string",
+              description: "The client id.",
+              required: true,
+            },
+            title: {
+              type: "string",
+              description: "The title.",
+              required: true,
+            },
+            receiver: {
+              type: "string",
               description: "The due date of the agreement.",
               required: true,
             },
@@ -27,6 +37,11 @@ const addAgreementAdmin = {
             status: {
               type: "string",
               description: "The status of the agreement.",
+              required: true,
+            },
+            agreement_content: {
+              type: "string",
+              description: "The agreement_content of the agreement.",
               required: true,
             },
           },
@@ -51,8 +66,8 @@ const addAgreementAdmin = {
 const getAllAgreement = {
   tags: ["Agreement"],
   description:
-    "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
-  summary: "Get All Agreement ",
+    "sortOrder : [`asc` , `desc`] ,  sortField : [`title` , `receiver` , `due_date` , `status`]   ,    page :[`number`] , itemsPerPage:[`number`] ))",
+  summary: "Get All Agreement  ",
   security: [
     {
       bearerAuth: [],
@@ -76,10 +91,12 @@ const getAllAgreement = {
             page: {
               type: "number",
               description: "Enter page number",
+              example: 1,
             },
             itemsPerPage: {
               type: "number",
               description: "Enter itemsPerPage",
+              example: 10,
             },
           },
         },
@@ -116,7 +133,7 @@ const deleteAgreement = {
     {
       name: "id",
       in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
+      description: "ID of the agreement",
       required: true,
       schema: {
         type: "string", // adjust the type accordingly
@@ -155,20 +172,28 @@ const updateAgreement = {
           properties: {
             title: {
               type: "string",
-              description: "Enter title",
+              description: "The title.",
+              required: true,
             },
-            description: {
+            receiver: {
               type: "string",
-              description: "Enter description",
+              description: "The due date of the agreement.",
+              required: true,
             },
             due_date: {
               type: "string",
-              format: "date",
-              description: "Enter description",
+              description: "The due date of the agreement.",
+              required: true,
             },
             status: {
               type: "string",
-              description: "Enter status",
+              description: "The status of the agreement.",
+              required: true,
+            },
+            agreement_content: {
+              type: "string",
+              description: "The agreement_content of the agreement.",
+              required: true,
             },
           },
         },
@@ -179,7 +204,7 @@ const updateAgreement = {
     {
       name: "id",
       in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
+      description: "ID of the agreement",
       required: true,
       schema: {
         type: "string", // adjust the type accordingly
@@ -214,7 +239,7 @@ const getAgreement = {
     {
       name: "id",
       in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
+      description: "ID of agreement",
       required: true,
       schema: {
         type: "string", // adjust the type accordingly
@@ -237,7 +262,7 @@ const getAgreement = {
 
 const updateAgreementStatus = {
   tags: ["Agreement"],
-  description: "status : [`draft` , `sent`]",
+  description: "status : [`agreed`]",
   summary: "Update Agreement status ",
   security: [
     {
@@ -254,6 +279,7 @@ const updateAgreementStatus = {
             status: {
               type: "string",
               description: "Enter status",
+              example: "agreed",
             },
           },
         },
@@ -264,7 +290,7 @@ const updateAgreementStatus = {
     {
       name: "id",
       in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
+      description: "ID of the agreement",
       required: true,
       schema: {
         type: "string", // adjust the type accordingly
@@ -285,11 +311,10 @@ const updateAgreementStatus = {
   },
 };
 
-const getAllClientAgreement = {
+const sendAgreement = {
   tags: ["Agreement"],
-  description:
-    "sortOrder = (asc ,desc)  ,sortField = (name ,email , contact_no)  , page  = (number) , itemsPerPage=(number))",
-  summary: "Get All Agreement agency wise ",
+  description: "",
+  summary: "Send Agreement ",
   security: [
     {
       bearerAuth: [],
@@ -302,6 +327,50 @@ const getAllClientAgreement = {
           type: "object",
 
           properties: {
+            agreementId: {
+              type: "string",
+              description: "Enter status",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const getAllClientAgreement = {
+  tags: ["Agreement"],
+  description:
+    "sortOrder : [`asc` , `desc`] ,  sortField : [`title` , `receiver` , `due_date` , `status`]   ,    page :[`number`] , itemsPerPage:[`number`]))",
+  summary: "Get All Agreement  ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            agency_id: {
+              type: "string",
+              description: "Enter agency_id",
+            },
             sortField: {
               type: "string",
               description: "Enter sortField",
@@ -313,10 +382,12 @@ const getAllClientAgreement = {
             page: {
               type: "number",
               description: "Enter page number",
+              example: 1,
             },
             itemsPerPage: {
               type: "number",
               description: "Enter itemsPerPage",
+              example: 10,
             },
           },
         },
@@ -338,31 +409,32 @@ const getAllClientAgreement = {
   },
 };
 const agreementRoutes = {
-  "/api/v1/agency/add-agreement": {
+  "/api/v1/agency/agreement/add-agreement": {
     post: addAgreementAdmin,
   },
-  "/api/v1/agency/get-all-agreement": {
+  "/api/v1/agency/agreement/get-all-agreement": {
     post: getAllAgreement,
   },
-  "/api/v1/agency/delete-agreement": {
+  "/api/v1/agency/agreement/delete-agreement/{id}": {
     delete: deleteAgreement,
   },
-  "/api/v1/agency/get-agreement/{id}": {
+  "/api/v1/agency/agreement/get-agreement/{id}": {
     get: getAgreement,
   },
-  "/api/v1/agency/update-agreement/{id}": {
+  "/api/v1/agency/agreement/update-agreement/{id}": {
     put: updateAgreement,
   },
-  "/api/v1/client/get-agreement/{id}": {
+  "/api/v1/agency/agreement/send-agreement": {
+    post: sendAgreement,
+  },
+  "/api/v1/client/agreement/get-agreement/{id}": {
     get: getAgreement,
   },
-  "/api/v1/client/update-agreement/{id}": {
+  "/api/v1/client/agreement/update-agreement-status/{id}": {
     put: updateAgreementStatus,
   },
-  "/api/v1/client/update-agreement/{id}": {
-    put: updateAgreementStatus,
-  },
-  "/api/v1/client/get-all-agreement": {
+
+  "/api/v1/client/agreement/get-all-agreement": {
     post: getAllClientAgreement,
   },
 };

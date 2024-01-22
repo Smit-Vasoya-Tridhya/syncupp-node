@@ -3,13 +3,28 @@ const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const { returnMessage } = require("../utils/utils");
 const { paginationObject, getKeywordType } = require("./commonSevice");
+const sendEmail = require("../helpers/sendEmail");
+const Authentication = require("../models/authenticationSchema");
 
 class AgreementService {
   // Add   Agreement
   addAgreement = async (payload, user_id) => {
     try {
+      const {
+        client_id,
+        title,
+        agreement_content,
+        due_date,
+        status,
+        receiver,
+      } = payload;
       const agreement = await Agreement.create({
-        ...payload,
+        client_id,
+        title,
+        agreement_content,
+        due_date,
+        status,
+        receiver,
         agency_id: user_id,
       });
       return agreement;
@@ -52,7 +67,7 @@ class AgreementService {
 
   getAgreement = async (agreementId) => {
     try {
-      const agreement = await Agreement.findById({
+      const agreement = await Agreement.findOne({
         _id: agreementId,
         is_deleted: false,
       }).lean();
@@ -91,25 +106,59 @@ class AgreementService {
 
   updateAgreement = async (payload, agreementId) => {
     try {
+      const { title, agreement_content, due_date, status, receiver } = payload;
       const agreement = await Agreement.findOne({
         _id: agreementId,
         is_deleted: false,
       }).lean();
-
       if (agreement.status === "draft") {
         const updatedAgreement = await Agreement.findByIdAndUpdate(
           {
             _id: agreementId,
           },
-          payload,
+          {
+            title,
+            agreement_content,
+            due_date,
+            status,
+            receiver,
+          },
           { new: true, useFindAndModify: false }
         );
         return updatedAgreement;
       } else {
-        return throwError(returnMessage("agreement", "canNotDelete"));
+        return throwError(returnMessage("agreement", "canNotUpdate"));
       }
     } catch (error) {
       logger.error(`Error while updating Agreement, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Send Agreement
+
+  sendAgreement = async (payload) => {
+    try {
+      const { agreementId } = payload;
+
+      const agreement = await Agreement.findOne({
+        _id: agreementId,
+        is_deleted: false,
+      }).lean();
+
+      const clientDetails = await Authentication.findOne({
+        _id: agreement.client_id,
+      });
+
+      await sendEmail({
+        email: clientDetails?.email,
+        subject: "New agreement",
+        message: agreement,
+      });
+
+      return true;
+    } catch (error) {
+      logger.error(`Error while send Agreement, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };
@@ -120,11 +169,12 @@ class AgreementService {
 
   updateAgreementStatus = async (payload, agreementId) => {
     try {
+      const { status } = payload;
       const agreement = await Agreement.findOneAndUpdate(
         {
           _id: agreementId,
         },
-        payload,
+        { status },
         { new: true, useFindAndModify: false }
       );
       return agreement;

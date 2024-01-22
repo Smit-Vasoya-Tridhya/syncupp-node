@@ -89,8 +89,10 @@
     "agreementUpdated": "Agreement updated successfully.",
     "getAgreement": "Agreement fetched successfully.",
     "getAllAgreement": "Agreements fetched successfully.",
-    "canNotDelete": "Agreement already agreed.",
-    "agreementStatusUpdated": "Agreement status updated."
+    "canNotDelete": "Agreement can not be deleted.",
+    "canNotUpdate": "Agreement can not be updated.",
+    "agreementStatusUpdated": "Agreement status updated.",
+    "agreementSent": "Agreement sent to client successfully."
   },
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",
