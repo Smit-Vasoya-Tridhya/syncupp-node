@@ -57,7 +57,7 @@ adminRoute.put(
 adminRoute.get("/getProfile", getAdmin);
 adminRoute.put("/updateProfile", updateAdmin);
 adminRoute.post("/add-faq", addFaqValidator, validatorFunc, addFaq);
-adminRoute.get("/get-all-faq", getAllFaq);
+adminRoute.post("/get-all-faq", getAllFaq);
 adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
 adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
 adminRoute.get("/get-faq/:id", getFaq);
