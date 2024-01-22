@@ -1,8 +1,7 @@
 const AdminFqa = require("../models/adminFaqSchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const { returnMessage } = require("../utils/utils");
-const { paginationObject, getKeywordType } = require("./commonSevice");
+const { returnMessage, paginationObject } = require("../utils/utils");
 
 class FaqService {
   // Add   FQA
@@ -29,33 +28,40 @@ class FaqService {
               $options: "i",
             },
           },
+          {
+            description: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
         ];
 
-        const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
-          queryObj["$or"].push({
-            contact_number: numericKeyword,
-          });
-        }
+        // const keywordType = getKeywordType(searchObj.search);
+        // if (keywordType === "number") {
+        //   const numericKeyword = parseInt(searchObj.search);
+        //   queryObj["$or"].push({
+        //     contact_number: numericKeyword,
+        //   });
+        // }
       }
 
       const pagination = paginationObject(searchObj);
-      const faqs = await AdminFqa.find(queryObj)
-        .skip(pagination.skip)
-        .limit(pagination.resultPerPage)
-        .sort(pagination.sort);
 
-      const totalFaqsCount = await AdminFqa.countDocuments(queryObj);
-
-      // Calculating total pages
-      const pages = Math.ceil(totalFaqsCount / pagination.resultPerPage);
+      const [faqs, totalFaqsCount] = await Promise.all([
+        AdminFqa.find(queryObj)
+          .select("title description")
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
+          .lean(),
+        AdminFqa.countDocuments(queryObj),
+      ]);
 
       return {
         faqs,
         pagination: {
           current_page: pagination.page,
-          total_pages: pages,
+          total_pages: Math.ceil(totalFaqsCount / pagination.result_per_page),
         },
       };
     } catch (error) {

@@ -37,7 +37,7 @@ class ClientService {
 
       let link = `${
         process.env.REACT_APP_URL
-      }/verify-client?name=${encodeURIComponent(
+      }/client/verify?name=${encodeURIComponent(
         agency?.first_name + " " + agency?.last_name
       )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
         agency?.reference_id
@@ -227,6 +227,13 @@ class ClientService {
   // Get the client ist for the Agency
   clientList = async (payload, agency) => {
     try {
+      if (
+        payload.sort_field &&
+        (payload.sort_field === "company_name" ||
+          payload.sort_field === "company_website")
+      ) {
+        payload.sort_field = `reference_id.${payload.sort_field}`;
+      }
       const pagination = paginationObject(payload);
 
       const clients = await Client.distinct("_id", {
@@ -249,6 +256,9 @@ class ClientService {
             email: { $regex: payload.search, $options: "i" },
           },
           {
+            contact_number: { $regex: payload.search, $options: "i" },
+          },
+          {
             "reference_id.company_name": {
               $regex: payload.search,
               $options: "i",
@@ -262,9 +272,9 @@ class ClientService {
           },
         ];
 
-        if (!isNaN(payload?.search)) {
-          query_obj["$or"].push({ contact_number: payload.search });
-        }
+        // if (!isNaN(payload?.search)) {
+        //   query_obj["$or"].push({ contact_number: payload.search });
+        // }
       }
 
       const aggrage_array = [
@@ -357,9 +367,9 @@ class ClientService {
           .lean(),
         Client.findById(client?.reference_id)
           .select("-agency_ids")
-          .populate("city", "label")
-          .populate("country", "label")
-          .populate("state", "label")
+          .populate("city", "name")
+          .populate("country", "name")
+          .populate("state", "name")
           .lean(),
       ]);
 

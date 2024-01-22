@@ -79,8 +79,8 @@ class AuthService {
       if (!passwordValidation(password))
         return throwError(returnMessage("auth", "invalidPassword"));
 
-      if (isNaN(contact_number))
-        return throwError(returnMessage("auth", "invalidContactNumber"));
+      // if (isNaN(contact_number))
+      //   return throwError(returnMessage("auth", "invalidContactNumber"));
 
       const agency_exist = await Authentication.findOne({
         email,

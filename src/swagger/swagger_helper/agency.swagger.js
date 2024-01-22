@@ -44,7 +44,7 @@ const addClient = {
               descripition: "Enter country object id of client.",
             },
             pincode: {
-              type: "number",
+              type: "string",
               descripition: "Enter pincode of client.",
             },
             title: {
@@ -52,7 +52,7 @@ const addClient = {
               descripition: "Enter title of client.",
             },
             contact_number: {
-              type: "number",
+              type: "string",
               descripition: "Enter contact number of client.",
             },
           },
@@ -214,7 +214,7 @@ const updateAgencyProfile = {
               required: true,
             },
             contact_number: {
-              type: "number",
+              type: "string",
               description: "Enter contact number",
               required: true,
             },
@@ -332,7 +332,7 @@ const updateClient = {
               descripition: "Enter country object id of client.",
             },
             pincode: {
-              type: "number",
+              type: "string",
               descripition: "Enter pincode of client.",
             },
             title: {
@@ -340,7 +340,7 @@ const updateClient = {
               descripition: "Enter title of client.",
             },
             contact_number: {
-              type: "number",
+              type: "string",
               descripition: "Enter contact number of client.",
             },
           },

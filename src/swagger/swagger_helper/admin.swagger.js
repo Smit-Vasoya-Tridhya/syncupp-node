@@ -265,6 +265,7 @@ const deleteFaq = {
             faqIdsToDelete: {
               type: "array",
               description: "Enter FQA IDS to be deleted",
+              default: [],
             },
           },
         },
@@ -456,10 +457,10 @@ const updateAgencyStatus = {
             status: {
               type: "string",
               description:
-                "Enter status of the agency. either active or agency_inactive.",
-              default: "agency_inactive",
+                "Enter status of the agency. either active or inactive.",
+              default: "inactive",
             },
-            is_deleted: {
+            delete: {
               type: "boolean",
               description: "Enter true or false.",
               default: false,
