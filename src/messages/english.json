@@ -71,7 +71,8 @@
     "fillAll": "Please fill all the required fields",
     "agencyIdRequired": "Agency Id required",
     "roleRequired": "Role required",
-    "userNotFound": "User not found."
+    "userNotFound": "User not found.",
+    "verified": "Verified successfully."
   },
 
   "agency": {

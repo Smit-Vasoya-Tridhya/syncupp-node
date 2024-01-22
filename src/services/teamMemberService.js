@@ -380,6 +380,7 @@ class TeamMemberService {
         teamMember.status = "confirmed";
 
         await teamMember.save();
+        return;
       } else if (client_id && client_id !== "") {
         if (!validateEmail(email))
           return throwError(returnMessage("auth", "invalidEmail"));
@@ -444,6 +445,7 @@ class TeamMemberService {
           return authService.tokenGenerator(client_team_member);
         }
       }
+      return throwError(returnMessage("default", "default"));
     } catch (error) {
       logger.error(`Error while Team Member verify , ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -826,27 +828,38 @@ class TeamMemberService {
 
   // Edit Team Member
 
-  editMember = async (payload, userId) => {
+  editMember = async (payload, team_member_id) => {
     try {
-      const memberId = userId;
+      const team_member_exist = await Authentication.findById(team_member_id)
+        .populate("role", "name")
+        .where("is_deleted")
+        .ne(true)
+        .lean();
+      if (!team_member_exist || team_member_exist?.role?.name !== "team_agency")
+        return throwError(
+          returnMessage("teamMember", "userNotFound"),
+          statusCode.notFound
+        );
+      let role;
       if (payload?.role && payload?.role !== "")
-        payload.role = await Team_Role_Master.findOne({ name: payload?.role })
+        role = await Team_Role_Master.findOne({ name: payload?.role })
           .select("_id")
           .lean();
 
-      const teamMember = await Authentication.findOneAndUpdate(
+      await Authentication.findByIdAndUpdate(
+        team_member_id,
         {
-          _id: memberId,
-          is_deleted: false,
+          name: payload?.name,
+          contact_number: payload?.contact_number,
         },
-        payload,
-        { new: true, useFindAndModify: false }
+        { new: true }
       );
-
-      if (!teamMember) {
-        return throwError(returnMessage("teamMember", "invalidId"));
-      }
-      return teamMember;
+      await Team_Agency.findByIdAndUpdate(
+        team_member_exist?.reference_id,
+        { role: role?._id },
+        { new: true }
+      );
+      return;
     } catch (error) {
       logger.error(`Error while Team member Edit, ${error}`);
       return throwError(error?.message, error?.statusCode);

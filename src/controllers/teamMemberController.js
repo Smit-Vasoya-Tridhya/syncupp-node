@@ -23,7 +23,7 @@ exports.verify = catchAsyncError(async (req, res, next) => {
   sendResponse(
     res,
     true,
-    returnMessage("teamMember", "passwordSet"),
+    returnMessage("teamMember", "verified"),
     verify,
     statusCode.success
   );
@@ -88,8 +88,10 @@ exports.getAll = catchAsyncError(async (req, res, next) => {
 //  Edit Team Member
 
 exports.editMember = catchAsyncError(async (req, res, next) => {
-  const user_id = req.user._id;
-  const teamMember = await teamMemberService.editMember(req.body, user_id);
+  const teamMember = await teamMemberService.editMember(
+    req.body,
+    req.params.id
+  );
   sendResponse(
     res,
     true,
