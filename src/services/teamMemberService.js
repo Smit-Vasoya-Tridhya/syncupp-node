@@ -131,9 +131,9 @@ class TeamMemberService {
 
         let link = `${
           process.env.REACT_APP_URL
-        }/verify?name=${encodeURIComponent(
+        }/team/verify?name=${encodeURIComponent(
           teamMember?.name
-        )}&email=${encodeURIComponent(email)}&clientId = ${encodeURIComponent(
+        )}&email=${encodeURIComponent(email)}&clientId=${encodeURIComponent(
           user_id
         )}&agencyId=${encodeURIComponent(agency_id)}`;
         if (!isEmail) {
@@ -534,15 +534,21 @@ class TeamMemberService {
               $options: "i",
             },
           },
+          {
+            contact_number: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
         ];
 
-        const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
-          queryObj["$or"].push({
-            contact_number: numericKeyword,
-          });
-        }
+        // const keywordType = getKeywordType(searchObj.search);
+        // if (keywordType === "number") {
+        //   const numericKeyword = parseInt(searchObj.search);
+        //   queryObj["$or"].push({
+        //     contact_number: numericKeyword,
+        //   });
+        // }
       }
 
       const pagination = paginationObject(searchObj);
@@ -615,35 +621,18 @@ class TeamMemberService {
         },
       ];
 
-      const teamMemberList = await Authentication.aggregate(pipeLine)
-        .skip(pagination.skip)
-        .limit(pagination.resultPerPage)
-        .sort(pagination.sort);
+      const [teamMemberList, total_team_members] = await Promise.all([
+        Authentication.aggregate(pipeLine)
+          .skip(pagination.skip)
+          .limit(pagination.resultPerPage)
+          .sort(pagination.sort),
+        Authentication.aggregate(pipeLine),
+      ]);
 
-      const countResult = await Authentication.aggregate(pipeLine).count(
-        "count"
-      );
-
-      const count = countResult[0] && countResult[0].count;
-
-      if (count !== undefined) {
-        // Calculating total pages
-        const pages = Math.ceil(count / pagination.resultPerPage);
-
-        return {
-          teamMemberList,
-          pagination: {
-            current_page: pagination.page,
-            total_pages: pages,
-          },
-        };
-      }
       return {
         teamMemberList,
-        pagination: {
-          current_page: pagination.page,
-          total_pages: 0,
-        },
+        page_count:
+          Math.ceil(total_team_members.length / pagination.resultPerPage) || 0,
       };
     } catch (error) {
       logger.error(`Error while Team members, Listing ${error}`);

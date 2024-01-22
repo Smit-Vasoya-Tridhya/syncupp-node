@@ -86,7 +86,7 @@ const updateClient = {
               descripition: "Enter country object id.",
             },
             pincode: {
-              type: "number",
+              type: "string",
               descripition: "Enter pincode.",
             },
             address: {

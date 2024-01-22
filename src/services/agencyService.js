@@ -41,6 +41,9 @@ class AgencyService {
             email: { $regex: payload.search, $options: "i" },
           },
           {
+            contact_number: { $regex: payload.search, $options: "i" },
+          },
+          {
             "reference_id.company_name": {
               $regex: payload.search,
               $options: "i",
@@ -66,25 +69,41 @@ class AgencyService {
           },
         ];
 
-        const keyword_type = getKeywordType(payload.search);
-        if (keyword_type === "number") {
-          query_obj["$or"].push({ contact_number: parseInt(payload.search) });
-        }
+        // const keyword_type = getKeywordType(payload.search);
+        // if (keyword_type === "number") {
+        //   query_obj["$or"].push({ contact_number: parseInt(payload.search) });
+        // }
       }
 
+      const aggragate = [
+        {
+          $lookup: {
+            from: "agencies",
+            localField: "reference_id",
+            foreignField: "_id",
+            as: "reference_id",
+            pipeline: [
+              {
+                $project: {
+                  company_name: 1,
+                  company_website: 1,
+                  industry: 1,
+                  no_of_people: 1,
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$reference_id" },
+        { $match: query_obj },
+      ];
+
       const [agencyList, total_agencies] = await Promise.all([
-        Authentication.find(query_obj)
-          .populate({ path: "reference_id", model: "agency" })
+        Authentication.aggregate(aggragate)
           .sort(pagination.sort)
           .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean(),
-        Authentication.find(query_obj)
-          .populate({
-            path: "reference_id",
-            model: "agency",
-          })
-          .lean(),
+          .limit(pagination.result_per_page),
+        Authentication.aggregate(aggragate),
       ]);
 
       return {
@@ -102,12 +121,14 @@ class AgencyService {
   updateAgencyStatus = async (payload) => {
     try {
       const update_obj = {};
-      if (payload?.status && payload?.status !== "")
-        update_obj.status = payload?.status;
-      else if (payload?.delete) update_obj.is_deleted = true;
+      if (payload?.status && payload?.status !== "") {
+        if (payload.status === "active") update_obj.status = "confirmed";
+        else if (payload.status === "inactive")
+          update_obj.status = "agency_inactive";
+      } else if (payload?.delete) update_obj.is_deleted = true;
 
       await Authentication.updateMany(
-        { _id: { $in: payload?.agencies } },
+        { _id: { $in: payload?.agencies }, status: { $ne: "payment_pending" } },
         update_obj,
         { new: true }
       );

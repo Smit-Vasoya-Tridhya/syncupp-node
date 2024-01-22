@@ -4,7 +4,7 @@ const sendResponse = (
   message = "Fetched Successfully!",
   data,
   statusCode = 200,
-  pagination
+  pagination = undefined
 ) => {
   response.status(statusCode).json({
     success,

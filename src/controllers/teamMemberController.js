@@ -76,17 +76,13 @@ exports.deleteMember = catchAsyncError(async (req, res, next) => {
 
 exports.getAll = catchAsyncError(async (req, res, next) => {
   const user_id = req.user._id;
-  const { pagination, teamMemberList } = await teamMemberService.getAll(
-    user_id,
-    req.body
-  );
+  const teamMemberList = await teamMemberService.getAll(user_id, req.body);
   sendResponse(
     res,
     true,
     returnMessage("teamMember", "TeamMemberFetched"),
     teamMemberList,
-    statusCode.success,
-    pagination
+    statusCode.success
   );
 });
 
