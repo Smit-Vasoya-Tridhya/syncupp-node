@@ -120,7 +120,7 @@ class AgreementService {
 
   updateAgreementStatus = async (payload, agreementId) => {
     try {
-      const agreement = await Agreement.findByOneAndUpdate(
+      const agreement = await Agreement.findOneAndUpdate(
         {
           _id: agreementId,
         },
