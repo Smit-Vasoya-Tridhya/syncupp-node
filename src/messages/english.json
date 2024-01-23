@@ -92,7 +92,8 @@
     "canNotDelete": "Agreement can not be deleted.",
     "canNotUpdate": "Agreement can not be updated.",
     "agreementStatusUpdated": "Agreement status updated.",
-    "agreementSent": "Agreement sent to client successfully."
+    "agreementSent": "Agreement sent to client successfully.",
+    "downloadPDF": "Downlad PDF successfully"
   },
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",

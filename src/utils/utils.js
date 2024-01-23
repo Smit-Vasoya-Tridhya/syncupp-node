@@ -163,6 +163,42 @@ exports.invitationEmail = (link, name) => {
 </html>`;
 };
 
+exports.agrementEmail = (data) => {
+  return `<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agreement Information</title>
+</head>
+<body>
+  <h2>Agreement Information</h2>
+  <table border="1" cellpadding="5">
+    <tr>
+      <td><strong>Title:</strong></td>
+      <td>${data.title}</td>
+    </tr>
+    <tr>
+      <td><strong>Receiver:</strong></td>
+      <td>${data.receiver}</td>
+    </tr>
+    <tr>
+      <td><strong>Due Date:</strong></td>
+      <td>${data.due_date}</td>
+    </tr>
+    <tr>
+      <td><strong>Status:</strong></td>
+      <td>${data.status}</td>
+    </tr>
+    <tr>
+      <td><strong>Agreement Content:</strong></td>
+      <td>${data.agreement_content}</td>
+    </tr>
+  </table>
+  <p>Created At: ${data.createdAt}</p>
+  <p>Updated At: ${data.updatedAt}</p>
+</body>
+</html>`;
+};
 exports.paginationObject = (paginationObject) => {
   const page = paginationObject.page || 1;
   const result_per_page = paginationObject.items_per_page || 10;

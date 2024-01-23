@@ -43,7 +43,7 @@ exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
 // delete Agreement
 
 exports.deleteAgreement = catchAsyncError(async (req, res, next) => {
-  await agreementService.deleteAgreement(req?.params?.id);
+  await agreementService.deleteAgreement(req.body);
   sendResponse(
     res,
     true,
@@ -109,6 +109,18 @@ exports.updateAgreementStatus = catchAsyncError(async (req, res, next) => {
     true,
     returnMessage("agreement", "agreementStatusUpdated"),
     updatedAgreement,
+    statusCode.success
+  );
+});
+
+exports.downloadPdf = catchAsyncError(async (req, res, next) => {
+  const downloadPdf = await agreementService.downloadPdf(req?.params?.id, res);
+
+  sendResponse(
+    res,
+    true,
+    returnMessage("agreement", "downloadPDF"),
+    downloadPdf,
     statusCode.success
   );
 });

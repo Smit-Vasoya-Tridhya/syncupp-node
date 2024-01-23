@@ -1,8 +1,15 @@
 const Agreement = require("../models/agreementSchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const { returnMessage } = require("../utils/utils");
-const { paginationObject, getKeywordType } = require("./commonSevice");
+const {
+  returnMessage,
+  agrementEmail,
+  paginationObject,
+  getKeywordType,
+} = require("../utils/utils");
+// const { getKeywordType } = require("./commonSevice");
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
 const sendEmail = require("../helpers/sendEmail");
 const Authentication = require("../models/authenticationSchema");
 
@@ -18,11 +25,12 @@ class AgreementService {
         status,
         receiver,
       } = payload;
+      const dueDate = new Date(due_date);
       const agreement = await Agreement.create({
         client_id,
         title,
         agreement_content,
-        due_date,
+        due_date: dueDate,
         status,
         receiver,
         agency_id: user_id,
@@ -38,24 +46,59 @@ class AgreementService {
   getAllAgreement = async (searchObj, user_id) => {
     try {
       const queryObj = { is_deleted: false, agency_id: user_id };
-
       const pagination = paginationObject(searchObj);
+
+      if (searchObj.search && searchObj.search !== "") {
+        queryObj["$or"] = [
+          {
+            title: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            receiver: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            status: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+        ];
+
+        const keywordType = getKeywordType(searchObj.search);
+        if (keywordType === "number") {
+          const numericKeyword = parseInt(searchObj.search);
+
+          queryObj["$or"].push({
+            revenue_made: numericKeyword,
+          });
+        } else if (keywordType === "date") {
+          const dateKeyword = new Date(searchObj.search);
+          queryObj["$or"].push({ due_date: dateKeyword });
+          queryObj["$or"].push({ updatedAt: dateKeyword });
+        }
+      }
+
       const agreements = await Agreement.find(queryObj)
         .skip(pagination.skip)
-        .limit(pagination.resultPerPage)
+        .limit(pagination.result_per_page)
         .sort(pagination.sort);
 
       const totalAgreementsCount = await Agreement.countDocuments(queryObj);
 
       // Calculating total pages
-      const pages = Math.ceil(totalAgreementsCount / pagination.resultPerPage);
+      const pages = Math.ceil(
+        totalAgreementsCount / pagination.result_per_page
+      );
 
       return {
         agreements,
-        pagination: {
-          current_page: pagination.page,
-          total_pages: pages,
-        },
+        page_count: pages,
       };
     } catch (error) {
       logger.error(`Error while Admin Agreement Listing, ${error}`);
@@ -79,25 +122,54 @@ class AgreementService {
   };
 
   // Delete Agreement
+  // deleteAgreement = async (payload) => {
+  //   try {
+  //     const agreementIdToDelete = payload;
+  //     const agreement = await Agreement.findOne({
+  //       _id: agreementIdToDelete,
+  //       is_deleted: false,
+  //     }).lean();
+
+  //     if (agreement.status === "draft") {
+  //       await Agreement.updateOne(
+  //         { _id: agreementIdToDelete },
+  //         { $set: { is_deleted: true } }
+  //       );
+  //       return true;
+  //     } else {
+  //       return throwError(returnMessage("agreement", "canNotDelete"));
+  //     }
+  //   } catch (error) {
+  //     logger.error(`Error while Deleting Agreement, ${error}`);
+  //     throwError(error?.message, error?.statusCode);
+  //   }
+  // };
+
   deleteAgreement = async (payload) => {
     try {
-      const agreementIdToDelete = payload;
-      const agreement = await Agreement.findOne({
-        _id: agreementIdToDelete,
+      const { agreementIdsToDelete } = payload;
+
+      const agreements = await Agreement.find({
+        _id: { $in: agreementIdsToDelete },
         is_deleted: false,
       }).lean();
 
-      if (agreement.status === "draft") {
-        await Agreement.updateOne(
-          { _id: agreementIdToDelete },
-          { $set: { is_deleted: true } }
+      const deletableAgreements = agreements.filter(
+        (agreement) => agreement.status === "draft"
+      );
+
+      if (deletableAgreements.length === agreementIdsToDelete.length) {
+        await Agreement.updateMany(
+          { _id: { $in: agreementIdsToDelete } },
+          { $set: { is_deleted: true } },
+          { new: true }
         );
         return true;
       } else {
         return throwError(returnMessage("agreement", "canNotDelete"));
       }
     } catch (error) {
-      logger.error(`Error while Deleting Agreement, ${error}`);
+      logger.error(`Error while Deleting Agreement(s): ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };
@@ -149,11 +221,11 @@ class AgreementService {
       const clientDetails = await Authentication.findOne({
         _id: agreement.client_id,
       });
-
+      const ageremantMessage = agrementEmail(agreement);
       await sendEmail({
         email: clientDetails?.email,
         subject: "New agreement",
-        message: agreement,
+        message: ageremantMessage,
       });
 
       return true;
@@ -186,34 +258,104 @@ class AgreementService {
 
   // GET Client Agreement agencyWise
   getAllClientAgreement = async (searchObj, client_id) => {
-    const { agency_id } = searchObj;
+    // const { agency_id } = searchObj;
     try {
       const queryObj = {
         is_deleted: false,
         client_id: client_id,
-        agency_id: agency_id,
       };
+      if (searchObj.search && searchObj.search !== "") {
+        queryObj["$or"] = [
+          {
+            title: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            receiver: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            status: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+        ];
+
+        const keywordType = getKeywordType(searchObj.search);
+        if (keywordType === "number") {
+          const numericKeyword = parseInt(searchObj.search);
+
+          queryObj["$or"].push({
+            revenue_made: numericKeyword,
+          });
+        } else if (keywordType === "date") {
+          const dateKeyword = new Date(searchObj.search);
+          queryObj["$or"].push({ due_date: dateKeyword });
+          queryObj["$or"].push({ updatedAt: dateKeyword });
+        }
+      }
 
       const pagination = paginationObject(searchObj);
       const agreements = await Agreement.find(queryObj)
         .skip(pagination.skip)
-        .limit(pagination.resultPerPage)
+        .limit(pagination.result_per_page)
         .sort(pagination.sort);
 
       const totalAgreementsCount = await Agreement.countDocuments(queryObj);
 
       // Calculating total pages
-      const pages = Math.ceil(totalAgreementsCount / pagination.resultPerPage);
+      const pages = Math.ceil(
+        totalAgreementsCount / pagination.result_per_page
+      );
 
       return {
         agreements,
-        pagination: {
-          current_page: pagination.page,
-          total_pages: pages,
-        },
+        total_pages: pages,
       };
     } catch (error) {
       logger.error(`Error while Admin Agreement Listing, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  downloadPdf = async (id) => {
+    try {
+      const agreement = await Agreement.findOne({
+        _id: id,
+        is_deleted: false,
+      }).lean();
+
+      const doc = new PDFDocument();
+      const pdfBuffer = [];
+      return new Promise((resolve, reject) => {
+        doc.on("data", (chunk) => {
+          pdfBuffer.push(chunk);
+        });
+
+        doc.on("end", () => {
+          const resultBuffer = Buffer.concat(pdfBuffer);
+          resolve(resultBuffer);
+        });
+
+        doc.on("error", (error) => {
+          reject(error);
+        });
+
+        doc
+          .fontSize(16)
+          .text(`Document Title: ${agreement.title}`, 50, 50)
+          .text(`Receiver: ${agreement.receiver}`, 50, 80)
+          .text(`Due Date: ${agreement.due_date}`, 50, 110);
+
+        doc.end();
+      });
+    } catch (error) {
+      logger.error(`Error while generating PDF, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };

@@ -21,8 +21,8 @@ agreementRoute.get(
   "/agency/agreement/get-agreement/:id",
   agreementController.getAgreement
 );
-agreementRoute.delete(
-  "/agency/agreement/delete-agreement/:id",
+agreementRoute.post(
+  "/agency/agreement/delete-agreement",
   agreementController.deleteAgreement
 );
 agreementRoute.put(
@@ -34,6 +34,10 @@ agreementRoute.put(
 agreementRoute.post(
   "/agency/agreement/send-agreement",
   agreementController.sendAgreement
+);
+agreementRoute.get(
+  "/agency/agreement/download-pdf/:id",
+  agreementController.downloadPdf
 );
 
 // Client Agreement API
@@ -48,7 +52,7 @@ agreementRoute.get(
 );
 
 agreementRoute.put(
-  "/client/agreement/update-agreement-status/:id",
+  "/client/agreement/update-agreement-status/{id}",
   agreementController.updateAgreementStatus
 );
 
