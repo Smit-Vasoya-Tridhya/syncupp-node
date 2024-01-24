@@ -5,7 +5,7 @@ const InvoiceService = require("../services/invoiceService");
 const { sendResponse } = require("../utils/sendResponse");
 const invoiceService = new InvoiceService();
 
-// Add Clients
+// Add Clients ------   AGENCY API
 
 exports.getClients = catchAsyncError(async (req, res, next) => {
   const getClients = await invoiceService.getClients(req?.user);
@@ -18,7 +18,7 @@ exports.getClients = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// Get InvoiceInformation
+// Get InvoiceInformation ------   AGENCY API
 
 exports.getInvoiceInformation = catchAsyncError(async (req, res, next) => {
   const { getAgencyData, getClientData } =
@@ -32,7 +32,7 @@ exports.getInvoiceInformation = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// Add Invoice
+// Add Invoice ------   AGENCY API
 
 exports.addInvoice = catchAsyncError(async (req, res, next) => {
   const addedInvoice = await invoiceService.addInvoice(
@@ -48,7 +48,7 @@ exports.addInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// get All Invoice
+// get All Invoice ------   AGENCY API
 
 exports.getAllInvoice = catchAsyncError(async (req, res, next) => {
   const { invoices, pagination } = await invoiceService.getAllInvoice(
@@ -65,7 +65,7 @@ exports.getAllInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// Get Agreement
+// Get Invoice     ------   AGENCY API
 
 exports.getInvoice = catchAsyncError(async (req, res, next) => {
   const getInvoice = await invoiceService.getInvoice(req?.params?.id);
@@ -78,7 +78,7 @@ exports.getInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// delete Invoice
+// delete Invoice ------   AGENCY API
 
 exports.deleteInvoice = catchAsyncError(async (req, res, next) => {
   await invoiceService.deleteInvoice(req?.params?.id);
@@ -91,51 +91,45 @@ exports.deleteInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// // Update Agreement
+// Update Invoice  ------   Agency API
 
-// exports.updateAgreement = catchAsyncError(async (req, res, next) => {
-//   const updatedAgreement = await agreementService.updateAgreement(
-//     req.body,
-//     req?.params?.id
-//   );
-//   sendResponse(
-//     res,
-//     true,
-//     returnMessage("agreement", "agreementUpdated"),
-//     updatedAgreement,
-//     statusCode.success
-//   );
-// });
+exports.updateInvoice = catchAsyncError(async (req, res, next) => {
+  await invoiceService.updateInvoice(req.body, req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "invoiceUpdated"),
+    null,
+    statusCode.success
+  );
+});
 
-// // -------------------   Clint API   ------------------------
+// Update Invoice Status ------   Agency API
 
-// // Update Agreement status
+exports.updateStatusInvoice = catchAsyncError(async (req, res, next) => {
+  await invoiceService.updateStatusInvoice(req.body, req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "invoiceStatusUpdated"),
+    null,
+    statusCode.success
+  );
+});
 
-// exports.updateAgreementStatus = catchAsyncError(async (req, res, next) => {
-//   const updatedAgreement = await agreementService.updateAgreementStatus(
-//     req.body,
-//     req?.params?.id
-//   );
-//   sendResponse(
-//     res,
-//     true,
-//     returnMessage("agreement", "agreementStatusUpdated"),
-//     updatedAgreement,
-//     statusCode.success
-//   );
-// });
+// get All Client Invoice ------   Client API
 
-// // get All Agreement
-
-// exports.getAllClientAgreement = catchAsyncError(async (req, res, next) => {
-//   const { agreements, pagination } =
-//     await agreementService.getAllClientAgreement(req.body, req?.user?._id);
-//   sendResponse(
-//     res,
-//     true,
-//     returnMessage("agreement", "getAllAgreement"),
-//     agreements,
-//     statusCode.success,
-//     pagination
-//   );
-// });
+exports.getClientInvoice = catchAsyncError(async (req, res, next) => {
+  const { invoices, pagination } = await invoiceService.getClientInvoice(
+    req.body,
+    req?.user?._id
+  );
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "getAllInvoices"),
+    invoices,
+    statusCode.success,
+    pagination
+  );
+});

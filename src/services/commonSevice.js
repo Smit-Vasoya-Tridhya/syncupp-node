@@ -44,3 +44,12 @@ exports.calculateInvoice = (invoice_content) => {
 
   return { total, sub_total };
 };
+
+exports.calculateAmount = (items) => {
+  items.forEach((item) => {
+    const amount = item.qty * item.rate * (1 + item.tax / 100);
+    item.amount = amount;
+  });
+
+  return items;
+};

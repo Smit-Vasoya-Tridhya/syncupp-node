@@ -18,7 +18,7 @@ exports.addAgreementValidator = [
     .isEmpty()
     .withMessage(validationMessage.agreement.descRequired)
     .isLength({ max: 1000 }) // specify the maximum length for the agreement_content
-    .withMessage(validationMessage.general.descLength),
+    .withMessage(validationMessage.agreement.descLength),
   body("status")
     .not()
     .isEmpty()

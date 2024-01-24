@@ -6,10 +6,22 @@ const validatorFunc = require("../utils/validatorFunction.helper");
 
 invoiceRoute.use(protect);
 
-invoiceRoute.get("/get-clients", invoiceController.getClients);
-invoiceRoute.post("/get-invoice-data", invoiceController.getInvoiceInformation);
-invoiceRoute.post("/create-invoice", invoiceController.addInvoice);
-invoiceRoute.post("/get-all", invoiceController.getAllInvoice);
-invoiceRoute.get("/:id", invoiceController.getInvoice);
-invoiceRoute.delete("/:id", invoiceController.deleteInvoice);
+invoiceRoute.get("/agency/invoice/get-clients", invoiceController.getClients);
+invoiceRoute.get(
+  "/agency/invoice/get-invoice-data/:id",
+  invoiceController.getInvoiceInformation
+);
+invoiceRoute.post(
+  "/agency/invoice/create-invoice",
+  invoiceController.addInvoice
+);
+invoiceRoute.post("/agency/invoice/get-all", invoiceController.getAllInvoice);
+invoiceRoute.post(
+  "/client/invoice/get-all",
+  invoiceController.getClientInvoice
+);
+invoiceRoute.get("/agency/invoice/:id", invoiceController.getInvoice);
+invoiceRoute.get("/client/invoice/:id", invoiceController.getInvoice);
+invoiceRoute.delete("/agency/invoice/:id", invoiceController.deleteInvoice);
+invoiceRoute.put("/agency/invoice/:id", invoiceController.updateStatusInvoice);
 module.exports = invoiceRoute;

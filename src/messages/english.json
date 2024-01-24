@@ -92,8 +92,10 @@
     "agreementUpdated": "Agreement updated successfully.",
     "getAgreement": "Agreement fetched successfully.",
     "getAllAgreement": "Agreements fetched successfully.",
-    "canNotDelete": "Agreement already agreed.",
-    "agreementStatusUpdated": "Agreement status updated."
+    "canNotDelete": "Agreement can not be deleted.",
+    "canNotUpdate": "Agreement can not be updated.",
+    "agreementStatusUpdated": "Agreement status updated.",
+    "agreementSent": "Agreement sent to client successfully."
   },
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",
@@ -102,7 +104,9 @@
     "getAllInvoices": "Invoices fetched successfully.",
     "invoiceDeleted": "Invoice deleted successfully.",
     "canNotDelete": "Invoice can not be deleted.",
-    "invoiceInfo": "Invoice information fetched successfully."
+    "invoiceInfo": "Invoice information fetched successfully.",
+    "invoiceStatusUpdated": "Invoice status updated successfully.",
+    "invoiceUpdated": "Invoice updated successfully."
   },
 
   "emailTemplate": {
