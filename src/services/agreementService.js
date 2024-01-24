@@ -196,9 +196,9 @@ class AgreementService {
 
       const pagination = paginationObject(searchObj);
       const agreements = await Agreement.find(queryObj)
+        .sort(pagination.sort)
         .skip(pagination.skip)
-        .limit(pagination.resultPerPage)
-        .sort(pagination.sort);
+        .limit(pagination.resultPerPage);
 
       const totalAgreementsCount = await Agreement.countDocuments(queryObj);
 

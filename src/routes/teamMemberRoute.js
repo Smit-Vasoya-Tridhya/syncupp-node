@@ -24,7 +24,7 @@ teamMemberRoute.post("/login", loginTeamMemberValidator, validatorFunc, login);
 teamMemberRoute.use(protect);
 teamMemberRoute.post("/add", addMemberValidator, validatorFunc, add);
 teamMemberRoute.get("/details/:id", getMember);
-teamMemberRoute.delete("/delete/:id", deleteMember);
+teamMemberRoute.delete("/delete", deleteMember);
 teamMemberRoute.post("/get-all", getAll);
 teamMemberRoute.put("/edit/:id", editMember);
 

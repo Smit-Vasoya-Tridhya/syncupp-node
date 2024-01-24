@@ -643,9 +643,13 @@ class TeamMemberService {
             statusCode.notFound
           );
 
+        const agency = await Authentication.findOne({
+          reference_id: agency_id,
+        });
+
         teamMemberData = await TeamModelName.distinct("_id", {
           [memberOf]: user.reference_id,
-          agency_ids: { $in: [agency_id] },
+          agency_ids: { $in: [agency._id] },
         }).lean();
       }
 
@@ -671,15 +675,13 @@ class TeamMemberService {
               $options: "i",
             },
           },
+          {
+            email: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
         ];
-
-        // const keywordType = getKeywordType(searchObj.search);
-        // if (keywordType === "number") {
-        //   const numericKeyword = parseInt(searchObj.search);
-        //   queryObj["$or"].push({
-        //     contact_number: numericKeyword,
-        //   });
-        // }
       }
 
       const pagination = paginationObject(searchObj);
@@ -754,9 +756,9 @@ class TeamMemberService {
 
       const [teamMemberList, total_team_members] = await Promise.all([
         Authentication.aggregate(pipeLine)
+          .sort(pagination.sort)
           .skip(pagination.skip)
-          .limit(pagination.resultPerPage)
-          .sort(pagination.sort),
+          .limit(pagination.resultPerPage),
         Authentication.aggregate(pipeLine),
       ]);
 
@@ -775,11 +777,10 @@ class TeamMemberService {
 
   deleteMember = async (payload) => {
     try {
-      const memberId = payload;
+      const { teamMemberIds } = payload;
 
-      console.log(memberId);
-      const teamMember = await Authentication.findOne({
-        _id: memberId,
+      const teamMember = await Authentication.find({
+        _id: { $in: teamMemberIds },
         is_deleted: false,
       })
         .populate({
@@ -796,26 +797,11 @@ class TeamMemberService {
         })
         .lean();
 
-      let TeamModelName;
-      if (teamMember.role.name === "team_agency") {
-        TeamModelName = Team_Agency;
-      }
-      if (teamMember.role.name === "team_client") {
-        TeamModelName = Team_Client;
-      }
-
-      // Step 1: Delete from Authentication collection
-      await Authentication.findByIdAndUpdate(
-        { _id: memberId },
+      // Delete from Authentication collection
+      await Authentication.updateMany(
+        { _id: { $in: teamMemberIds } },
         { $set: { is_deleted: true } }
       );
-
-      // Step 2: Delete references in team_role_master collection
-      await TeamModelName.findByIdAndUpdate(
-        { _id: teamMember?.reference_id?._id },
-        { $set: { is_deleted: true } }
-      );
-
       if (!teamMember) {
         return throwError(returnMessage("teamMember", "invalidId"));
       }

@@ -195,7 +195,7 @@ const getTeamMember = {
 const getAllTeamMember = {
   tags: ["Team Member - CRM Panel"],
   description:
-    "For Agency \n\n\n- sortOrder: (asc, desc)\n- sortField: (name, email, contact_no  ,member_role  ,createdAt)\n- search : (string)\n- page: (number)\n- itemsPerPage: (number) \n\nFor Client   \n\n- sortOrder: (asc, desc)\n- sortField: (name, email, contact_no ,createdAt )\n- page: (number)\n- search : (string)\n- agency_id : (string)\n- itemsPerPage: (number)",
+    "For Agency \n\n\n- sortOrder: (asc, desc)\n- sortField: (name, email, contact_number  ,member_role  ,createdAt)\n- search : (string)\n- page: (number)\n- itemsPerPage: (number)",
   security: [
     {
       bearerAuth: [],
@@ -226,11 +226,13 @@ const getAllTeamMember = {
               type: "number",
               description: "Enter page number",
               required: true,
+              example: 1,
             },
             itemsPerPage: {
               type: "number",
               description: "Enter itemsPerPage",
               required: true,
+              example: 10,
             },
           },
         },
@@ -253,24 +255,29 @@ const getAllTeamMember = {
 };
 const deleteTeamMember = {
   tags: ["Team Member - CRM Panel"],
-  description: "",
+  description:
+    'Pass data like this {"teamMemberIds" : ["6597aeb9528e7bc34319c6f7" , "6597b11b248ca49192fcb7b9"]}',
   summary: "Delete Team Member ",
   security: [
     {
       bearerAuth: [],
     },
   ],
-  parameters: [
-    {
-      name: "id",
-      in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
-      required: true,
-      schema: {
-        type: "integer", // adjust the type accordingly
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            teamMemberIds: {
+              type: "array",
+              description: "Enter team member IDS to be deleted",
+            },
+          },
+        },
       },
     },
-  ],
+  },
   responses: {
     200: {
       description: "ok",
@@ -370,7 +377,7 @@ const teamMembersRoutes = {
   "/api/v1/team-member/details/{id}": {
     get: getTeamMember,
   },
-  "/api/v1/team-member/delete/{id}": {
+  "/api/v1/team-member/delete": {
     delete: deleteTeamMember,
   },
   "/api/v1/team-member/edit/{id}": {
