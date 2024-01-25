@@ -11,7 +11,6 @@ const {
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
   loginTeamMemberValidator,
-  verifyValidator,
   addMemberValidator,
 } = require("../validators/teamMember.validator");
 const teamMemberRoute = require("express").Router();
