@@ -888,55 +888,98 @@ class TeamMemberService {
 
           const team_clients_ids = await Team_Client.distinct("_id", query_obj);
 
-          return await Authentication.find({
-            reference_id: { $in: team_clients_ids },
+          const [teams, total_teams] = await Promise.all([
+            Authentication.find({
+              reference_id: { $in: team_clients_ids },
+              is_deleted: false,
+              ...search_obj,
+            })
+              .select(
+                "name first_name last_name email contact_number status createdAt reference_id"
+              )
+              .sort(pagination.sort)
+              .skip(pagination.skip)
+              .limit(pagination.result_per_page)
+              .lean(),
+            Authentication.countDocuments({
+              reference_id: { $in: team_clients_ids },
+              is_deleted: false,
+              ...search_obj,
+            }),
+          ]);
+
+          return {
+            teamMemberList: teams,
+            page_count:
+              Math.ceil(total_teams / pagination.result_per_page) || 0,
+          };
+        }
+        const team_agency_ids = await Team_Agency.distinct("_id", {
+          agency_id: user?.reference_id,
+        });
+        const [teams, total_teams] = await Promise.all([
+          Authentication.find({
+            reference_id: { $in: team_agency_ids },
             is_deleted: false,
             ...search_obj,
           })
             .select(
               "name first_name last_name email contact_number status createdAt reference_id"
             )
+            .populate({
+              path: "reference_id",
+              model: "team_agency",
+              populate: {
+                path: "role",
+                model: "team_role_master",
+                select: "name",
+              },
+            })
             .sort(pagination.sort)
             .skip(pagination.skip)
             .limit(pagination.result_per_page)
-            .lean();
-        }
-        const team_agency_ids = await Team_Agency.distinct("_id", {
-          agency_id: user?.reference_id,
-        });
-        return await Authentication.find({
-          reference_id: { $in: team_agency_ids },
-          is_deleted: false,
-          ...search_obj,
-        })
-          .select(
-            "name first_name last_name email contact_number status createdAt reference_id"
-          )
-          .populate({
-            path: "reference_id",
-            model: "team_agency",
-            populate: {
-              path: "role",
-              model: "team_role_master",
-              select: "name",
-            },
-          })
-          .sort(pagination.sort)
-          .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean();
+            .lean(),
+          Authentication.countDocuments({
+            reference_id: { $in: team_agency_ids },
+            is_deleted: false,
+            ...search_obj,
+          }),
+        ]);
+        return {
+          teamMemberList: teams,
+          page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
+        };
       } else if (user?.role?.name === "client") {
         const team_client_ids = await Team_Client.distinct("_id", {
           client_id: user?.reference_id,
+          "agency_ids.agency_id": payload?.agency_id,
         });
 
-        return await Authentication.find({
-          _id: { $in: team_client_ids, is_deleted: false, ...search_obj },
-        })
-          .sort(pagination.sort)
-          .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean();
+        const [teams, total_teams] = await Promise.all([
+          Authentication.find({
+            reference_id: { $in: team_client_ids },
+            is_deleted: false,
+            ...search_obj,
+          })
+            .populate({
+              path: "reference_id",
+              model: "team_client",
+              match: { "agency_ids.agency_id": payload?.agency_id },
+            })
+            .sort(pagination.sort)
+            .skip(pagination.skip)
+            .limit(pagination.result_per_page)
+            .lean(),
+          Authentication.countDocuments({
+            _id: { $in: team_client_ids },
+            is_deleted: false,
+            ...search_obj,
+          }),
+        ]);
+        return {
+          teamMemberList: teams,
+          page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
+        };
       }
     } catch (error) {
       logger.error(`Error while fetching all team members: ${error}`);

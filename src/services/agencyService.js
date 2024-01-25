@@ -196,7 +196,11 @@ class AgencyService {
 
       await Promise.all([
         Authentication.updateOne({ _id: user_id }, { $set: authData }),
-        Agency.updateOne({ _id: reference_id }, { $set: agencyData }),
+        Agency.updateOne(
+          { _id: reference_id },
+          { $set: agencyData },
+          { new: true }
+        ),
       ]);
 
       return;
