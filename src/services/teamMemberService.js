@@ -914,10 +914,10 @@ class TeamMemberService {
           )
           .populate({
             path: "reference_id",
-            model: "team_agencies",
+            model: "team_agency",
             populate: {
               path: "role",
-              model: "team_role_masters",
+              model: "team_role_master",
               select: "name",
             },
           })
