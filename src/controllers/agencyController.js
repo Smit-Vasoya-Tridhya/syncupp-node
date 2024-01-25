@@ -68,7 +68,7 @@ exports.updateClient = catchAsyncError(async (req, res, next) => {
   sendResponse(
     res,
     true,
-    returnMessage("auth", "profileUpdated"),
+    returnMessage("agency", "clientUpdated"),
     {},
     statusCode.success
   );

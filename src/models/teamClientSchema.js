@@ -14,7 +14,10 @@ const teamClientSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "agency",
         },
-        status: { type: String, enum: ["confirmed", "requested", "inactive"] },
+        status: {
+          type: String,
+          enum: ["confirmed", "requested", "inactive", "rejected"],
+        },
         date: { type: Date, default: new Date() },
       },
     ],

@@ -338,6 +338,7 @@ class ClientService {
           country: payload?.country,
           pincode: payload?.pincode,
           address: payload?.address,
+          title: payload?.title,
         },
         { new: true }
       );

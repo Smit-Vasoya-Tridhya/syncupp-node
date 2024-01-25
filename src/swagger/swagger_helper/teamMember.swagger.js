@@ -208,29 +208,33 @@ const getAllTeamMember = {
           type: "object",
 
           properties: {
-            sortField: {
-              type: "string",
-              description: "Enter sortField",
-              required: true,
+            page: {
+              type: "number",
+              description: "Enter page number.",
+              default: 1,
             },
-            sortOrder: {
+            items_per_page: {
+              type: "number",
+              description: "Enter item per page.",
+              default: 10,
+            },
+            sort_order: {
               type: "string",
-              description: "Enter sortOrder",
-              required: true,
+              description: "Enter order of sort asc or desc.",
+              default: "desc",
+            },
+            sort_field: {
+              type: "string",
+              description: "Enter field to sort.",
+              default: "createdAt",
             },
             search: {
               type: "string",
-              description: "Enter search value",
+              description: "Enter value of search",
             },
-            page: {
-              type: "number",
-              description: "Enter page number",
-              required: true,
-            },
-            itemsPerPage: {
-              type: "number",
-              description: "Enter itemsPerPage",
-              required: true,
+            for_client: {
+              type: "boolean",
+              default: false,
             },
           },
         },
