@@ -11,8 +11,7 @@ const clientService = new ClientService();
 
 // Agency get Profile
 exports.getAgencyProfile = catchAsyncError(async (req, res, next) => {
-  const user_id = req?.user?._id;
-  const agency = await agencyService.getAgencyProfile(user_id);
+  const agency = await agencyService.getAgencyProfile(req.user);
   sendResponse(
     res,
     true,

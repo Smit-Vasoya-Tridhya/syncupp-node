@@ -69,9 +69,12 @@
     "updated": "Team member updated successfully.",
     "agencyIdAlreadyExists": "Agency Id already exist for this teamMember.",
     "fillAll": "Please fill all the required fields",
-    "agencyIdRequired": "Agencie Id required",
-    "roleRequired": "Role required"
+    "agencyIdRequired": "Agency Id required",
+    "roleRequired": "Role required",
+    "userNotFound": "User not found.",
+    "verified": "Verified successfully."
   },
+
   "agency": {
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",
@@ -89,8 +92,10 @@
     "agreementUpdated": "Agreement updated successfully.",
     "getAgreement": "Agreement fetched successfully.",
     "getAllAgreement": "Agreements fetched successfully.",
-    "canNotDelete": "Agreement already agreed.",
-    "agreementStatusUpdated": "Agreement status updated."
+    "canNotDelete": "Agreement can not be deleted.",
+    "canNotUpdate": "Agreement can not be updated.",
+    "agreementStatusUpdated": "Agreement status updated.",
+    "agreementSent": "Agreement sent to client successfully."
   },
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",

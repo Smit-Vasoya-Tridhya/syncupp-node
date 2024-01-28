@@ -81,6 +81,19 @@ exports.getAgreement = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+// Send Agreement
+
+exports.sendAgreement = catchAsyncError(async (req, res, next) => {
+  await agreementService.sendAgreement(req?.body);
+
+  sendResponse(
+    res,
+    true,
+    returnMessage("agreement", "agreementSent"),
+    null,
+    statusCode.success
+  );
+});
 
 // -------------------   Clint API   ------------------------
 

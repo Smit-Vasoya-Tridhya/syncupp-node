@@ -8,10 +8,10 @@ const agencySchema = new mongoose.Schema(
     no_of_people: { type: String },
     industry: { type: String },
     address: { type: String },
-    city: { type: String },
-    state: { type: String },
-    country: { type: String },
-    pin_code: { type: Number },
+    city: { type: mongoose.Schema.Types.ObjectId, ref: "city_master" },
+    state: { type: mongoose.Schema.Types.ObjectId, ref: "state_master" },
+    country: { type: mongoose.Schema.Types.ObjectId, ref: "country_master" },
+    pincode: { type: String },
   },
   { timestamps: true }
 );

@@ -1,12 +1,11 @@
-const jwt = require("jsonwebtoken");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const {
   returnMessage,
-  forgotPasswordEmailTemplate,
   invitationEmail,
   validateEmail,
   passwordValidation,
+  validateRequestFields,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
@@ -15,196 +14,333 @@ const sendEmail = require("../helpers/sendEmail");
 const Authentication = require("../models/authenticationSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const Team_Agency = require("../models/teamAgencySchema");
-const { paginationObject, getKeywordType } = require("./commonSevice");
+const { paginationObject } = require("./commonSevice");
 const Team_Role_Master = require("../models/masters/teamRoleSchema");
 const Team_Client = require("../models/teamClientSchema");
 const { ObjectId } = require("mongodb");
+const Agency = require("../models/agencySchema");
+const AuthService = require("./authService");
+const authService = new AuthService();
 
 class TeamMemberService {
-  // Token generate
-
-  tokenGenerator = (payload) => {
+  // Add Team Member by agency or client
+  addTeamMember = async (payload, user) => {
     try {
-      const token = jwt.sign(
-        { id: payload._id },
-        process.env.JWT_ADMIN_SECRET_KEY,
-        {
-          expiresIn: process.env.JWT_EXPIRES_IN,
-        }
-      );
-      return { token, user: payload };
+      validateRequestFields(payload, ["email", "name"]);
+
+      if (user?.role?.name == "agency") {
+        return await this.addAgencyTeam(payload, user);
+      } else if (user?.role?.name == "client") {
+        return await this.addClientTeam(payload, user);
+      }
     } catch (error) {
-      logger.error("Error while token generate", error);
+      logger.error(`Error While adding the Team member: ${error}`);
+      return throwError(error?.message, error?.status);
+    }
+  };
+
+  // Add the team member by the Agency it self
+  addAgencyTeam = async (payload, user) => {
+    try {
+      const { email, name, contact_number, role } = payload;
+      if (!role || role === "")
+        return throwError(returnMessage("teamMember", "roleRequired"));
+
+      const [team_member_exist, team_role, role_for_auth] = await Promise.all([
+        Authentication.findOne({
+          email,
+          is_deleted: false,
+        }).lean(),
+        Team_Role_Master.findOne({ name: role }).select("_id").lean(),
+        Role_Master.findOne({ name: "team_agency" }).lean(),
+      ]);
+
+      if (team_member_exist)
+        return throwError(returnMessage("teamMember", "emailExist"));
+
+      let invitation_token = crypto.randomBytes(32).toString("hex");
+
+      const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+        user?.first_name + " " + user?.last_name
+      }&agencyId=${user?.reference_id}&email=${encodeURIComponent(
+        email
+      )}&token=${invitation_token}&redirect=false`;
+
+      const team_agency = await Team_Agency.create({
+        agency_id: user?.reference_id,
+        role: team_role?._id,
+      });
+      invitation_token = crypto
+        .createHash("sha256")
+        .update(invitation_token)
+        .digest("hex");
+
+      await Authentication.create({
+        name,
+        status: "confirm_pending",
+        email,
+        reference_id: team_agency?._id,
+        contact_number,
+        invitation_token,
+        role: role_for_auth?._id,
+      });
+      const invitation_template = invitationEmail(link, name);
+
+      sendEmail({
+        email,
+        subject: returnMessage("emailTemplate", "invitation"),
+        message: invitation_template,
+      });
+      return;
+    } catch (error) {
+      logger.error(`Error While adding the Team member by agency: ${error}`);
+      return throwError(error?.message, error?.status);
+    }
+  };
+
+  // Add the team member for the particular agency by client
+  addClientTeam = async (payload, user) => {
+    try {
+      const { email, name, agency_id, contact_number, role } = payload;
+      if (!agency_id || agency_id === "")
+        return throwError(returnMessage("teamMember", "agencyIdRequired"));
+
+      if (!role || role === "")
+        return throwError(returnMessage("teamMember", "roleRequired"));
+
+      const agency_exist = await Agency.findById(agency_id).lean();
+      if (!agency_exist)
+        return throwError(
+          returnMessage("agency", "agencyNotFound"),
+          statusCode?.notFound
+        );
+
+      const [team_client_exist, team_role, team_auth_role] = await Promise.all([
+        Authentication.findOne({
+          email,
+          is_deleted: false,
+        }).lean(),
+        Team_Role_Master.findOne({ name: "team_client" }).lean(),
+        Role_Master.findOne({ name: "team_client" }).lean(),
+      ]);
+
+      if (!team_client_exist) {
+        const new_team_client = await Team_Client.create({
+          client_id: user?.reference_id,
+          agency_ids: [{ agency_id, status: "requested" }],
+          role: team_role?._id,
+        });
+
+        await Authentication.create({
+          name,
+          email,
+          contact_number,
+          role: team_auth_role?._id,
+          reference_id: new_team_client?._id,
+          status: "confirm_pending",
+        });
+        return;
+      } else {
+        const team_member = await Team_Client.findById(
+          team_client_exist?.reference_id
+        ).lean();
+
+        const agency_id_exist = team_member?.agency_ids.filter(
+          (agency) => agency?.agency_id.toString() === agency_id
+        );
+
+        if (agency_id_exist.length > 0)
+          return throwError(
+            returnMessage("teamMember", "agencyIdAlreadyExists")
+          );
+
+        const agency_ids = [
+          ...team_member.agency_ids,
+          { agency_id, status: "requested" },
+        ];
+
+        await Team_Client.findByIdAndUpdate(
+          team_client_exist?.reference_id,
+          {
+            agency_ids,
+          },
+          { new: true }
+        );
+      }
+
+      return;
+    } catch (error) {
+      logger.error(`Error While adding the Team member by client: ${error}`);
+      return throwError(error?.message, error?.status);
     }
   };
 
   // Add Team Member
+  // add = async (payload, user_id) => {
+  //   try {
+  //     const { email, name, contact_number, role, agency_id } = payload;
+  //     const isEmail = await Authentication.findOne({
+  //       email: email,
+  //       is_deleted: false,
+  //     }).populate({
+  //       path: "reference_id",
+  //       model: "team_client",
+  //     });
 
-  add = async (payload, user_id) => {
-    try {
-      const { email, name, contact_number, role, agency_id } = payload;
-      const isEmail = await Authentication.findOne({
-        email: email,
-        is_deleted: false,
-      }).populate({
-        path: "reference_id",
-        model: "team_client",
-      });
+  //     const teamMember = await Authentication.findOne({
+  //       _id: user_id,
+  //       is_deleted: false,
+  //     })
+  //       .populate({
+  //         path: "role",
+  //         model: "role_master",
+  //       })
+  //       .lean();
 
-      const teamMember = await Authentication.findOne({
-        _id: user_id,
-        is_deleted: false,
-      })
-        .populate({
-          path: "role",
-          model: "role_master",
-        })
-        .lean();
+  //     let roleKey;
+  //     let TeamModelName;
+  //     let memberOf;
+  //     if (teamMember.role.name === "agency") {
+  //       roleKey = "team_agency";
+  //       TeamModelName = Team_Agency;
+  //       memberOf = "agency_id";
 
-      let roleKey;
-      let TeamModelName;
-      let memberOf;
-      if (teamMember.role.name === "agency") {
-        roleKey = "team_agency";
-        TeamModelName = Team_Agency;
-        memberOf = "agency_id";
+  //       if (isEmail) {
+  //         return throwError(returnMessage("teamMember", "emailExist"));
+  //       }
 
-        if (isEmail) {
-          return throwError(returnMessage("teamMember", "emailExist"));
-        }
+  //       if (!role) {
+  //         return throwError(returnMessage("teamMember", "roleRequired"));
+  //       }
 
-        if (!role) {
-          return throwError(returnMessage("teamMember", "roleRequired"));
-        }
+  //       // Get  Role master data
+  //       const getRoleData = await Role_Master.findOne({
+  //         name: roleKey,
+  //       }).lean();
 
-        // Get  Role master data
-        const getRoleData = await Role_Master.findOne({
-          name: roleKey,
-        }).lean();
+  //       // Get Team Role master
+  //       const getTeamMemberRoleData = await Team_Role_Master.findOne({
+  //         name: role,
+  //       }).lean();
 
-        // Get Team Role master
-        const getTeamMemberRoleData = await Team_Role_Master.findOne({
-          name: role,
-        }).lean();
+  //       // Create Team Member schema data
+  //       const teamModel = await TeamModelName.create({
+  //         role: getTeamMemberRoleData._id,
+  //         [memberOf]: teamMember.reference_id,
+  //       });
 
-        // Create Team Member schema data
-        const teamModel = await TeamModelName.create({
-          role: getTeamMemberRoleData._id,
-          [memberOf]: teamMember.reference_id,
-        });
+  //       // Create new Team Member
+  //       const newTeamMember = await Authentication.create({
+  //         email,
+  //         name,
+  //         contact_number,
+  //         role: getRoleData._id,
+  //         reference_id: teamModel._id,
+  //         status: "confirm_pending",
+  //       });
 
-        // Create new Team Member
-        const newTeamMember = await Authentication.create({
-          email,
-          name,
-          contact_number,
-          role: getRoleData._id,
-          reference_id: teamModel._id,
-          status: "confirm_pending",
-        });
+  //       const invitation_token = crypto.randomBytes(32).toString("hex");
+  //       console.log(invitation_token);
+  //       const encode = encodeURIComponent(email);
 
-        const invitation_token = crypto.randomBytes(32).toString("hex");
-        console.log(invitation_token);
-        const encode = encodeURIComponent(email);
+  //       const link = `${process.env.TEAM_MEMBER_SETPASSWORD_PATH}?name=${name}&email=${encode}&redirect=false&agency=${user_id}`;
+  //       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
-        const link = `${process.env.TEAM_MEMBER_SETPASSWORD_PATH}?token=${invitation_token}&email=${encode}`;
-        const forgot_email_template = forgotPasswordEmailTemplate(link);
+  //       await sendEmail({
+  //         email: email,
+  //         subject: returnMessage("emailTemplate", "forgotPasswordSubject"),
+  //         message: forgot_email_template,
+  //       });
 
-        await sendEmail({
-          email: email,
-          subject: returnMessage("emailTemplate", "forgotPasswordSubject"),
-          message: forgot_email_template,
-        });
+  //       const hash_token = crypto
+  //         .createHash("sha256")
+  //         .update(invitation_token)
+  //         .digest("hex");
 
-        const hash_token = crypto
-          .createHash("sha256")
-          .update(invitation_token)
-          .digest("hex");
+  //       newTeamMember.invitation_token = hash_token;
+  //       await newTeamMember.save();
+  //       return true;
+  //     }
+  //     if (teamMember.role.name === "client") {
+  //       roleKey = "team_client";
+  //       TeamModelName = Team_Client;
+  //       memberOf = "client_id";
 
-        newTeamMember.invitation_token = hash_token;
-        await newTeamMember.save();
-      }
-      if (teamMember.role.name === "client") {
-        roleKey = "team_client";
-        TeamModelName = Team_Client;
-        memberOf = "client_id";
+  //       let link = `${
+  //         process.env.REACT_APP_URL
+  //       }/team/verify?name=${encodeURIComponent(
+  //         teamMember?.name
+  //       )}&email=${encodeURIComponent(email)}&clientId=${encodeURIComponent(
+  //         user_id
+  //       )}&agencyId=${encodeURIComponent(agency_id)}`;
+  //       if (!isEmail) {
+  //         if (!agency_id) {
+  //           return throwError(
+  //             returnMessage("teamMember", "agencyIdRequired"),
+  //             statusCode.badRequest
+  //           );
+  //         }
 
-        let link = `${
-          process.env.REACT_APP_URL
-        }/team/verify?name=${encodeURIComponent(
-          teamMember?.name
-        )}&email=${encodeURIComponent(email)}&clientId=${encodeURIComponent(
-          user_id
-        )}&agencyId=${encodeURIComponent(agency_id)}`;
-        if (!isEmail) {
-          if (!agency_id) {
-            return throwError(
-              returnMessage("teamMember", "agencyIdRequired"),
-              statusCode.badRequest
-            );
-          }
+  //         // Get  Role master data
+  //         const getRoleData = await Role_Master.findOne({
+  //           name: roleKey,
+  //         }).lean();
 
-          // Get  Role master data
-          const getRoleData = await Role_Master.findOne({
-            name: roleKey,
-          }).lean();
+  //         // Get Team Role master
+  //         const getTeamMemberRoleData = await Team_Role_Master.findOne({
+  //           name: "team_member",
+  //         }).lean();
 
-          // Get Team Role master
-          const getTeamMemberRoleData = await Team_Role_Master.findOne({
-            name: "team_member",
-          }).lean();
+  //         // Create Team Member schema data
+  //         const teamModel = await TeamModelName.create({
+  //           role: getTeamMemberRoleData._id,
+  //           [memberOf]: teamMember.reference_id._id,
+  //           agency_ids: [],
+  //         });
 
-          // Create Team Member schema data
-          const teamModel = await TeamModelName.create({
-            role: getTeamMemberRoleData._id,
-            [memberOf]: teamMember.reference_id._id,
-            agency_ids: [],
-          });
+  //         // Create new Team Member
+  //         await Authentication.create({
+  //           email,
+  //           name,
+  //           contact_number,
+  //           role: getRoleData._id,
+  //           reference_id: teamModel._id,
+  //           status: "confirm_pending",
+  //         });
 
-          // Create new Team Member
-          await Authentication.create({
-            email,
-            name,
-            contact_number,
-            role: getRoleData._id,
-            reference_id: teamModel._id,
-            status: "confirm_pending",
-          });
+  //         link = link + "&redirect=false";
+  //         const invitation_mail = invitationEmail(link, teamMember.name);
 
-          link = link + "&redirect=false";
-          const invitation_mail = invitationEmail(link, teamMember.name);
-
-          await sendEmail({
-            email: email,
-            subject: returnMessage("emailTemplate", "invitation"),
-            message: invitation_mail,
-          });
-          return true;
-        } else {
-          if (isEmail?.reference_id?.agency_ids.includes(agency_id)) {
-            return throwError(
-              returnMessage("teamMember", "agencyIdAlreadyExists"),
-              statusCode.badRequest
-            );
-          }
-          link = link + "&redirect=true";
-          const invitation_mail = invitationEmail(link, teamMember.name);
-          await sendEmail({
-            email: email,
-            subject: returnMessage("emailTemplate", "invitation"),
-            message: invitation_mail,
-          });
-          return true;
-        }
-      }
-    } catch (error) {
-      logger.error(`Error while Team Member register, ${error}`);
-      throwError(error?.message, error?.status);
-    }
-  };
+  //         await sendEmail({
+  //           email: email,
+  //           subject: returnMessage("emailTemplate", "invitation"),
+  //           message: invitation_mail,
+  //         });
+  //         return true;
+  //       } else {
+  //         if (isEmail?.reference_id?.agency_ids.includes(agency_id)) {
+  //           return throwError(
+  //             returnMessage("teamMember", "agencyIdAlreadyExists"),
+  //             statusCode.badRequest
+  //           );
+  //         }
+  //         link = link + "&redirect=true";
+  //         const invitation_mail = invitationEmail(link, teamMember.name);
+  //         await sendEmail({
+  //           email: email,
+  //           subject: returnMessage("emailTemplate", "invitation"),
+  //           message: invitation_mail,
+  //         });
+  //         return true;
+  //       }
+  //     }
+  //   } catch (error) {
+  //     logger.error(`Error while Team Member register, ${error}`);
+  //     throwError(error?.message, error?.status);
+  //   }
+  // };
 
   // Verify Team Member
-
   verify = async (payload) => {
     try {
       const {
@@ -216,10 +352,9 @@ class TeamMemberService {
         agency_id,
         client_id,
         redirect,
-        name,
       } = payload;
 
-      if (token) {
+      if (token && !redirect) {
         const hash_token = crypto
           .createHash("sha256")
           .update(token)
@@ -227,92 +362,90 @@ class TeamMemberService {
         const teamMember = await Authentication.findOne({
           email: email,
           invitation_token: hash_token,
+          is_deleted: false,
         });
 
         if (!teamMember) {
           return throwError(returnMessage("teamMember", "invalidToken"));
         }
-        const hash_password = await bcrypt.hash(password, 14);
+        const hash_password = await authService.passwordEncryption({
+          password,
+        });
 
         teamMember.first_name = first_name;
         teamMember.last_name = last_name;
         teamMember.email = email;
-        teamMember.password = hash_password;
-        teamMember.invitation_token = null;
+        teamMember.invitation_token = undefined;
         teamMember.password = hash_password;
         teamMember.status = "confirmed";
 
         await teamMember.save();
-      }
-
-      if (redirect) {
+        return;
+      } else if (client_id && client_id !== "") {
         if (!validateEmail(email))
           return throwError(returnMessage("auth", "invalidEmail"));
 
-        const isClientExist = await Authentication.findOne({
-          _id: client_id,
-        });
+        const team_auth_role = await Role_Master.findOne({
+          name: "team_client",
+        }).lean();
 
-        if (!isClientExist)
-          return throwError(returnMessage("default", "default"));
-
-        const teamMemberExist = await Authentication.findOne({
+        const client_team_member = await Authentication.findOne({
           email,
-          is_deleted: false,
-        });
-        if (!teamMemberExist)
-          return throwError(returnMessage("default", "default"));
+          role: team_auth_role?._id,
+        }).lean();
 
-        const teamMember = await Team_Client.findOne({
-          _id: teamMemberExist?.reference_id,
-        });
-        if (!teamMember) return throwError(returnMessage("default", "default"));
+        if (!client_team_member)
+          return throwError(
+            returnMessage("auth", "userNotFound"),
+            statusCode.notFound
+          );
 
-        teamMemberExist.status = "confirmed";
-        teamMember.agency_ids = teamMember.agency_ids || [];
-        teamMember.agency_ids.push(agency_id);
-        await teamMemberExist.save();
-        await teamMember.save();
-      } else {
-        if (!validateEmail(email))
-          return throwError(returnMessage("auth", "invalidEmail"));
+        const team_client = await Team_Client.findById(
+          client_team_member?.reference_id
+        ).lean();
 
-        if (!passwordValidation(password))
-          return throwError(returnMessage("auth", "invalidPassword"));
+        if (!team_client)
+          return throwError(
+            returnMessage("auth", "userNotFound"),
+            statusCode.notFound
+          );
 
-        const isClientExist = await Authentication.findOne({
-          _id: client_id,
-          // name: name,
-        });
+        const agency_id_exist = team_client?.agency_ids.filter(
+          (agency) =>
+            agency?.agency_id.toString() === agency_id &&
+            agency?.status === "requested"
+        );
 
-        if (!isClientExist)
-          return throwError(returnMessage("default", "default"));
+        if (agency_id_exist.length === 0)
+          return throwError(returnMessage("agency", "agencyNotFound"));
 
-        const teamMemberExist = await Authentication.findOne({
-          email,
-          is_deleted: false,
-          status: "confirm_pending",
-        });
-        if (!teamMemberExist)
-          return throwError(returnMessage("default", "default"));
+        if (redirect) {
+          await Team_Client.updateOne(
+            { _id: team_client?._id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "confirmed" } },
+            { new: true }
+          );
+          return authService.tokenGenerator(client_team_member);
+        } else {
+          const hash_password = await authService.passwordEncryption({
+            password,
+          });
+          await Authentication.findByIdAndUpdate(client_team_member?._id, {
+            first_name,
+            last_name,
+            password: hash_password,
+            status: "confirmed",
+          });
 
-        const teamMember = await Team_Client.findOne({
-          _id: teamMemberExist?.reference_id,
-        });
-        if (!teamMember) return throwError(returnMessage("default", "default"));
-
-        const hash_password = await bcrypt.hash(password, 14);
-
-        teamMemberExist.first_name = first_name;
-        teamMemberExist.last_name = last_name;
-        teamMemberExist.email = email;
-        teamMemberExist.password = hash_password;
-        teamMemberExist.status = "confirmed";
-        teamMember.agency_ids = teamMember.agency_ids || [];
-        teamMember.agency_ids.push(agency_id);
-        await teamMemberExist.save();
-        await teamMember.save();
+          await Team_Client.updateOne(
+            { _id: team_client?._id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "confirmed" } },
+            { new: true }
+          );
+          return authService.tokenGenerator(client_team_member);
+        }
       }
+      return throwError(returnMessage("default", "default"));
     } catch (error) {
       logger.error(`Error while Team Member verify , ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -320,7 +453,6 @@ class TeamMemberService {
   };
 
   // Login Team Member
-
   login = async (payload) => {
     try {
       const { email, password } = payload;
@@ -454,6 +586,8 @@ class TeamMemberService {
             contact_number: 1,
             image_url: 1,
             status: 1,
+            name: 1,
+            contact_number: 1,
           },
         },
       ];
@@ -479,10 +613,7 @@ class TeamMemberService {
         _id: user_id,
         is_deleted: false,
       })
-        .populate({
-          path: "role",
-          model: "role_master",
-        })
+        .populate("role", "name")
         .lean();
 
       let TeamModelName;
@@ -512,9 +643,13 @@ class TeamMemberService {
             statusCode.notFound
           );
 
+        const agency = await Authentication.findOne({
+          reference_id: agency_id,
+        });
+
         teamMemberData = await TeamModelName.distinct("_id", {
           [memberOf]: user.reference_id,
-          agency_ids: { $in: [agency_id] },
+          agency_ids: { $in: [agency._id] },
         }).lean();
       }
 
@@ -540,15 +675,13 @@ class TeamMemberService {
               $options: "i",
             },
           },
+          {
+            email: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
         ];
-
-        // const keywordType = getKeywordType(searchObj.search);
-        // if (keywordType === "number") {
-        //   const numericKeyword = parseInt(searchObj.search);
-        //   queryObj["$or"].push({
-        //     contact_number: numericKeyword,
-        //   });
-        // }
       }
 
       const pagination = paginationObject(searchObj);
@@ -623,9 +756,9 @@ class TeamMemberService {
 
       const [teamMemberList, total_team_members] = await Promise.all([
         Authentication.aggregate(pipeLine)
+          .sort(pagination.sort)
           .skip(pagination.skip)
-          .limit(pagination.resultPerPage)
-          .sort(pagination.sort),
+          .limit(pagination.resultPerPage),
         Authentication.aggregate(pipeLine),
       ]);
 
@@ -644,11 +777,10 @@ class TeamMemberService {
 
   deleteMember = async (payload) => {
     try {
-      const memberId = payload;
+      const { teamMemberIds } = payload;
 
-      console.log(memberId);
-      const teamMember = await Authentication.findOne({
-        _id: memberId,
+      const teamMember = await Authentication.find({
+        _id: { $in: teamMemberIds },
         is_deleted: false,
       })
         .populate({
@@ -665,26 +797,11 @@ class TeamMemberService {
         })
         .lean();
 
-      let TeamModelName;
-      if (teamMember.role.name === "team_agency") {
-        TeamModelName = Team_Agency;
-      }
-      if (teamMember.role.name === "team_client") {
-        TeamModelName = Team_Client;
-      }
-
-      // Step 1: Delete from Authentication collection
-      await Authentication.findByIdAndUpdate(
-        { _id: memberId },
+      // Delete from Authentication collection
+      await Authentication.updateMany(
+        { _id: { $in: teamMemberIds } },
         { $set: { is_deleted: true } }
       );
-
-      // Step 2: Delete references in team_role_master collection
-      await TeamModelName.findByIdAndUpdate(
-        { _id: teamMember?.reference_id?._id },
-        { $set: { is_deleted: true } }
-      );
-
       if (!teamMember) {
         return throwError(returnMessage("teamMember", "invalidId"));
       }
@@ -697,23 +814,38 @@ class TeamMemberService {
 
   // Edit Team Member
 
-  editMember = async (payload, userId) => {
+  editMember = async (payload, team_member_id) => {
     try {
-      const memberId = userId;
-      const teamMember = await Authentication.findOneAndUpdate(
+      const team_member_exist = await Authentication.findById(team_member_id)
+        .populate("role", "name")
+        .where("is_deleted")
+        .ne(true)
+        .lean();
+      if (!team_member_exist || team_member_exist?.role?.name !== "team_agency")
+        return throwError(
+          returnMessage("teamMember", "userNotFound"),
+          statusCode.notFound
+        );
+      let role;
+      if (payload?.role && payload?.role !== "")
+        role = await Team_Role_Master.findOne({ name: payload?.role })
+          .select("_id")
+          .lean();
+
+      await Authentication.findByIdAndUpdate(
+        team_member_id,
         {
-          _id: memberId,
-          is_deleted: false,
+          name: payload?.name,
+          contact_number: payload?.contact_number,
         },
-
-        payload,
-        { new: true, useFindAndModify: false }
+        { new: true }
       );
-
-      if (!teamMember) {
-        return throwError(returnMessage("teamMember", "invalidId"));
-      }
-      return teamMember;
+      await Team_Agency.findByIdAndUpdate(
+        team_member_exist?.reference_id,
+        { role: role?._id },
+        { new: true }
+      );
+      return;
     } catch (error) {
       logger.error(`Error while Team member Edit, ${error}`);
       return throwError(error?.message, error?.statusCode);

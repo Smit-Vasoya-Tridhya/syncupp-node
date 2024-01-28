@@ -141,31 +141,18 @@ class AgencyService {
   };
 
   // Get Agency profile
-  getAgencyProfile = async (payload) => {
+  getAgencyProfile = async (agency) => {
     try {
-      const user_id = payload;
-
-      const agency = await Authentication.findOne(
-        {
-          _id: user_id,
-          is_deleted: false,
-        },
-
-        {
-          is_facebook_signup: 0,
-          is_google_signup: 0,
-          password: 0,
-          is_deleted: 0,
-          remember_me: 0,
-        }
-      )
-        .populate({
-          path: "reference_id",
-          model: "agency",
-        })
-        .lean();
-
-      return agency;
+      const [agency_detail, agency_reference] = await Promise.all([
+        Authentication.findById(agency?._id).select("-password").lean(),
+        Agency.findById(agency?.reference_id)
+          .populate("city", "name")
+          .populate("state", "name")
+          .populate("country", "name")
+          .lean(),
+      ]);
+      agency_detail.reference_id = agency_reference;
+      return agency_detail;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -207,12 +194,10 @@ class AgencyService {
         pin_code,
       };
 
-      const [data, data2] = await Promise.all([
+      await Promise.all([
         Authentication.updateOne({ _id: user_id }, { $set: authData }),
         Agency.updateOne({ _id: reference_id }, { $set: agencyData }),
       ]);
-
-      console.log(data);
 
       return;
     } catch (error) {

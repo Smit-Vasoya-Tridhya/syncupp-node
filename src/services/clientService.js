@@ -13,6 +13,8 @@ const {
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
+const { ObjectId } = require("mongodb");
+
 const authService = new AuthService();
 
 class ClientService {
@@ -385,9 +387,43 @@ class ClientService {
     try {
       const { reference_id } = client;
 
-      const findClient = await Client.findById(reference_id);
+      const findClient = await Client.find({ _id: reference_id });
 
-      return findClient.agency_ids;
+      // .populate({
+      //   path: "agency_ids.agency_id",
+      //   model: "agency", // The name of the agency model
+      //   select: "company_name", // Specify the fields you want to select
+      // });
+
+      // const findClient = await Client.aggregate([
+      //   {
+      //     $match: { _id: reference_id },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: "agencies", // Assuming "agencies" is the name of your agency model
+      //       localField: "agency_ids.agency_id",
+      //       foreignField: "_id",
+      //       as: "agencyDetails",
+      //     },
+      //   },
+      //   {
+      //     $unwind: "$agencyDetails",
+      //   },
+      //   {
+      //     $project: {
+      //       _id: 0, // Exclude the default _id field
+      //       agency_id: "$agencyDetails._id",
+      //       agency_id: "$agencyDetails.company_name",
+      //       status: "$agency_ids.status",
+      //       createdAt: 1,
+      //       updatedAt: 1,
+      //       __v: 1,
+      //     },
+      //   },
+      // ]);
+
+      return findClient;
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
       return throwError(error?.message, error?.statusCode);
