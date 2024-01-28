@@ -27,7 +27,7 @@ exports.getInvoiceInformation = catchAsyncError(async (req, res, next) => {
     res,
     true,
     returnMessage("invoice", "invoiceInfo"),
-    [{ agencyData: getAgencyData }, { clientData: getClientData }],
+    { From: getAgencyData, To: getClientData },
     statusCode.success
   );
 });
@@ -37,7 +37,7 @@ exports.getInvoiceInformation = catchAsyncError(async (req, res, next) => {
 exports.addInvoice = catchAsyncError(async (req, res, next) => {
   const addedInvoice = await invoiceService.addInvoice(
     req.body,
-    req?.user?._id
+    req?.user?.reference_id
   );
   sendResponse(
     res,
@@ -48,24 +48,32 @@ exports.addInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// get All Invoice ------   AGENCY API
+// get All Invoice ------   AGENCY API AND CLIENT API --------------------------------
 
 exports.getAllInvoice = catchAsyncError(async (req, res, next) => {
-  const { invoices, pagination } = await invoiceService.getAllInvoice(
-    req.body,
-    req?.user?._id
-  );
+  let invoicesList;
+  if (req.user.role.name === "agency") {
+    invoicesList = await invoiceService.getAllInvoice(
+      req.body,
+      req?.user?.reference_id
+    );
+  } else {
+    invoicesList = await invoiceService.getClientInvoice(
+      req.body,
+      req?.user?.reference_id
+    );
+  }
+
   sendResponse(
     res,
     true,
     returnMessage("invoice", "getAllInvoices"),
-    invoices,
-    statusCode.success,
-    pagination
+    invoicesList,
+    statusCode.success
   );
 });
 
-// Get Invoice     ------   AGENCY API
+// Get Invoice     ------   AGENCY API / Client API
 
 exports.getInvoice = catchAsyncError(async (req, res, next) => {
   const getInvoice = await invoiceService.getInvoice(req?.params?.id);
@@ -104,7 +112,7 @@ exports.updateInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// Update Invoice Status ------   Agency API
+// Update Status Invoice Status ------   Agency API
 
 exports.updateStatusInvoice = catchAsyncError(async (req, res, next) => {
   await invoiceService.updateStatusInvoice(req.body, req?.params?.id);
@@ -117,19 +125,15 @@ exports.updateStatusInvoice = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// get All Client Invoice ------   Client API
+// Send Invoice By mail------   Agency API
 
-exports.getClientInvoice = catchAsyncError(async (req, res, next) => {
-  const { invoices, pagination } = await invoiceService.getClientInvoice(
-    req.body,
-    req?.user?._id
-  );
+exports.sendInvoice = catchAsyncError(async (req, res, next) => {
+  await invoiceService.sendInvoice(req.body);
   sendResponse(
     res,
     true,
-    returnMessage("invoice", "getAllInvoices"),
-    invoices,
-    statusCode.success,
-    pagination
+    returnMessage("invoice", "invoiceSent"),
+    null,
+    statusCode.success
   );
 });

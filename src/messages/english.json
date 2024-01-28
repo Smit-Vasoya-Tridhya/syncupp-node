@@ -100,13 +100,16 @@
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",
     "invoiceNumberExists": "Invoice number already exists",
-    "clientFetched": "Client Fetched successfully",
+    "clientFetched": "Clients Fetched successfully",
     "getAllInvoices": "Invoices fetched successfully.",
     "invoiceDeleted": "Invoice deleted successfully.",
     "canNotDelete": "Invoice can not be deleted.",
     "invoiceInfo": "Invoice information fetched successfully.",
     "invoiceStatusUpdated": "Invoice status updated successfully.",
-    "invoiceUpdated": "Invoice updated successfully."
+    "invoiceUpdated": "Invoice updated successfully.",
+    "canNotUpdate": "Invoice can not be updated.",
+    "agencyIdRequired": "Agency ID required.",
+    "invoiceSent": "Invoice sent successfully."
   },
 
   "emailTemplate": {

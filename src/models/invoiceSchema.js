@@ -6,6 +6,7 @@ const invoiceSchema = new mongoose.Schema(
     invoice_number: { type: String, required: true, unique: true },
     recipient: { type: String, required: true },
     due_date: { type: Date, required: true },
+    invoice_date: { type: Date, required: true },
     status: {
       type: mongoose.Types.ObjectId,
       ref: "invoice_status_master",
@@ -13,12 +14,12 @@ const invoiceSchema = new mongoose.Schema(
     },
     client_id: {
       type: mongoose.Types.ObjectId,
-      ref: "authentication",
+      ref: "client",
       required: true,
     },
     agency_id: {
       type: mongoose.Types.ObjectId,
-      ref: "authentication",
+      ref: "agency",
       required: true,
     },
     invoice_content: [

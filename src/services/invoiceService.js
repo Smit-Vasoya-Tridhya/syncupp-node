@@ -14,26 +14,56 @@ const {
 } = require("./commonSevice");
 const statusCode = require("../messages/english.json");
 const Agency = require("../models/agencySchema");
+const Authentication = require("../models/authenticationSchema");
+const sendEmail = require("../helpers/sendEmail");
 
 class InvoiceService {
   // Get Client list  ------   AGENCY API
   getClients = async (user) => {
+    const { reference_id } = user;
     try {
       const pipeline = [
         {
           $match: {
-            "agency_ids.agency_id": user._id,
+            "agency_ids.agency_id": reference_id,
             "agency_ids.status": "active",
           },
         },
         {
+          $lookup: {
+            from: "authentications",
+            localField: "_id",
+            foreignField: "reference_id",
+            as: "clientInfo",
+            pipeline: [{ $project: { first_name: 1, last_name: 1, name: 1 } }],
+          },
+        },
+
+        {
+          $unwind: "$clientInfo",
+        },
+        {
+          $lookup: {
+            from: "clients",
+            localField: "_id",
+            foreignField: "_id",
+            as: "clientDetails",
+          },
+        },
+
+        {
+          $unwind: "$clientDetails",
+        },
+        {
           $project: {
-            _id: 1,
-            company_name: 1,
+            _id: "$clientDetails._id",
+            company_name: "$clientDetails.company_name",
+            first_name: "$clientInfo.first_name",
+            last_name: "$clientInfo.last_name",
+            name: "$clientInfo.name",
           },
         },
       ];
-
       const findClient = await Client.aggregate(pipeline);
 
       return findClient;
@@ -75,6 +105,7 @@ class InvoiceService {
         client_id,
         due_date,
         invoice_number,
+        invoice_date,
         invoice_content,
         recipient,
       } = payload;
@@ -95,12 +126,12 @@ class InvoiceService {
       const getInvoiceStatus = await Invoice_Status_Master.findOne({
         name: status,
       });
-      console.log(invoiceItems);
 
       const invoice = await Invoice.create({
         client_id,
         due_date,
         invoice_number,
+        invoice_date,
         total,
         sub_total,
         invoice_content: invoiceItems,
@@ -119,10 +150,17 @@ class InvoiceService {
   getAllInvoice = async (searchObj, user_id) => {
     try {
       const queryObj = { is_deleted: false, agency_id: user_id };
+
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
           {
             invoice_number: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            status: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -132,6 +170,7 @@ class InvoiceService {
         const keywordType = getKeywordType(searchObj.search);
         if (keywordType === "number") {
           const numericKeyword = parseInt(searchObj.search);
+
           queryObj["$or"].push({
             total: numericKeyword,
           });
@@ -158,11 +197,25 @@ class InvoiceService {
           $unwind: "$status",
         },
         {
+          $lookup: {
+            from: "authentications",
+            localField: "client_id",
+            foreignField: "reference_id",
+            as: "customerInfo",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$customerInfo",
+        },
+        {
           $project: {
             _id: 1,
             invoice_number: 1,
+            invoice_date: 1,
             recipient: 1,
             due_date: 1,
+            customer_name: "$customerInfo.name",
             status: "$status.name",
             client_id: 1,
             invoice_content: 1,
@@ -174,33 +227,18 @@ class InvoiceService {
         },
       ];
 
-      const invoices = await Invoice.aggregate(pipeLine)
-        .sort(pagination.sort)
-        .skip(pagination.skip)
-        .limit(pagination.resultPerPage);
+      const [invoiceList, total_invoices] = await Promise.all([
+        Invoice.aggregate(pipeLine)
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.resultPerPage),
+        Invoice.aggregate(pipeLine),
+      ]);
 
-      const countResult = await Invoice.aggregate(pipeLine).count("count");
-
-      const count = countResult[0] && countResult[0].count;
-
-      if (count !== undefined) {
-        // Calculating total pages
-        const pages = Math.ceil(count / pagination.resultPerPage);
-
-        return {
-          invoices,
-          pagination: {
-            current_page: pagination.page,
-            total_pages: pages,
-          },
-        };
-      }
       return {
-        invoices,
-        pagination: {
-          current_page: pagination.page,
-          total_pages: 0,
-        },
+        invoiceList,
+        page_count:
+          Math.ceil(total_invoices.length / pagination.resultPerPage) || 0,
       };
     } catch (error) {
       logger.error(`Error while Lising ALL Invoice Listing, ${error}`);
@@ -216,20 +254,20 @@ class InvoiceService {
         .populate("status", "name")
         .populate({
           path: "client_id",
-          model: "authentication",
-          select: "reference_id",
+          model: "client",
+          select: "_id",
           populate: {
-            path: "reference_id",
+            path: "_id",
             model: "client",
             select: "-agency_ids",
           },
         })
         .populate({
           path: "agency_id",
-          model: "authentication",
-          select: "reference_id",
+          model: "agency",
+          select: "_id",
           populate: {
-            path: "reference_id",
+            path: "_id",
             model: "agency",
           },
         });
@@ -240,45 +278,79 @@ class InvoiceService {
     }
   };
 
-  // Update Invoice Status  ------   AGENCY API
+  // Update Invoice   ------   AGENCY API
+  updateInvoice = async (payload, invoiceIdToUpdate) => {
+    try {
+      const { status, due_date, invoice_content, recipient, invoice_date } =
+        payload;
+      const invoice = await Invoice.findById(invoiceIdToUpdate).populate(
+        "status"
+      );
+      if (invoice.status.name === "draft") {
+        if (status === "draft" || status === "unpaid") {
+          // Get Invoice status
+          const getInvoiceStatus = await Invoice_Status_Master.findOne({
+            name: status,
+          });
+
+          await Invoice.updateOne(
+            { _id: invoiceIdToUpdate },
+            { $set: { status: getInvoiceStatus._id } }
+          );
+        }
+        if (due_date || invoice_content || recipient || invoice_date) {
+          const invoiceItems = invoice_content;
+          calculateAmount(invoiceItems);
+
+          const { total, sub_total } = calculateInvoice(invoiceItems);
+
+          await Invoice.updateOne(
+            { _id: invoiceIdToUpdate },
+            {
+              $set: {
+                total,
+                sub_total,
+                due_date,
+                invoice_content: invoiceItems,
+                recipient,
+                invoice_date,
+              },
+            }
+          );
+        }
+      } else {
+        return throwError(returnMessage("invoice", "canNotUpdate"));
+      }
+      return true;
+    } catch (error) {
+      logger.error(`Error while updating Invoice, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Update Status Invoice   ------   AGENCY API
   updateStatusInvoice = async (payload, invoiceIdToUpdate) => {
     try {
-      const { status, due_date, invoice_content, recipient } = payload;
+      const { status } = payload;
 
-      if (status) {
+      if (
+        status === "draft" ||
+        status === "unpaid" ||
+        status === "paid" ||
+        status === "overdue"
+      ) {
         // Get Invoice status
         const getInvoiceStatus = await Invoice_Status_Master.findOne({
           name: status,
         });
-
         await Invoice.updateOne(
           { _id: invoiceIdToUpdate },
           { $set: { status: getInvoiceStatus._id } }
         );
       }
-      if (due_date || invoice_content || recipient) {
-        const invoiceItems = invoice_content;
-        calculateAmount(invoiceItems);
-
-        const { total, sub_total } = calculateInvoice(invoiceItems);
-
-        await Invoice.updateOne(
-          { _id: invoiceIdToUpdate },
-          {
-            $set: {
-              total,
-              sub_total,
-              due_date,
-              invoice_content: invoiceItems,
-              recipient,
-            },
-          }
-        );
-      }
-
       return true;
     } catch (error) {
-      logger.error(`Error while updating Invoice, ${error}`);
+      logger.error(`Error while updating  Invoice status, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };
@@ -309,11 +381,25 @@ class InvoiceService {
   // GET All Invoice    ------   CLient API
   getClientInvoice = async (searchObj, user_id) => {
     try {
-      const queryObj = { is_deleted: false, client_id: user_id };
+      const { agency_id } = searchObj;
+      if (!agency_id) {
+        return throwError(returnMessage("invoice", "agencyIdRequired"));
+      }
+      const queryObj = {
+        is_deleted: false,
+        client_id: user_id,
+        agency_id: new ObjectId(agency_id),
+      };
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
           {
             invoice_number: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            status: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -341,12 +427,17 @@ class InvoiceService {
             from: "invoice_status_masters",
             localField: "status",
             foreignField: "_id",
-            as: "status",
+            as: "statusArray",
             pipeline: [{ $project: { name: 1 } }],
           },
         },
         {
-          $unwind: "$status",
+          $unwind: "$statusArray",
+        },
+        {
+          $match: {
+            "statusArray.name": { $ne: "draft" }, // Exclude documents with status "draft"
+          },
         },
         {
           $project: {
@@ -354,8 +445,9 @@ class InvoiceService {
             invoice_number: 1,
             recipient: 1,
             due_date: 1,
-            status: "$status.name",
-            client_id: 1,
+            invoice_date: 1,
+            status: "$statusArray.name",
+            agency_id: 1,
             invoice_content: 1,
             sub_total: 1,
             total: 1,
@@ -365,36 +457,60 @@ class InvoiceService {
         },
       ];
 
-      const invoices = await Invoice.aggregate(pipeLine)
-        .sort(pagination.sort)
-        .skip(pagination.skip)
-        .limit(pagination.resultPerPage);
+      const [invoiceList, total_invoices] = await Promise.all([
+        Invoice.aggregate(pipeLine)
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.resultPerPage),
+        Invoice.aggregate(pipeLine),
+      ]);
 
-      const countResult = await Invoice.aggregate(pipeLine).count("count");
-
-      const count = countResult[0] && countResult[0].count;
-
-      if (count !== undefined) {
-        // Calculating total pages
-        const pages = Math.ceil(count / pagination.resultPerPage);
-
-        return {
-          invoices,
-          pagination: {
-            current_page: pagination.page,
-            total_pages: pages,
-          },
-        };
-      }
       return {
-        invoices,
-        pagination: {
-          current_page: pagination.page,
-          total_pages: 0,
-        },
+        invoiceList,
+        page_count:
+          Math.ceil(total_invoices.length / pagination.resultPerPage) || 0,
       };
     } catch (error) {
       logger.error(`Error while Lising ALL Invoice Listing, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Send Invoice
+
+  sendInvoice = async (payload) => {
+    try {
+      const { invoiceId } = payload;
+
+      const invoice = await Invoice.findOne({
+        _id: invoiceId,
+        is_deleted: false,
+      })
+        .populate("client_id")
+        .populate("agency_id");
+
+      console.log(invoice);
+
+      const clientDetails = await Authentication.findOne({
+        reference_id: invoice.client_id,
+      });
+
+      // Use a template or format the invoice message accordingly
+      const formattedMessage = `Invoice Details:\n${JSON.stringify(
+        invoice,
+        null,
+        2
+      )}`;
+
+      await sendEmail({
+        email: clientDetails?.email,
+        subject: "Invoice",
+        message: formattedMessage,
+      });
+
+      return true;
+    } catch (error) {
+      logger.error(`Error while send Invoice, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };
