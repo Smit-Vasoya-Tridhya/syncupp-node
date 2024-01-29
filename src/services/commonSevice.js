@@ -48,7 +48,7 @@ exports.calculateInvoice = (invoice_content) => {
 exports.calculateAmount = (items) => {
   items.forEach((item) => {
     const amount = item.qty * item.rate * (1 + item.tax / 100);
-    item.amount = amount;
+    item.amount = parseFloat(amount.toFixed(0)); // Round to 0 decimal places
   });
 
   return items;

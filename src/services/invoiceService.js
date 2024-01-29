@@ -57,8 +57,6 @@ class InvoiceService {
         {
           $project: {
             _id: "$clientDetails._id",
-            first_name: "$clientInfo.first_name",
-            last_name: "$clientInfo.last_name",
             name: "$clientInfo.name",
           },
         },
@@ -85,6 +83,9 @@ class InvoiceService {
           createdAt: 0,
           updatedAt: 0,
           __v: 0,
+          company_website: 0,
+          no_of_people: 0,
+          industry: 0,
         }
       )
         .populate("city", "name")
@@ -99,6 +100,8 @@ class InvoiceService {
           createdAt: 0,
           updatedAt: 0,
           __v: 0,
+          company_website: 0,
+          title: 0,
         }
       )
         .populate("city", "name")
@@ -258,32 +261,242 @@ class InvoiceService {
     }
   };
 
-  // GET Agreement   ------   Client and Agency API
+  // GET Invoice   ------   Client and Agency API
 
   getInvoice = async (invoiceId) => {
     try {
-      const invoice = await Invoice.findOne({ _id: invoiceId })
-        .populate("status", "name")
-        .populate({
-          path: "recipient",
-          model: "client",
-          select: "_id",
-          populate: {
-            path: "_id",
-            model: "client",
-            select: "-agency_ids -createdAt  -updatedAt -__v",
+      const invoice = await Invoice.aggregate([
+        {
+          $match: { _id: new ObjectId(invoiceId) },
+        },
+
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "recipient",
+            foreignField: "reference_id",
+            as: "recipientData",
+            pipeline: [{ $project: { name: 1 } }],
           },
-        })
-        .populate({
-          path: "agency_id",
-          model: "agency",
-          select: "_id",
-          populate: {
-            path: "_id",
-            model: "agency",
-            select: "-createdAt  -updatedAt -__v",
+        },
+
+        {
+          $unwind: "$recipientData",
+        },
+        {
+          $lookup: {
+            from: "invoice_status_masters",
+            localField: "status",
+            foreignField: "_id",
+            as: "statusData",
+            pipeline: [{ $project: { name: 1 } }],
           },
-        });
+        },
+
+        {
+          $unwind: "$statusData",
+        },
+        {
+          $lookup: {
+            from: "clients",
+            localField: "recipient",
+            foreignField: "_id",
+            as: "clientData",
+            pipeline: [
+              {
+                $project: {
+                  agency_ids: 0,
+                  title: 0,
+                  company_website: 0,
+                  createdAt: 0,
+                  updatedAt: 0,
+                  __v: 0,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$clientData",
+        },
+        {
+          $lookup: {
+            from: "state_masters",
+            localField: "clientData.state",
+            foreignField: "_id",
+            as: "clientState",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$clientState",
+        },
+        {
+          $lookup: {
+            from: "city_masters",
+            localField: "clientData.city",
+            foreignField: "_id",
+            as: "clientCity",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$clientCity",
+        },
+        {
+          $lookup: {
+            from: "country_masters",
+            localField: "clientData.country",
+            foreignField: "_id",
+            as: "clientCountry",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$clientCountry",
+        },
+        {
+          $lookup: {
+            from: "agencies",
+            localField: "agency_id",
+            foreignField: "_id",
+            as: "agencyData",
+
+            pipeline: [
+              {
+                $project: {
+                  company_website: 0,
+                  no_of_people: 0,
+                  createdAt: 0,
+                  updatedAt: 0,
+                  industry: 0,
+                  __v: 0,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$agencyData",
+        },
+        {
+          $lookup: {
+            from: "state_masters",
+            localField: "agencyData.state",
+            foreignField: "_id",
+            as: "agencyState",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$agencyState",
+        },
+        {
+          $lookup: {
+            from: "city_masters",
+            localField: "agencyData.city",
+            foreignField: "_id",
+            as: "agencyCity",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$agencyCity",
+        },
+        {
+          $lookup: {
+            from: "country_masters",
+            localField: "agencyData.country",
+            foreignField: "_id",
+            as: "agencyCountry",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: "$agencyCountry",
+        },
+
+        {
+          $project: {
+            _id: 1,
+            invoice_number: 1,
+            recipient: "$recipientData",
+            invoice_date: 1,
+            due_date: 1,
+            status: "$statusData.name",
+            from: {
+              _id: "$agencyData._id",
+              company_name: "$agencyData.company_name",
+              address: "$agencyData.address",
+              pincode: "$agencyData.pincode",
+              state: "$agencyState",
+              city: "$agencyCity",
+              country: "$agencyCountry",
+            },
+
+            to: {
+              _id: "$clientData._id",
+              company_name: "$clientData.company_name",
+              address: "$clientData.address",
+              pincode: "$clientData.pincode",
+              state: "$clientState",
+              city: "$clientCity",
+              country: "$clientCountry",
+            },
+
+            invoice_content: 1,
+            sub_total: 1,
+            total: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ]);
+
       return invoice;
     } catch (error) {
       logger.error(`Error while Get Invoice, ${error}`);
