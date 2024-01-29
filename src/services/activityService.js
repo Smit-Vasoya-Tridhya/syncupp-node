@@ -13,16 +13,19 @@ class ActivityService {
   createTask = async (payload, id) => {
     try {
       const {
+        title,
         internal_info,
         due_date,
         due_time,
         assign_to,
-        assign_by,
         client_id,
         mark_as_done,
       } = payload;
-      const dueDateObject = moment(due_date);
 
+      const dueDateObject = moment(due_date);
+      const duetimeObject = moment(due_time);
+
+      const timeOnly = duetimeObject.format("HH:mm:ss");
       dueDateObject.startOf("day");
 
       const currentDate = moment().startOf("day");
@@ -40,11 +43,12 @@ class ActivityService {
       const type = await ActivityType.findOne({ name: "task" }).lean();
 
       const newTask = new Activity({
+        title,
         internal_info,
         due_date: dueDateObject.toDate(),
-        due_time,
+        due_time: timeOnly,
         assign_to,
-        assign_by,
+        assign_by: id,
         client_id,
         activity_status: status._id,
         activity_type: type._id,
@@ -78,12 +82,7 @@ class ActivityService {
               $options: "i",
             },
           },
-          {
-            receiver: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
+
           {
             status: {
               $regex: searchObj.search.toLowerCase(),
@@ -105,7 +104,7 @@ class ActivityService {
           queryObj["$or"].push({ updatedAt: dateKeyword });
         }
       }
-      const aggregationPipeline = [
+      const taskPipeline = [
         {
           $lookup: {
             from: "authentications",
@@ -134,7 +133,7 @@ class ActivityService {
           },
         },
       ];
-      const agreements = await Agreement.aggregate(aggregationPipeline)
+      const agreements = await Activity.aggregate(aggregationPipeline)
         .skip(pagination.skip)
         .limit(pagination.result_per_page)
         .sort(pagination.sort);

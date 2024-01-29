@@ -127,7 +127,8 @@
   },
   "activity": {
     "dateinvalid": "Date must be the present date or a future date.",
-    "statusList": "List fetch successfully."
+    "statusList": "List fetch successfully.",
+    "createTask": "Add task successfully."
   },
 
   "default": { "default": "Something went wrong." }
