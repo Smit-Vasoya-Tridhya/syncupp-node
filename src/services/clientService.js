@@ -238,7 +238,7 @@ class ClientService {
 
       const clients = await Client.distinct("_id", {
         agency_ids: {
-          $elemMatch: { agency_id: agency?.reference_id },
+          $elemMatch: { agency_id: agency?.reference_id, status: "active" },
         },
       }).lean();
 
