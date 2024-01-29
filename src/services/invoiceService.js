@@ -57,7 +57,6 @@ class InvoiceService {
         {
           $project: {
             _id: "$clientDetails._id",
-            company_name: "$clientDetails.company_name",
             first_name: "$clientInfo.first_name",
             last_name: "$clientInfo.last_name",
             name: "$clientInfo.name",
@@ -78,17 +77,33 @@ class InvoiceService {
     try {
       const { client_id } = payload;
       const { reference_id } = user;
-      const getAgencyData = await Agency.findOne({
-        _id: reference_id,
-      });
+      const getAgencyData = await Agency.findOne(
+        {
+          _id: reference_id,
+        },
+        {
+          createdAt: 0,
+          updatedAt: 0,
+          __v: 0,
+        }
+      )
+        .populate("city", "name")
+        .populate("state", "name")
+        .populate("country", "name");
       const getClientData = await Client.findOne(
         {
           _id: client_id,
         },
         {
           agency_ids: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          __v: 0,
         }
-      );
+      )
+        .populate("city", "name")
+        .populate("state", "name")
+        .populate("country", "name");
 
       return { getAgencyData, getClientData };
     } catch (error) {
@@ -102,7 +117,6 @@ class InvoiceService {
     try {
       const {
         status,
-        client_id,
         due_date,
         invoice_number,
         invoice_date,
@@ -122,13 +136,12 @@ class InvoiceService {
 
       const { total, sub_total } = calculateInvoice(invoiceItems);
 
-      // Get Invoice status
+      // Update Invoice status
       const getInvoiceStatus = await Invoice_Status_Master.findOne({
         name: status,
       });
 
       const invoice = await Invoice.create({
-        client_id,
         due_date,
         invoice_number,
         invoice_date,
@@ -199,7 +212,7 @@ class InvoiceService {
         {
           $lookup: {
             from: "authentications",
-            localField: "client_id",
+            localField: "recipient",
             foreignField: "reference_id",
             as: "customerInfo",
             pipeline: [{ $project: { name: 1 } }],
@@ -217,7 +230,6 @@ class InvoiceService {
             due_date: 1,
             customer_name: "$customerInfo.name",
             status: "$status.name",
-            client_id: 1,
             invoice_content: 1,
             sub_total: 1,
             total: 1,
@@ -253,13 +265,13 @@ class InvoiceService {
       const invoice = await Invoice.findOne({ _id: invoiceId })
         .populate("status", "name")
         .populate({
-          path: "client_id",
+          path: "recipient",
           model: "client",
           select: "_id",
           populate: {
             path: "_id",
             model: "client",
-            select: "-agency_ids",
+            select: "-agency_ids -createdAt  -updatedAt -__v",
           },
         })
         .populate({
@@ -269,6 +281,7 @@ class InvoiceService {
           populate: {
             path: "_id",
             model: "agency",
+            select: "-createdAt  -updatedAt -__v",
           },
         });
       return invoice;
@@ -387,7 +400,7 @@ class InvoiceService {
       }
       const queryObj = {
         is_deleted: false,
-        client_id: user_id,
+        recipient: user_id,
         agency_id: new ObjectId(agency_id),
       };
       if (searchObj.search && searchObj.search !== "") {
@@ -480,19 +493,17 @@ class InvoiceService {
 
   sendInvoice = async (payload) => {
     try {
-      const { invoiceId } = payload;
+      const { invoice_id } = payload;
 
       const invoice = await Invoice.findOne({
-        _id: invoiceId,
+        _id: invoice_id,
         is_deleted: false,
       })
-        .populate("client_id")
+        .populate("recipient")
         .populate("agency_id");
 
-      console.log(invoice);
-
       const clientDetails = await Authentication.findOne({
-        reference_id: invoice.client_id,
+        reference_id: invoice.recipient,
       });
 
       // Use a template or format the invoice message accordingly

@@ -4,17 +4,12 @@ const { crm_connection } = require("../config/connection");
 const invoiceSchema = new mongoose.Schema(
   {
     invoice_number: { type: String, required: true, unique: true },
-    recipient: { type: String, required: true },
+    recipient: { type: mongoose.Types.ObjectId, ref: "client", required: true },
     due_date: { type: Date, required: true },
     invoice_date: { type: Date, required: true },
     status: {
       type: mongoose.Types.ObjectId,
       ref: "invoice_status_master",
-      required: true,
-    },
-    client_id: {
-      type: mongoose.Types.ObjectId,
-      ref: "client",
       required: true,
     },
     agency_id: {

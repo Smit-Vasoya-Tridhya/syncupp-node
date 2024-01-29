@@ -362,10 +362,6 @@ const createInvoice = {
               type: "string",
               description: "Enter status",
             },
-            client_id: {
-              type: "string",
-              description: "Enter client_id",
-            },
             due_date: {
               type: "string",
               description: "Enter due_date",
@@ -441,7 +437,7 @@ const sendInvoice = {
           type: "object",
 
           properties: {
-            invoiceId: {
+            invoice_id: {
               type: "string",
               description: "Enter Invoice Id",
             },
