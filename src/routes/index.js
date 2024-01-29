@@ -7,7 +7,9 @@ const clientRoute = require("./clientRoute");
 const teamMemberRoute = require("./teamMemberRoute");
 const invoiceRoute = require("./invoiceRoute");
 const agreementRoute = require("./agreementRoute");
+const activityRoute = require("./activityRoute");
 
+router.use("/api/v1/activity", activityRoute);
 router.use("/api/v1/auth", authRoute);
 router.use("/api/v1/admin", adminRoute);
 router.use("/api/v1/agency", agencyRoute);

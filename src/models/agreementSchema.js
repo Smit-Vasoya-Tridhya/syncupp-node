@@ -23,8 +23,9 @@ const agreementSchema = new mongoose.Schema(
       required: true,
     },
     receiver: {
-      type: String,
+      type: mongoose.Types.ObjectId,
       required: true,
+      ref: "client",
     },
     agreement_content: {
       type: String,
@@ -33,7 +34,7 @@ const agreementSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["draft", "sent", "agreed"],
-      required: true,
+      default: "draft",
     },
     is_deleted: { type: Boolean, default: false },
   },

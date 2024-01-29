@@ -7,6 +7,8 @@ const statusCode = require("../messages/statusCodes.json");
 const Admin = require("../models/adminSchema");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const Agency_Type_Master = require("../models/masters/agencyTypeMasterSchema");
+const Activity_Type_Master = require("../models/masters/activityTypeMasterSchema");
+const Activity_Status_Master = require("../models/masters/activityStatusMasterSchema");
 // const Country_Master = require("../models/masters/countryMasterSchema");
 // const State_Master = require("../models/masters/stateMasterSchema");
 // const City_Master = require("../models/masters/cityMasterSchema");
@@ -21,6 +23,15 @@ const role_master_data = JSON.parse(
 const agency_type_master_data = JSON.parse(
   fs.readFileSync(`${__dirname}/seeder-data/agency_type_master.json`, "utf-8")
 );
+const activity_type_master_data = JSON.parse(
+  fs.readFileSync(`${__dirname}/seeder-data/activity_type_master.json`, "utf-8")
+);
+const activity_status_master_data = JSON.parse(
+  fs.readFileSync(
+    `${__dirname}/seeder-data/activity_status_master.json`,
+    "utf-8"
+  )
+);
 
 // const state_master_data = JSON.parse(
 //   fs.readFileSync(`${__dirname}/seeder-data/state_master.json`, "utf-8")
@@ -34,11 +45,14 @@ const agency_type_master_data = JSON.parse(
 
 exports.insertData = async () => {
   try {
-    const [admins, roles, agency_types] = await Promise.all([
-      Admin.countDocuments(),
-      Role_Master.countDocuments(),
-      Agency_Type_Master.countDocuments(),
-    ]);
+    const [admins, roles, agency_types, activity_type, activity_status] =
+      await Promise.all([
+        Admin.countDocuments(),
+        Role_Master.countDocuments(),
+        Agency_Type_Master.countDocuments(),
+        Activity_Type_Master.countDocuments(),
+        Activity_Status_Master.countDocuments(),
+      ]);
 
     const promiseArray = [];
 
@@ -53,6 +67,14 @@ exports.insertData = async () => {
     if (agency_types === 0) {
       // promiseArray.push(Agency_Type_Master.deleteMany());
       promiseArray.push(Agency_Type_Master.create(agency_type_master_data));
+    }
+    if (activity_type === 0) {
+      promiseArray.push(Activity_Type_Master.create(activity_type_master_data));
+    }
+    if (activity_status === 0) {
+      promiseArray.push(
+        Activity_Status_Master.create(activity_status_master_data)
+      );
     }
 
     // if (countries === 0) {

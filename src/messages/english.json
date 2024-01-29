@@ -93,7 +93,8 @@
     "canNotUpdate": "Agreement can not be updated.",
     "agreementStatusUpdated": "Agreement status updated.",
     "agreementSent": "Agreement sent to client successfully.",
-    "downloadPDF": "Downlad PDF successfully"
+    "downloadPDF": "Downlad PDF successfully.",
+    "clientnotexist": "Client doest not exist."
   },
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",
@@ -118,6 +119,10 @@
     "clientDeleted": "Client deleted successfully.",
     "agenciesFetched": "Agencies fetched successfully.",
     "clientsFetched": "Client list fetched successfully."
+  },
+  "activity": {
+    "dateinvalid": "Date must be the present date or a future date.",
+    "statusList": "List fetch successfully."
   },
 
   "default": { "default": "Something went wrong." }

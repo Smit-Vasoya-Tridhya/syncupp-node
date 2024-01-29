@@ -12,7 +12,7 @@ const agreementService = new AgreementService();
 exports.addAgreement = catchAsyncError(async (req, res, next) => {
   const addedAgreement = await agreementService.addAgreement(
     req.body,
-    req?.user?._id
+    req?.user
   );
   sendResponse(
     res,
@@ -94,6 +94,21 @@ exports.sendAgreement = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+exports.updateAgreementStatusAgency = catchAsyncError(
+  async (req, res, next) => {
+    const updatedAgreement = await agreementService.updateAgreementStatusAgency(
+      req.body,
+      req?.params?.id
+    );
+    sendResponse(
+      res,
+      true,
+      returnMessage("agreement", "agreementStatusUpdated"),
+      updatedAgreement,
+      statusCode.success
+    );
+  }
+);
 
 // -------------------   Clint API   ------------------------
 
