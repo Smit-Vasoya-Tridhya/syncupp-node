@@ -211,9 +211,15 @@ class ClientService {
       //     returnMessage("agency", "agencyNotFound"),
       //     statusCode.notFound
       //   );
+      const clientIds = await Authentication.distinct("reference_id", {
+        _id: { $in: client_ids },
+      });
 
       await Client.updateMany(
-        { _id: { $in: client_ids }, "agency_ids.agency_id": agency?._id },
+        {
+          _id: { $in: clientIds },
+          "agency_ids.agency_id": agency?.reference_id,
+        },
         { $set: { "agency_ids.$.status": "inactive" } },
         { new: true }
       );
