@@ -8,11 +8,17 @@ const teamClientSchema = new mongoose.Schema(
       ref: "client",
       required: true,
     },
-
     agency_ids: [
       {
-        type: mongoose.Types.ObjectId,
-        ref: "agency",
+        agency_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "agency",
+        },
+        status: {
+          type: String,
+          enum: ["confirmed", "requested", "inactive", "rejected"],
+        },
+        date: { type: Date, default: new Date() },
       },
     ],
     role: {

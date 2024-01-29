@@ -211,9 +211,15 @@ class ClientService {
       //     returnMessage("agency", "agencyNotFound"),
       //     statusCode.notFound
       //   );
+      const clientIds = await Authentication.distinct("reference_id", {
+        _id: { $in: client_ids },
+      });
 
       await Client.updateMany(
-        { _id: { $in: client_ids }, "agency_ids.agency_id": agency?._id },
+        {
+          _id: { $in: clientIds },
+          "agency_ids.agency_id": agency?.reference_id,
+        },
         { $set: { "agency_ids.$.status": "inactive" } },
         { new: true }
       );
@@ -238,7 +244,7 @@ class ClientService {
 
       const clients = await Client.distinct("_id", {
         agency_ids: {
-          $elemMatch: { agency_id: agency?.reference_id },
+          $elemMatch: { agency_id: agency?.reference_id, status: "active" },
         },
       }).lean();
 
@@ -338,6 +344,7 @@ class ClientService {
           country: payload?.country,
           pincode: payload?.pincode,
           address: payload?.address,
+          title: payload?.title,
         },
         { new: true }
       );
@@ -383,11 +390,16 @@ class ClientService {
 
   getAgencies = async (client) => {
     try {
-      const { reference_id } = client;
-
-      const findClient = await Client.findById(reference_id);
-
-      return findClient.agency_ids;
+      const client_data = await Client.findById(client?.reference_id).lean();
+      const agency_array = client_data?.agency_ids?.map((agency) =>
+        agency?.status === "active" ? agency?.agency_id : undefined
+      );
+      return await Authentication.find({
+        reference_id: { $in: agency_array },
+        is_deleted: false,
+      })
+        .select("name reference_id first_name last_name")
+        .lean();
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
       return throwError(error?.message, error?.statusCode);

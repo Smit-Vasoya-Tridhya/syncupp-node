@@ -1,3 +1,4 @@
+const { protect } = require("../middlewares/authMiddleware");
 const {
   verify,
   login,
@@ -10,10 +11,8 @@ const {
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
   loginTeamMemberValidator,
-  verifyValidator,
   addMemberValidator,
 } = require("../validators/teamMember.validator");
-const { protect } = require("../middlewares/authMiddleware");
 const teamMemberRoute = require("express").Router();
 
 // this route is used for the Team Agency Route.

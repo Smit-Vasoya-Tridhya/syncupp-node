@@ -7,25 +7,24 @@ const teamMemberService = new TeamMemberService();
 
 // Team Member add
 exports.add = catchAsyncError(async (req, res, next) => {
-  const user_id = req.user._id;
-  const teamMember = await teamMemberService.add(req.body, user_id);
+  await teamMemberService.addTeamMember(req.body, req.user);
   sendResponse(
     res,
     true,
     returnMessage("teamMember", "invitationSent"),
-    teamMember,
+    {},
     statusCode.success
   );
 });
 
 // Team Member Verification
 exports.verify = catchAsyncError(async (req, res, next) => {
-  await teamMemberService.verify(req.body);
+  const verify = await teamMemberService.verify(req.body);
   sendResponse(
     res,
     true,
-    returnMessage("teamMember", "passwordSet"),
-    null,
+    returnMessage("teamMember", "verified"),
+    verify,
     statusCode.success
   );
 });
@@ -75,8 +74,7 @@ exports.deleteMember = catchAsyncError(async (req, res, next) => {
 //  Get All Team Member
 
 exports.getAll = catchAsyncError(async (req, res, next) => {
-  const user_id = req.user._id;
-  const teamMemberList = await teamMemberService.getAll(user_id, req.body);
+  const teamMemberList = await teamMemberService.getAllTeam(req.body, req.user);
   sendResponse(
     res,
     true,
@@ -89,8 +87,10 @@ exports.getAll = catchAsyncError(async (req, res, next) => {
 //  Edit Team Member
 
 exports.editMember = catchAsyncError(async (req, res, next) => {
-  const user_id = req.user._id;
-  const teamMember = await teamMemberService.editMember(req.body, user_id);
+  const teamMember = await teamMemberService.editMember(
+    req.body,
+    req.params.id
+  );
   sendResponse(
     res,
     true,

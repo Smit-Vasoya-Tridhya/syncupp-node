@@ -208,29 +208,33 @@ const getAllTeamMember = {
           type: "object",
 
           properties: {
-            sortField: {
-              type: "string",
-              description: "Enter sortField",
-              required: true,
+            page: {
+              type: "number",
+              description: "Enter page number.",
+              default: 1,
             },
-            sortOrder: {
+            items_per_page: {
+              type: "number",
+              description: "Enter item per page.",
+              default: 10,
+            },
+            sort_order: {
               type: "string",
-              description: "Enter sortOrder",
-              required: true,
+              description: "Enter order of sort asc or desc.",
+              default: "desc",
+            },
+            sort_field: {
+              type: "string",
+              description: "Enter field to sort.",
+              default: "createdAt",
             },
             search: {
               type: "string",
-              description: "Enter search value",
+              description: "Enter value of search",
             },
-            page: {
-              type: "number",
-              description: "Enter page number",
-              required: true,
-            },
-            itemsPerPage: {
-              type: "number",
-              description: "Enter itemsPerPage",
-              required: true,
+            for_client: {
+              type: "boolean",
+              default: false,
             },
           },
         },
@@ -360,20 +364,20 @@ const teamMembersRoutes = {
     post: verifyTeamMember,
   },
 
-  "/api/v1/agency/team-member/add": {
+  "/api/v1/team-member/add": {
     post: addTeamMember,
   },
 
-  "/api/v1/agency/team-member/get-all": {
+  "/api/v1/team-member/get-all": {
     post: getAllTeamMember,
   },
-  "/api/v1/agency/team-member/details/{id}": {
+  "/api/v1/team-member/details/{id}": {
     get: getTeamMember,
   },
-  "/api/v1/agency/team-member/delete/{id}": {
+  "/api/v1/team-member/delete/{id}": {
     delete: deleteTeamMember,
   },
-  "/api/v1/agency/team-member/edit/{id}": {
+  "/api/v1/team-member/edit/{id}": {
     put: editTeamMember,
   },
 

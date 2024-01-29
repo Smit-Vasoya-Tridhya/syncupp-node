@@ -17,5 +17,6 @@ authRoute.post("/cities/:stateId", authController.citiesList);
 
 authRoute.use(protect);
 authRoute.post("/change-password", authController.changePassword);
+authRoute.get("/profile", authController.getProfile);
 
 module.exports = authRoute;

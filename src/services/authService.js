@@ -121,6 +121,9 @@ class AuthService {
       });
       agency_enroll = agency_enroll.toObject();
       agency_enroll.role = role;
+      delete agency_enroll?.password;
+      delete agency_enroll?.is_facebook_signup;
+      delete agency_enroll?.is_google_signup;
       return this.tokenGenerator({
         ...agency_enroll,
         rememberMe: payload?.rememberMe,
@@ -260,6 +263,9 @@ class AuthService {
       )
         return throwError(returnMessage("agency", "agencyInactive"));
 
+      delete existing_Data?.is_facebook_signup;
+      delete existing_Data?.is_google_signup;
+      delete existing_Data?.password;
       return this.tokenGenerator({
         ...existing_Data,
         rememberMe: payload?.rememberMe,
