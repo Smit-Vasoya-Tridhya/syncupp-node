@@ -2,7 +2,11 @@ const catchAsyncError = require("../helpers/catchAsyncError");
 const { returnMessage } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const AuthService = require("../services/authService");
+const AgencyService = require("../services/agencyService");
+const ClientService = require("../services/clientService");
 const authService = new AuthService();
+const agencyService = new AgencyService();
+const clientService = new ClientService();
 const { sendResponse } = require("../utils/sendResponse");
 const { throwError } = require("../helpers/errorUtil");
 
@@ -103,4 +107,24 @@ exports.citiesList = catchAsyncError(async (req, res, next) => {
     return throwError(returnMessage("auth", "stateIdRequired"));
   const cities = await authService.citiesList(req.params.stateId, req.body);
   return sendResponse(res, true, undefined, cities, statusCode.success);
+});
+
+exports.getProfile = catchAsyncError(async (req, res, next) => {
+  // const user = req?.user;
+  // let profile;
+  // if (user?.role?.name === "agency") {
+  //   profile = await agencyService.getAgencyProfile(req.user);
+  // } else if (user?.role?.name === "client") {
+  //   profile = await clientService.getClientDetail(req.user);
+  // } else if (user?.role?.name === "team_agency") {
+  //   profile =  await
+  // } else if (user?.role?.name === "team_client") {
+  // }
+  // sendResponse(
+  //   res,
+  //   true,
+  //   returnMessage("auth", "profileFetched"),
+  //   profile,
+  //   statusCode.success
+  // );
 });

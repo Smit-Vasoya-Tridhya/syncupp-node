@@ -18,8 +18,8 @@
     "passwordRequired": "Old and new passwords are required.",
     "incorrectOldPassword": "Old password does not match.",
     "insufficientPermission": "In-sufficient permission.",
-    "profileFetched": "Profile fetched.",
-    "profileUpdated": "Profile updated.",
+    "profileFetched": "Profile fetched successfully.",
+    "profileUpdated": "Profile updated successfully.",
     "invalidContactNumber": "Contact number is invalid.",
     "countryIdRequired": "Country id is required.",
     "stateIdRequired": "State id is required."
