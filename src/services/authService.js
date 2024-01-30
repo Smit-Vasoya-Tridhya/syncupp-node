@@ -450,6 +450,23 @@ class AuthService {
       return throwError(error?.message, error?.statusCode);
     }
   };
+
+  // set password is required
+  passwordSetRequired = async (payload) => {
+    try {
+      if (!payload.email)
+        return throwError(returnMessage("auth", "emailRequired"));
+      const password_required = await Authentication.findOne({
+        email: payload?.email,
+        is_deleted: false,
+      }).lean();
+      if (password_required?.password) return { password_required: false };
+      return { password_required: true };
+    } catch (error) {
+      logger.error(`Error while getting password required: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
 }
 
 module.exports = AuthService;

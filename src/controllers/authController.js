@@ -132,3 +132,42 @@ exports.getProfile = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.updateProfile = catchAsyncError(async (req, res, next) => {
+  const user_id = req?.user?._id;
+  const reference_id = req?.user?.reference_id;
+  const user = req.user;
+  if (user?.role?.name === "agency") {
+    await agencyService.updateAgencyProfile(req.body, user_id, reference_id);
+  } else if (user?.role?.name === "client") {
+    await clientService.updateClientProfile(req.body, user_id, reference_id);
+  } else if (
+    user?.role?.name === "team_agency" ||
+    user?.role?.name === "team_client"
+  ) {
+    await teamMemberService.updateTeamMeberProfile(
+      req.body,
+      user_id,
+      reference_id,
+      user?.role?.name
+    );
+  }
+  sendResponse(
+    res,
+    true,
+    returnMessage("auth", "profileUpdated"),
+    {},
+    statusCode.success
+  );
+});
+
+exports.passwordSetRequired = catchAsyncError(async (req, res, next) => {
+  const password_set_required = await authService.passwordSetRequired(req.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("auth", "profileUpdated"),
+    password_set_required,
+    statusCode.success
+  );
+});

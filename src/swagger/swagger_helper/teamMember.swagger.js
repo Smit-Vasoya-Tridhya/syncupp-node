@@ -255,26 +255,32 @@ const getAllTeamMember = {
     },
   },
 };
+
 const deleteTeamMember = {
   tags: ["Team Member - CRM Panel"],
-  description: "",
+  description:
+    'Pass data like this {"teamMemberIds" : ["6597aeb9528e7bc34319c6f7" , "6597b11b248ca49192fcb7b9"]}',
   summary: "Delete Team Member ",
   security: [
     {
       bearerAuth: [],
     },
   ],
-  parameters: [
-    {
-      name: "id",
-      in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
-      required: true,
-      schema: {
-        type: "integer", // adjust the type accordingly
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            teamMemberIds: {
+              type: "array",
+              description: "Enter team member IDS to be deleted",
+            },
+          },
+        },
       },
     },
-  ],
+  },
   responses: {
     200: {
       description: "ok",

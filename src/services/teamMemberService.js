@@ -775,11 +775,10 @@ class TeamMemberService {
 
   deleteMember = async (payload) => {
     try {
-      const memberId = payload;
+      const { teamMemberIds } = payload;
 
-      console.log(memberId);
-      const teamMember = await Authentication.findOne({
-        _id: memberId,
+      const teamMember = await Authentication.find({
+        _id: { $in: teamMemberIds },
         is_deleted: false,
       })
         .populate({
@@ -796,26 +795,11 @@ class TeamMemberService {
         })
         .lean();
 
-      let TeamModelName;
-      if (teamMember.role.name === "team_agency") {
-        TeamModelName = Team_Agency;
-      }
-      if (teamMember.role.name === "team_client") {
-        TeamModelName = Team_Client;
-      }
-
-      // Step 1: Delete from Authentication collection
-      await Authentication.findByIdAndUpdate(
-        { _id: memberId },
+      // Delete from Authentication collection
+      await Authentication.updateMany(
+        { _id: { $in: teamMemberIds } },
         { $set: { is_deleted: true } }
       );
-
-      // Step 2: Delete references in team_role_master collection
-      await TeamModelName.findByIdAndUpdate(
-        { _id: teamMember?.reference_id?._id },
-        { $set: { is_deleted: true } }
-      );
-
       if (!teamMember) {
         return throwError(returnMessage("teamMember", "invalidId"));
       }
@@ -1011,6 +995,67 @@ class TeamMemberService {
       return team_detail;
     } catch (error) {
       logger.error(`Error while getting team profile: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Update Agency profile
+  updateTeamMeberProfile = async (payload, user_id, reference_id, role) => {
+    try {
+      const {
+        first_name,
+        last_name,
+        contact_number,
+        company_name,
+        company_website,
+        no_of_people,
+        industry,
+        city,
+        address,
+        state,
+        country,
+        pincode,
+      } = payload;
+
+      const authData = {
+        first_name,
+        last_name,
+        contact_number,
+      };
+      const agencyData = {
+        company_name,
+        company_website,
+        no_of_people,
+        industry,
+        city,
+        address,
+        state,
+        country,
+        pincode,
+      };
+
+      await Authentication.updateOne(
+        { _id: user_id },
+        { $set: authData },
+        { new: true }
+      );
+      if (role === "team_agency") {
+        await Team_Agency.updateOne(
+          { _id: reference_id },
+          { $set: agencyData },
+          { new: true }
+        );
+      } else if (role === "team_client") {
+        await Team_Client.updateOne(
+          { _id: reference_id },
+          { $set: agencyData },
+          { new: true }
+        );
+      }
+
+      return;
+    } catch (error) {
+      logger.error(`Error while registering the agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };

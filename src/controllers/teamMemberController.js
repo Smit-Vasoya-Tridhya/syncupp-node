@@ -60,8 +60,7 @@ exports.getMember = catchAsyncError(async (req, res, next) => {
 //  Delete Team Member
 
 exports.deleteMember = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  await teamMemberService.deleteMember(id);
+  await teamMemberService.deleteMember(req?.body);
   sendResponse(
     res,
     true,

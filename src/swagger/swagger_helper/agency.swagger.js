@@ -257,7 +257,7 @@ const updateAgencyProfile = {
               description: "Enter No of people",
               required: true,
             },
-            pin_code: {
+            pincode: {
               type: "number",
               description: "Enter Pin code",
               required: true,
@@ -406,9 +406,9 @@ const agenciesRoutes = {
   "/api/v1/agency/get-profile": {
     get: getAgencyProfile,
   },
-  "/api/v1/agency/update-profile": {
-    put: updateAgencyProfile,
-  },
+  // "/api/v1/agency/update-profile": {
+  //   put: updateAgencyProfile,
+  // },
   "/api/v1/agency/update-client/{clientId}": {
     patch: updateClient,
   },

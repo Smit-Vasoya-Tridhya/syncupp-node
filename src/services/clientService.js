@@ -65,7 +65,6 @@ class ClientService {
           status: "confirm_pending",
         };
         await Authentication.create(client_auth_obj);
-        link = link + "&redirect=false";
       } else {
         const client = await Client.findById(client_exist?.reference_id);
         const already_exist = client?.agency_ids.filter(
@@ -75,7 +74,6 @@ class ClientService {
         if (already_exist.length > 0)
           return throwError(returnMessage("agency", "clientExist"));
 
-        link = link + "&redirect=true";
         client.agency_ids = [
           ...client?.agency_ids,
           {
@@ -107,19 +105,14 @@ class ClientService {
       const role = await Role_Master.findOne({ name: "client" })
         .select("_id")
         .lean();
+      const client_auth = await Authentication.findOne({
+        email,
+        is_deleted: false,
+        role: role?._id,
+      }).lean();
 
-      if (redirect) {
+      if (redirect && client_auth && client_auth?.status !== "confirmed") {
         if (!email || !agency_id)
-          return throwError(returnMessage("default", "default"));
-
-        const client_auth = await Authentication.findOne({
-          email,
-          is_deleted: false,
-          status: "confirmed",
-          role: role?._id,
-        }).lean();
-
-        if (!client_auth)
           return throwError(returnMessage("default", "default"));
 
         const client = await Client.findById(client_auth?.reference_id).lean();
@@ -129,7 +122,12 @@ class ClientService {
         );
 
         if (agency_exist.length == 0)
-          return throwError(returnMessage("default", "default"));
+          return throwError(returnMessage("agency", "agencyNotFound"));
+
+        agency_exist.filter((agency) => {
+          if (agency?.status !== "pending")
+            return throwError(returnMessage("agency", "agencyExist"));
+        });
 
         await Client.updateOne(
           { _id: client?._id, "agency_ids.agency_id": agency_id },
@@ -137,7 +135,8 @@ class ClientService {
           { new: true }
         );
 
-        return authService.tokenGenerator(client_auth);
+        return;
+        // return authService.tokenGenerator(client_auth);
       }
 
       validateRequestFields(payload, [
@@ -154,23 +153,22 @@ class ClientService {
       if (!passwordValidation(password))
         return throwError(returnMessage("auth", "invalidPassword"));
 
-      const client_exist = await Authentication.findOne({
-        email,
-        is_deleted: false,
-        status: "confirm_pending",
-        role: role?._id,
-      });
+      if (client_auth?.status !== "confirm_pending")
+        return throwError(returnMessage("client", "clientNotFound"));
 
-      if (!client_exist) return throwError(returnMessage("default", "default"));
-
-      const client = await Client.findById(client_exist?.reference_id).lean();
+      const client = await Client.findById(client_auth?.reference_id).lean();
 
       const agency_exist = client?.agency_ids.filter(
         (id) => id?.agency_id?.toString() == agency_id
       );
 
       if (agency_exist.length == 0)
-        return throwError(returnMessage("default", "default"));
+        return throwError(returnMessage("agency", "agencyNotFound"));
+
+      agency_exist.filter((agency) => {
+        if (agency?.status !== "pending")
+          return throwError(returnMessage("agency", "agencyExist"));
+      });
 
       const hash_password = await authService.passwordEncryption({ password });
 
@@ -185,7 +183,8 @@ class ClientService {
       client_exist.password = hash_password;
       await client_exist.save();
 
-      return authService.tokenGenerator(client_exist);
+      return;
+      // return authService.tokenGenerator(client_exist);
     } catch (error) {
       console.log(`Error while verifying client`, error);
       return throwError(error?.message, error?.statusCode);
@@ -229,11 +228,10 @@ class ClientService {
       }
       const pagination = paginationObject(payload);
 
-      const clients = await Client.distinct("_id", {
+      const clients_ids = await Client.distinct("_id", {
         agency_ids: {
           $elemMatch: {
             agency_id: agency?.reference_id,
-            status: { $in: ["active", "pending"] },
           },
         },
       }).lean();
@@ -266,22 +264,37 @@ class ClientService {
               $options: "i",
             },
           },
+          {
+            $and: [
+              { "reference_id.agency_ids.$.agency_id": agency?.reference_id },
+              {
+                "reference_id.agency_ids.$.status": {
+                  $regex: payload.search,
+                  $options: "i",
+                },
+              },
+            ],
+          },
         ];
-
-        // if (!isNaN(payload?.search)) {
-        //   query_obj["$or"].push({ contact_number: payload.search });
-        // }
       }
 
       const aggrage_array = [
-        { $match: { reference_id: { $in: clients }, is_deleted: false } },
+        { $match: { reference_id: { $in: clients_ids }, is_deleted: false } },
         {
           $lookup: {
             from: "clients",
             localField: "reference_id",
             foreignField: "_id",
             as: "reference_id",
-            pipeline: [{ $project: { company_name: 1, company_website: 1 } }],
+            pipeline: [
+              {
+                $project: {
+                  company_name: 1,
+                  company_website: 1,
+                  agency_ids: 1,
+                },
+              },
+            ],
           },
         },
         { $unwind: "$reference_id" },
@@ -297,19 +310,29 @@ class ClientService {
             reference_id: {
               company_name: 1,
               company_website: 1,
+              agency_ids: 1,
             },
           },
         },
       ];
-      const [client, totalClients] = await Promise.all([
+      const [clients, totalClients] = await Promise.all([
         Authentication.aggregate(aggrage_array)
           .sort(pagination.sort)
           .skip(pagination.skip)
           .limit(pagination.result_per_page),
         Authentication.aggregate(aggrage_array),
       ]);
+
+      clients.forEach((client) => {
+        const agency_exists = client?.reference_id?.agency_ids?.find(
+          (ag) => ag?.agency_id?.toString() == agency?.reference_id
+        );
+        if (agency_exists) client["status"] = agency_exists?.status;
+        delete client?.reference_id?.agency_ids;
+      });
+
       return {
-        client,
+        clients,
         page_count:
           Math.ceil(totalClients.length / pagination.result_per_page) || 0,
       };
@@ -424,6 +447,61 @@ class ClientService {
         .lean();
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Update Agency profile
+  updateClientProfile = async (payload, user_id, reference_id) => {
+    try {
+      const {
+        first_name,
+        last_name,
+        contact_number,
+        company_name,
+        company_website,
+        no_of_people,
+        industry,
+        city,
+        address,
+        state,
+        country,
+        pincode,
+      } = payload;
+
+      const authData = {
+        first_name,
+        last_name,
+        contact_number,
+      };
+      const agencyData = {
+        company_name,
+        company_website,
+        no_of_people,
+        industry,
+        city,
+        address,
+        state,
+        country,
+        pincode,
+      };
+
+      await Promise.all([
+        Authentication.updateOne(
+          { _id: user_id },
+          { $set: authData },
+          { new: true }
+        ),
+        Client.updateOne(
+          { _id: reference_id },
+          { $set: agencyData },
+          { new: true }
+        ),
+      ]);
+
+      return;
+    } catch (error) {
+      logger.error(`Error while registering the agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };
