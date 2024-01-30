@@ -53,7 +53,7 @@ class ClientService {
           country: payload?.country,
           pincode: payload?.pincode,
           title: payload?.title,
-          agency_ids: [{ agency_id: agency?.reference_id, status: "inactive" }],
+          agency_ids: [{ agency_id: agency?.reference_id, status: "pending" }],
         };
         const new_client = await Client.create(client_obj);
         const client_auth_obj = {
@@ -80,7 +80,7 @@ class ClientService {
           ...client?.agency_ids,
           {
             agency_id: agency?.reference_id,
-            status: "inactive",
+            status: "pending",
           },
         ];
         await client.save();
@@ -195,22 +195,6 @@ class ClientService {
   // delete the client from the particuar agency
   deleteClient = async (client_ids, agency) => {
     try {
-      // const client = await Client.findById(client_id).lean();
-      // if (!client)
-      //   return throwError(
-      //     returnMessage("client", "clientNotFound"),
-      //     statusCode.notFound
-      //   );
-
-      // const agency_exist = client?.agency_ids.filter(
-      //   (id) => id?.agency_id?.toString() == agency?._id
-      // );
-
-      // if (agency_exist.length == 0)
-      //   return throwError(
-      //     returnMessage("agency", "agencyNotFound"),
-      //     statusCode.notFound
-      //   );
       const clientIds = await Authentication.distinct("reference_id", {
         _id: { $in: client_ids },
       });
@@ -233,6 +217,9 @@ class ClientService {
   // Get the client ist for the Agency
   clientList = async (payload, agency) => {
     try {
+      if (!payload?.pagination)
+        return await this.clientListWithoutPagination(agency);
+
       if (
         payload.sort_field &&
         (payload.sort_field === "company_name" ||
@@ -244,7 +231,10 @@ class ClientService {
 
       const clients = await Client.distinct("_id", {
         agency_ids: {
-          $elemMatch: { agency_id: agency?.reference_id, status: "active" },
+          $elemMatch: {
+            agency_id: agency?.reference_id,
+            status: { $in: ["active", "pending"] },
+          },
         },
       }).lean();
 
@@ -323,6 +313,38 @@ class ClientService {
         page_count:
           Math.ceil(totalClients.length / pagination.result_per_page) || 0,
       };
+    } catch (error) {
+      logger.error(
+        `Error While fetching list of client for the agency: ${error}`
+      );
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Get the client ist for the Agency without pagination
+  clientListWithoutPagination = async (agency) => {
+    try {
+      const clients = await Client.distinct("_id", {
+        agency_ids: {
+          $elemMatch: { agency_id: agency?.reference_id, status: "active" },
+        },
+      }).lean();
+
+      const aggrage_array = [
+        { $match: { reference_id: { $in: clients }, is_deleted: false } },
+        {
+          $project: {
+            first_name: 1,
+            last_name: 1,
+            email: 1,
+            name: 1,
+            createdAt: 1,
+            reference_id: 1,
+          },
+        },
+      ];
+
+      return await Authentication.aggregate(aggrage_array);
     } catch (error) {
       logger.error(
         `Error While fetching list of client for the agency: ${error}`

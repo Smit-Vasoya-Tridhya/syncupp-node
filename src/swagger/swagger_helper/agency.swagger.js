@@ -144,6 +144,10 @@ const clientList = {
               type: "string",
               description: "Enter value of search",
             },
+            pagination: {
+              type: "boolean",
+              default: false,
+            },
           },
         },
       },

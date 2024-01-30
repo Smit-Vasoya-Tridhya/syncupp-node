@@ -986,6 +986,34 @@ class TeamMemberService {
       return throwError(error?.message, error?.statusCode);
     }
   };
+
+  getProfile = async (team) => {
+    try {
+      const team_detail = await Authentication.findById(team?._id)
+        .select("-password")
+        .lean();
+      let team_reference;
+      if (team?.role?.name === "team_agency") {
+        team_reference = await Team_Agency.findById(team?.reference_id)
+          .populate("city", "name")
+          .populate("state", "name")
+          .populate("country", "name")
+          .lean();
+      } else if (team?.role?.name === "team_client") {
+        team_reference = await Team_Client.findById(team?.reference_id)
+          .populate("city", "name")
+          .populate("state", "name")
+          .populate("country", "name")
+          .lean();
+      }
+
+      team_detail.reference_id = team_reference;
+      return team_detail;
+    } catch (error) {
+      logger.error(`Error while getting team profile: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
 }
 
 module.exports = TeamMemberService;

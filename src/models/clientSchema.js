@@ -14,7 +14,7 @@ const clientSchema = new mongoose.Schema(
     agency_ids: [
       {
         agency_id: { type: mongoose.Schema.Types.ObjectId, ref: "agency" },
-        status: { type: String, enum: ["active", "inactive"] },
+        status: { type: String, enum: ["active", "inactive", "pending"] },
       },
     ],
   },
