@@ -210,7 +210,7 @@ class ClientService {
           _id: { $in: clientIds },
           "agency_ids.agency_id": agency?.reference_id,
         },
-        { $set: { "agency_ids.$.status": "inactive" } },
+        { $set: { "agency_ids.$.status": "deleted" } },
         { new: true }
       );
       return true;
@@ -239,6 +239,7 @@ class ClientService {
         agency_ids: {
           $elemMatch: {
             agency_id: agency?.reference_id,
+            status: { $ne: "deleted" },
           },
         },
       }).lean();
@@ -334,7 +335,10 @@ class ClientService {
         const agency_exists = client?.reference_id?.agency_ids?.find(
           (ag) => ag?.agency_id?.toString() == agency?.reference_id
         );
-        if (agency_exists) client["status"] = agency_exists?.status;
+        if (agency_exists) {
+          client["status"] = agency_exists?.status;
+          client.agency = agency_exists;
+        }
         delete client?.reference_id?.agency_ids;
       });
 
