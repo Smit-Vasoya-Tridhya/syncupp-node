@@ -92,7 +92,7 @@ class AdminService {
       const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
-      sendEmail({
+      await sendEmail({
         email: email,
         subject: returnMessage("emailTemplate", "forgotPasswordSubject"),
         message: forgot_email_template,

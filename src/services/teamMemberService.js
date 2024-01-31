@@ -86,7 +86,7 @@ class TeamMemberService {
       });
       const invitation_template = invitationEmail(link, name);
 
-      sendEmail({
+      await sendEmail({
         email,
         subject: returnMessage("emailTemplate", "invitation"),
         message: invitation_template,

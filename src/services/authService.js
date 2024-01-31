@@ -313,7 +313,7 @@ class AuthService {
       const link = `${process.env.RESET_PASSWORD_URL}?token=${token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
-      sendEmail({
+      await sendEmail({
         email,
         subject: returnMessage("emailTemplate", "forgotPasswordSubject"),
         message: forgot_email_template,

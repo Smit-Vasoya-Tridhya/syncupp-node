@@ -67,11 +67,11 @@ class ClientService {
         await Authentication.create(client_auth_obj);
       } else {
         const client = await Client.findById(client_exist?.reference_id);
-        const already_exist = client?.agency_ids.filter(
+        const already_exist = client?.agency_ids?.filter(
           (id) => id?.agency_id?.toString() == agency?.reference_id
         );
 
-        if (already_exist.length > 0)
+        if (already_exist?.length > 0)
           return throwError(returnMessage("agency", "clientExist"));
 
         client.agency_ids = [
@@ -85,7 +85,7 @@ class ClientService {
       }
       const invitation_mail = invitationEmail(link, name);
 
-      sendEmail({
+      await sendEmail({
         email,
         subject: returnMessage("emailTemplate", "invitation"),
         message: invitation_mail,
