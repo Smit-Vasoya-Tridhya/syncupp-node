@@ -57,7 +57,7 @@
     "emailNotFound": "Email does not exist.",
     "oldPasswordMismatch": "Old password does not match.",
     "passwordUpdated": "Password updated successfully.",
-    "invalidToken": "Invalid token.",
+    "invalidToken": "Something went wrong with invitation link.",
     "registerFirst": "Register first.",
     "passwordSet": "Password set successfully.",
     "resetPassword": "Password reset successfully.",
@@ -73,7 +73,8 @@
     "agencyIdRequired": "Agency required.",
     "roleRequired": "Role is required.",
     "userNotFound": "User not found.",
-    "verified": "Verified successfully."
+    "verified": "Verified successfully.",
+    "alreadyVerified": "You have already verified for this client."
   },
 
   "agency": {

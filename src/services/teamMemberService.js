@@ -427,6 +427,12 @@ class TeamMemberService {
           );
           return authService.tokenGenerator(client_team_member);
         } else {
+          if (client_team_member && client_team_member?.password)
+            return throwError(
+              returnMessage("teamMember", "alreadyVerified"),
+              statusCode.unprocessableEntity
+            );
+
           const hash_password = await authService.passwordEncryption({
             password,
           });
