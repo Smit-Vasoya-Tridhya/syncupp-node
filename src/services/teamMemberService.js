@@ -872,9 +872,11 @@ class TeamMemberService {
         ];
       }
       if (user?.role?.name === "agency") {
-        if (payload?.for_client) {
-          const query_obj = { "agency_ids.agency_id": user?.reference_id };
-          if (payload?.client_id) query_obj.client_id = payload?.client_id;
+        if (payload?.client_id) {
+          const query_obj = {
+            "agency_ids.agency_id": user?.reference_id,
+            client_id: payload?.client_id,
+          };
 
           const team_clients_ids = await Team_Client.distinct("_id", query_obj);
 
