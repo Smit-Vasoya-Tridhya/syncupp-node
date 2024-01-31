@@ -126,7 +126,8 @@
     "clientVerified": "Verified successfully.",
     "clientDeleted": "Client deleted successfully.",
     "agenciesFetched": "Agencies fetched successfully.",
-    "clientsFetched": "Client list fetched successfully."
+    "clientsFetched": "Client list fetched successfully.",
+    "agencyRemovedBeforeVerify": "Agency has removed you. you can not verify."
   },
   "activity": {
     "dateinvalid": "Date must be the present date or a future date.",

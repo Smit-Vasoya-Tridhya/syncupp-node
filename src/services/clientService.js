@@ -133,6 +133,14 @@ class ClientService {
               returnMessage("agency", "alreadyVerified"),
               statusCode.unprocessableEntity
             );
+          else if (
+            agency?.status !== "deleted" &&
+            agency?.agency_id?.toString() == agency_id
+          )
+            return throwError(
+              returnMessage("client", "agencyRemovedBeforeVerify"),
+              statusCode.unprocessableEntity
+            );
         });
 
         await Client.updateOne(
@@ -171,9 +179,20 @@ class ClientService {
           return throwError(returnMessage("agency", "agencyNotFound"));
 
         agency_exist.filter((agency) => {
-          if (agency?.status !== "pending")
+          if (
+            agency?.status !== "pending" &&
+            agency?.agency_id?.toString() == agency_id
+          )
             return throwError(
-              returnMessage("agency", "agencyExist"),
+              returnMessage("agency", "alreadyVerified"),
+              statusCode.unprocessableEntity
+            );
+          else if (
+            agency?.status !== "deleted" &&
+            agency?.agency_id?.toString() == agency_id
+          )
+            return throwError(
+              returnMessage("client", "agencyRemovedBeforeVerify"),
               statusCode.unprocessableEntity
             );
         });
