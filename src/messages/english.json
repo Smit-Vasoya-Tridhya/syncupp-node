@@ -65,13 +65,13 @@
     "passwordNotMatch": "Old password does not match.",
     "memberGet": "Team member details fetched successfully.",
     "deleted": "Team member deleted successfully.",
-    "TeamMemberFetched": "All team member fetched successfully.",
+    "TeamMemberFetched": "All team members fetched successfully.",
     "noDataFound": "All team member fetched successfully.",
     "updated": "Team member updated successfully.",
-    "agencyIdAlreadyExists": "Agency Id already exist for this teamMember.",
-    "fillAll": "Please fill all the required fields",
-    "agencyIdRequired": "Agency Id required",
-    "roleRequired": "Role required",
+    "agencyIdAlreadyExists": "Agency already exist for this teamMember.",
+    "fillAll": "Please fill all the required fields.",
+    "agencyIdRequired": "Agency required.",
+    "roleRequired": "Role is required.",
     "userNotFound": "User not found.",
     "verified": "Verified successfully."
   },
@@ -87,7 +87,7 @@
     "agencyGet": "Agency profile fetched successfully.",
     "agencyUpdate": "Agency profile updated successfully.",
     "clientUpdated": "Client details updated successfully.",
-    "alreadyVerified": "You are already verified for this agency."
+    "alreadyVerified": "You have already verified for this agency."
   },
 
   "agreement": {
