@@ -137,54 +137,56 @@ class ClientService {
 
         return;
         // return authService.tokenGenerator(client_auth);
+      } else {
+        validateRequestFields(payload, [
+          "password",
+          "email",
+          "first_name",
+          "last_name",
+          "agency_id",
+        ]);
+
+        if (!validateEmail(email))
+          return throwError(returnMessage("auth", "invalidEmail"));
+
+        if (!passwordValidation(password))
+          return throwError(returnMessage("auth", "invalidPassword"));
+
+        if (client_auth?.status !== "confirm_pending")
+          return throwError(returnMessage("client", "clientNotFound"));
+
+        const client = await Client.findById(client_auth?.reference_id).lean();
+
+        const agency_exist = client?.agency_ids.filter(
+          (id) => id?.agency_id?.toString() == agency_id
+        );
+
+        if (agency_exist.length == 0)
+          return throwError(returnMessage("agency", "agencyNotFound"));
+
+        agency_exist.filter((agency) => {
+          if (agency?.status !== "pending")
+            return throwError(returnMessage("agency", "agencyExist"));
+        });
+
+        const hash_password = await authService.passwordEncryption({
+          password,
+        });
+
+        await Client.updateOne(
+          { _id: client?._id, "agency_ids.agency_id": agency_id },
+          { $set: { "agency_ids.$.status": "active" } },
+          { new: true }
+        );
+        client_exist.first_name = first_name;
+        client_exist.last_name = last_name;
+        client_exist.status = "confirmed";
+        client_exist.password = hash_password;
+        await client_exist.save();
+        return;
+        // return authService.tokenGenerator(client_exist);
       }
-
-      validateRequestFields(payload, [
-        "password",
-        "email",
-        "first_name",
-        "last_name",
-        "agency_id",
-      ]);
-
-      if (!validateEmail(email))
-        return throwError(returnMessage("auth", "invalidEmail"));
-
-      if (!passwordValidation(password))
-        return throwError(returnMessage("auth", "invalidPassword"));
-
-      if (client_auth?.status !== "confirm_pending")
-        return throwError(returnMessage("client", "clientNotFound"));
-
-      const client = await Client.findById(client_auth?.reference_id).lean();
-
-      const agency_exist = client?.agency_ids.filter(
-        (id) => id?.agency_id?.toString() == agency_id
-      );
-
-      if (agency_exist.length == 0)
-        return throwError(returnMessage("agency", "agencyNotFound"));
-
-      agency_exist.filter((agency) => {
-        if (agency?.status !== "pending")
-          return throwError(returnMessage("agency", "agencyExist"));
-      });
-
-      const hash_password = await authService.passwordEncryption({ password });
-
-      await Client.updateOne(
-        { _id: client?._id, "agency_ids.agency_id": agency_id },
-        { $set: { "agency_ids.$.status": "active" } },
-        { new: true }
-      );
-      client_exist.first_name = first_name;
-      client_exist.last_name = last_name;
-      client_exist.status = "confirmed";
-      client_exist.password = hash_password;
-      await client_exist.save();
-
-      return;
-      // return authService.tokenGenerator(client_exist);
+      return throwError(returnMessage("default", "default"));
     } catch (error) {
       console.log(`Error while verifying client`, error);
       return throwError(error?.message, error?.statusCode);

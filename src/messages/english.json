@@ -22,7 +22,8 @@
     "profileUpdated": "Profile updated successfully.",
     "invalidContactNumber": "Contact number is invalid.",
     "countryIdRequired": "Country id is required.",
-    "stateIdRequired": "State id is required."
+    "stateIdRequired": "State id is required.",
+    "oldAndNewPasswordSame": "New password should be different from old password."
   },
 
   "admin": {

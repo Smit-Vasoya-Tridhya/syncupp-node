@@ -353,6 +353,10 @@ class AuthService {
       if (!data) return throwError(returnMessage("auth", "invalidToken"));
 
       const hased_password = await this.passwordEncryption({ password });
+
+      if (hased_password === user.password)
+        return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
+
       await Authentication.findByIdAndUpdate(data?._id, {
         password: hased_password,
         reset_password_token: null,
@@ -383,6 +387,9 @@ class AuthService {
       const hash_password = await this.passwordEncryption({
         password: new_password,
       });
+
+      if (hash_password === user.password)
+        return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
 
       user.reset_password_token = null;
       user.password = hash_password;
