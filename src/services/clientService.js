@@ -178,11 +178,16 @@ class ClientService {
           { $set: { "agency_ids.$.status": "active" } },
           { new: true }
         );
-        client_exist.first_name = first_name;
-        client_exist.last_name = last_name;
-        client_exist.status = "confirmed";
-        client_exist.password = hash_password;
-        await client_exist.save();
+        await Authentication.findByIdAndUpdate(
+          client_auth?._id,
+          {
+            first_name,
+            last_name,
+            status: "confirmed",
+            password: hash_password,
+          },
+          { new: true }
+        );
         return;
         // return authService.tokenGenerator(client_exist);
       }
