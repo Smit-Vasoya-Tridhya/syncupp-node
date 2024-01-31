@@ -149,7 +149,7 @@ class TeamMemberService {
           (agency) => agency?.agency_id.toString() === agency_id
         );
 
-        if (agency_id_exist.length > 0)
+        if (agency_id_exist?.length > 0)
           return throwError(
             returnMessage("teamMember", "agencyIdAlreadyExists")
           );

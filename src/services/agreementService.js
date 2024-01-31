@@ -47,7 +47,7 @@ class AgreementService {
           _id: client_id,
         });
         const ageremantMessage = agrementEmail(payload);
-        await sendEmail({
+        sendEmail({
           email: clientDetails?.email,
           subject: "New agreement",
           message: ageremantMessage,
@@ -297,7 +297,7 @@ class AgreementService {
           _id: agreement.client_id,
         });
         const ageremantMessage = agrementEmail(agreement);
-        await sendEmail({
+        sendEmail({
           email: clientDetails?.email,
           subject: "Updated agreement",
           message: ageremantMessage,
@@ -343,7 +343,7 @@ class AgreementService {
         _id: agreement.client_id,
       });
       const ageremantMessage = agrementEmail(agreement);
-      await sendEmail({
+      sendEmail({
         email: clientDetails?.email,
         subject: "New agreement",
         message: ageremantMessage,
@@ -369,7 +369,7 @@ class AgreementService {
           _id: agreement.client_id,
         });
         const ageremantMessage = agrementEmail(agreement);
-        await sendEmail({
+        sendEmail({
           email: clientDetails?.email,
           subject: "Updated agreement",
           message: ageremantMessage,
@@ -405,7 +405,7 @@ class AgreementService {
           _id: agreement.client_id,
         });
         const ageremantMessage = agrementEmail(agreement);
-        await sendEmail({
+        sendEmail({
           email: clientDetails?.email,
           subject: "Updated agreement",
           message: ageremantMessage,

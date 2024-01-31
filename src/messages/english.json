@@ -7,7 +7,7 @@
     "invalidPassword": "Password should contain one uppercase letter, one lowercase letter, one special character, one number and minimum 8 length.",
     "googleAuthTokenNotFound": "Google oAuth token not found.",
     "facebookAuthTokenNotFound": "Facebook oAuth token not found.",
-    "dataNotFound": "Data not found.",
+    "dataNotFound": "User not found.",
     "emailRequired": "Email is required.",
     "emailNotFound": "Email does not exist.",
     "invalidToken": "Token is invalid.",
@@ -86,7 +86,8 @@
     "agencyUpdated": "Updated successfully.",
     "agencyGet": "Agency profile fetched successfully.",
     "agencyUpdate": "Agency profile updated successfully.",
-    "clientUpdated": "Client details updated successfully."
+    "clientUpdated": "Client details updated successfully.",
+    "alreadyVerified": "You are already verified for this agency."
   },
 
   "agreement": {

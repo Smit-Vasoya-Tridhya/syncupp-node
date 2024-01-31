@@ -14,6 +14,7 @@ const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
 const authService = new AuthService();
+const statusCode = require("../messages/statusCodes.json");
 
 class ClientService {
   // create client for the agency
@@ -32,7 +33,6 @@ class ClientService {
       const client_exist = await Authentication.findOne({
         email,
         is_deleted: false,
-        role: role?._id,
       });
 
       let link = `${
@@ -111,7 +111,7 @@ class ClientService {
         role: role?._id,
       }).lean();
 
-      if (redirect && client_auth && client_auth?.status !== "confirmed") {
+      if (redirect && client_auth && client_auth?.status === "confirmed") {
         if (!email || !agency_id)
           return throwError(returnMessage("default", "default"));
 
@@ -125,8 +125,14 @@ class ClientService {
           return throwError(returnMessage("agency", "agencyNotFound"));
 
         agency_exist.filter((agency) => {
-          if (agency?.status !== "pending")
-            return throwError(returnMessage("agency", "agencyExist"));
+          if (
+            agency?.status !== "pending" &&
+            agency?.agency_id?.toString() == agency_id
+          )
+            return throwError(
+              returnMessage("agency", "alreadyVerified"),
+              statusCode.unprocessableEntity
+            );
         });
 
         await Client.updateOne(
@@ -166,7 +172,10 @@ class ClientService {
 
         agency_exist.filter((agency) => {
           if (agency?.status !== "pending")
-            return throwError(returnMessage("agency", "agencyExist"));
+            return throwError(
+              returnMessage("agency", "agencyExist"),
+              statusCode.unprocessableEntity
+            );
         });
 
         const hash_password = await authService.passwordEncryption({
