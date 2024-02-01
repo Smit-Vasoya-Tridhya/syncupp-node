@@ -88,7 +88,8 @@ exports.getAll = catchAsyncError(async (req, res, next) => {
 exports.editMember = catchAsyncError(async (req, res, next) => {
   const teamMember = await teamMemberService.editMember(
     req.body,
-    req.params.id
+    req.params.id,
+    req.user
   );
   sendResponse(
     res,

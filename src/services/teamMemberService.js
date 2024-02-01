@@ -560,11 +560,9 @@ class TeamMemberService {
             pipeline: [{ $project: { role: 1, [memberOf]: 1 } }],
           },
         },
-
         {
           $unwind: "$member_data",
         },
-
         {
           $lookup: {
             from: "team_role_masters",
@@ -574,9 +572,6 @@ class TeamMemberService {
             pipeline: [{ $project: { name: 1 } }],
           },
         },
-        {
-          $unwind: "$member_role",
-        },
 
         {
           $project: {
@@ -584,7 +579,7 @@ class TeamMemberService {
             email: 1,
             user_type: "$user_type.name",
             [memberOf]: "$member_data." + memberOf,
-            member_role: "$member_role.name",
+
             createdAt: 1,
             updatedAt: 1,
             first_name: 1,
@@ -594,6 +589,13 @@ class TeamMemberService {
             status: 1,
             name: 1,
             contact_number: 1,
+            member_role: {
+              $cond: {
+                if: { $eq: [{ $size: "$member_role" }, 0] },
+                then: "$$REMOVE",
+                else: { $arrayElemAt: ["$member_role", 0] },
+              },
+            },
           },
         },
       ];
@@ -818,38 +820,52 @@ class TeamMemberService {
 
   // Edit Team Member
 
-  editMember = async (payload, team_member_id) => {
+  editMember = async (payload, team_member_id, user) => {
     try {
       const team_member_exist = await Authentication.findById(team_member_id)
         .populate("role", "name")
         .where("is_deleted")
         .ne(true)
         .lean();
-      if (!team_member_exist || team_member_exist?.role?.name !== "team_agency")
-        return throwError(
-          returnMessage("teamMember", "userNotFound"),
-          statusCode.notFound
-        );
-      let role;
-      if (payload?.role && payload?.role !== "")
-        role = await Team_Role_Master.findOne({ name: payload?.role })
-          .select("_id")
-          .lean();
+      if (user?.role?.name === "agency") {
+        if (
+          !team_member_exist ||
+          team_member_exist?.role?.name !== "team_agency"
+        )
+          return throwError(
+            returnMessage("teamMember", "userNotFound"),
+            statusCode.notFound
+          );
+        let role;
+        if (payload?.role && payload?.role !== "")
+          role = await Team_Role_Master.findOne({ name: payload?.role })
+            .select("_id")
+            .lean();
 
-      await Authentication.findByIdAndUpdate(
-        team_member_id,
-        {
-          name: payload?.name,
-          contact_number: payload?.contact_number,
-        },
-        { new: true }
-      );
-      await Team_Agency.findByIdAndUpdate(
-        team_member_exist?.reference_id,
-        { role: role?._id },
-        { new: true }
-      );
-      return;
+        await Authentication.findByIdAndUpdate(
+          team_member_id,
+          {
+            name: payload?.name,
+            contact_number: payload?.contact_number,
+          },
+          { new: true }
+        );
+        await Team_Agency.findByIdAndUpdate(
+          team_member_exist?.reference_id,
+          { role: role?._id },
+          { new: true }
+        );
+        return;
+      } else if (user?.role?.name === "client") {
+        await Authentication.findByIdAndUpdate(
+          team_member_id,
+          {
+            name: payload?.name,
+            contact_number: payload?.contact_number,
+          },
+          { new: true }
+        );
+      }
     } catch (error) {
       logger.error(`Error while Team member Edit, ${error}`);
       return throwError(error?.message, error?.statusCode);
