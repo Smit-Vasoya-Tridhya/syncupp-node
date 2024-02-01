@@ -146,7 +146,7 @@ class ClientService {
               statusCode.unprocessableEntity
             );
           else if (
-            agency?.status !== "deleted" &&
+            agency?.status === "deleted" &&
             agency?.agency_id?.toString() == agency_id
           )
             return throwError(

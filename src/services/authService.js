@@ -249,6 +249,9 @@ class AuthService {
           statusCode.notFound
         );
 
+      if (!existing_Data?.password)
+        return throwError(returnMessage("default", "default"));
+
       if (
         !(await this.passwordVerifier({
           password,
