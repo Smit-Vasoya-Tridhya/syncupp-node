@@ -190,7 +190,7 @@ class ClientService {
         if (agency_exist.length == 0)
           return throwError(returnMessage("agency", "agencyNotFound"));
 
-        agency_exist.filter((agency) => {
+        agency_exist.forEach((agency) => {
           if (
             agency?.status !== "pending" &&
             agency?.agency_id?.toString() == agency_id
@@ -200,7 +200,7 @@ class ClientService {
               statusCode.unprocessableEntity
             );
           else if (
-            agency?.status !== "deleted" &&
+            agency?.status === "deleted" &&
             agency?.agency_id?.toString() == agency_id
           )
             return throwError(
