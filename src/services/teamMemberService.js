@@ -451,7 +451,10 @@ class TeamMemberService {
           return authService.tokenGenerator(client_team_member);
         }
       }
-      return throwError(returnMessage("default", "default"));
+      return throwError(
+        returnMessage("teamMember", "alreadyVerified"),
+        statusCode.unprocessableEntity
+      );
     } catch (error) {
       logger.error(`Error while Team Member verify , ${error}`);
       return throwError(error?.message, error?.statusCode);
