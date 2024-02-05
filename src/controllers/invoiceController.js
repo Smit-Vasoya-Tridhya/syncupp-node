@@ -21,13 +21,15 @@ exports.getClients = catchAsyncError(async (req, res, next) => {
 // Get InvoiceInformation ------   AGENCY API
 
 exports.getInvoiceInformation = catchAsyncError(async (req, res, next) => {
-  const { getAgencyData, getClientData } =
-    await invoiceService.getInvoiceInformation(req?.body, req?.user);
+  const getClientData = await invoiceService.getInvoiceInformation(
+    req?.body,
+    req?.user
+  );
   sendResponse(
     res,
     true,
     returnMessage("invoice", "invoiceInfo"),
-    { From: getAgencyData, To: getClientData },
+    getClientData,
     statusCode.success
   );
 });
@@ -77,6 +79,7 @@ exports.getAllInvoice = catchAsyncError(async (req, res, next) => {
 
 exports.getInvoice = catchAsyncError(async (req, res, next) => {
   const getInvoice = await invoiceService.getInvoice(req?.params?.id);
+
   sendResponse(
     res,
     true,
@@ -89,7 +92,7 @@ exports.getInvoice = catchAsyncError(async (req, res, next) => {
 // delete Invoice ------   AGENCY API
 
 exports.deleteInvoice = catchAsyncError(async (req, res, next) => {
-  await invoiceService.deleteInvoice(req?.params?.id);
+  await invoiceService.deleteInvoice(req?.body);
   sendResponse(
     res,
     true,
@@ -134,6 +137,20 @@ exports.sendInvoice = catchAsyncError(async (req, res, next) => {
     true,
     returnMessage("invoice", "invoiceSent"),
     null,
+    statusCode.success
+  );
+});
+
+// Download PDF
+
+exports.downloadPdf = catchAsyncError(async (req, res, next) => {
+  const downloadPdf = await invoiceService.downloadPdf(req?.body, res);
+
+  sendResponse(
+    res,
+    true,
+    returnMessage("invoice", "downloadPDF"),
+    downloadPdf,
     statusCode.success
   );
 });

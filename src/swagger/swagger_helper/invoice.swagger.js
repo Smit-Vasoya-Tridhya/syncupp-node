@@ -106,18 +106,26 @@ const deleteInvoice = {
       bearerAuth: [],
     },
   ],
-  requestBody: {},
-  parameters: [
-    {
-      name: "id",
-      in: "path", // or "query" depending on your use case
-      description: "ID of the team member",
-      required: true,
-      schema: {
-        type: "string", // adjust the type accordingly
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            invoiceIdsToDelete: {
+              type: "array",
+              description: "Enter FQA IDS to be deleted",
+              items: {
+                type: "string",
+              },
+            },
+          },
+        },
       },
     },
-  ],
+  },
+
   responses: {
     200: {
       description: "ok",
@@ -135,7 +143,7 @@ const deleteInvoice = {
 const getAllInvoice = {
   tags: ["Invoice"],
   description:
-    "sortOrder = (asc ,desc)  ,sortField = (invoice_number ,due_date , status  ,total , invoice_date , customer_name)  , page  = (number) , itemsPerPage=(number) . search  = (string))  \n\n For Client Login \n\nagency_id  = (string) is required    ",
+    "sort_order = (asc ,desc)  ,sort_field = (invoice_number ,due_date , status  ,total , invoice_date , customer_name)  , page  = (number) , items_per_page=(number) . search  = (string))  \n\n For Client Login \n\nagency_id  = (string) is required    ",
   summary: "Get All Invoice  ",
   security: [
     {
@@ -149,25 +157,33 @@ const getAllInvoice = {
           type: "object",
 
           properties: {
-            sortField: {
+            sort_field: {
               type: "string",
               description: "Enter sortField",
               example: "invoice_date",
+              required: true,
             },
-            sortOrder: {
+            sort_order: {
               type: "string",
               description: "Enter sortOrder",
               example: "desc",
+              required: true,
             },
             page: {
               type: "number",
               description: "Enter page number",
               example: 1,
+              required: true,
             },
-            itemsPerPage: {
+            items_per_page: {
               type: "number",
               description: "Enter itemsPerPage",
               example: 10,
+              required: true,
+            },
+            agency_id: {
+              type: "string",
+              description: "Enter Agency Id",
             },
           },
         },
@@ -191,7 +207,7 @@ const getAllInvoice = {
 
 const updateInvoice = {
   tags: ["Invoice"],
-  description: "status : [`draft` , `unpaid`]",
+  description: "",
   summary: "Update Invoice ",
   security: [
     {
@@ -205,13 +221,9 @@ const updateInvoice = {
           type: "object",
 
           properties: {
-            recipient: {
+            client_id: {
               type: "string",
-              description: "Enter recipient",
-            },
-            status: {
-              type: "string",
-              description: "Enter status",
+              description: "Enter client_id",
             },
             due_date: {
               type: "string",
@@ -248,6 +260,10 @@ const updateInvoice = {
                   amount: {
                     type: "integer",
                     description: "Total amount for the item",
+                  },
+                  description: {
+                    type: "string",
+                    description: "Item description",
                   },
                 },
               },
@@ -336,7 +352,7 @@ const updateInvoiceStatus = {
 };
 const createInvoice = {
   tags: ["Invoice"],
-  description: "status : [`draft` , `unpaid`]",
+  description: "",
   summary: "Create invoice",
 
   security: [
@@ -353,24 +369,25 @@ const createInvoice = {
             invoice_number: {
               type: "string",
               description: "Enter invoice_number",
+              required: true,
             },
-            recipient: {
+            client_id: {
               type: "string",
               description: "Enter recipient",
+              required: true,
             },
-            status: {
-              type: "string",
-              description: "Enter status",
-            },
+
             due_date: {
               type: "string",
               description: "Enter due_date",
               format: "date",
+              required: true,
             },
             invoice_date: {
               type: "string",
               description: "Enter Invoice Date",
               format: "date",
+              required: true,
             },
             invoice_content: {
               type: "array",
@@ -381,22 +398,32 @@ const createInvoice = {
                   item: {
                     type: "string",
                     description: "Item name",
+                    required: true,
+                  },
+                  description: {
+                    type: "string",
+                    description: "Item description",
+                    required: true,
                   },
                   qty: {
                     type: "integer",
                     description: "Quantity",
+                    required: true,
                   },
                   rate: {
                     type: "integer",
                     description: "Rate per item",
+                    required: true,
                   },
                   tax: {
                     type: "integer",
                     description: "Tax percentage",
+                    required: true,
                   },
                   amount: {
                     type: "integer",
                     description: "Total amount for the item",
+                    required: true,
                   },
                 },
               },
@@ -461,6 +488,46 @@ const sendInvoice = {
   },
 };
 
+const downloadInvoice = {
+  tags: ["Invoice"],
+  description: "",
+  summary: "Download Invoice",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            invoice_id: {
+              type: "string",
+              description: "Enter Invoice Id",
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const invoiceRoutes = {
   "/api/v1/invoice/get-clients": {
     get: getClients,
@@ -477,6 +544,9 @@ const invoiceRoutes = {
   "/api/v1/invoice/{id}": {
     get: getInvoice,
     put: updateInvoice,
+  },
+
+  "/api/v1/invoice/delete-invoice": {
     delete: deleteInvoice,
   },
   "/api/v1/invoice/status-update/{id}": {
@@ -484,6 +554,9 @@ const invoiceRoutes = {
   },
   "/api/v1/invoice/send-invoice": {
     post: sendInvoice,
+  },
+  "/api/v1/invoice/download-invoice": {
+    post: downloadInvoice,
   },
 };
 

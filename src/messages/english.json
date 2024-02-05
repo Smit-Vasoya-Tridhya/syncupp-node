@@ -116,7 +116,8 @@
     "invoiceUpdated": "Invoice updated successfully.",
     "canNotUpdate": "Invoice can not be updated.",
     "agencyIdRequired": "Agency ID required.",
-    "invoiceSent": "Invoice sent successfully."
+    "invoiceSent": "Invoice sent successfully.",
+    "downloadPDF": "Download PDF successfully."
   },
 
   "emailTemplate": {

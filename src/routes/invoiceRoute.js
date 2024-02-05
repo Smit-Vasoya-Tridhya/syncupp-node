@@ -11,9 +11,10 @@ invoiceRoute.post("/get-invoice-data", invoiceController.getInvoiceInformation);
 invoiceRoute.post("/create-invoice", invoiceController.addInvoice);
 invoiceRoute.post("/get-all", invoiceController.getAllInvoice);
 invoiceRoute.get("/:id", invoiceController.getInvoice);
-invoiceRoute.delete("/:id", invoiceController.deleteInvoice);
+invoiceRoute.delete("/delete-invoice", invoiceController.deleteInvoice);
 invoiceRoute.put("/:id", invoiceController.updateInvoice);
 invoiceRoute.put("/status-update/:id", invoiceController.updateStatusInvoice);
 invoiceRoute.post("/send-invoice", invoiceController.sendInvoice);
+invoiceRoute.post("/download-invoice", invoiceController.downloadPdf);
 
 module.exports = invoiceRoute;
