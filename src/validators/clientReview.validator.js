@@ -1,6 +1,5 @@
 const { body } = require("express-validator");
 const validationMessage = require("../messages/valiation.json");
-
 exports.addClientReviewValidator = [
   body("customer_name")
     .not()
@@ -24,7 +23,7 @@ exports.deleteClientReviewValidator = [
     .withMessage(validationMessage.general.clientReviewIdsReq),
 ];
 exports.updateClientReviewValidator = [
-    body("customer_name")
+  body("customer_name")
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.customerNameRequired),
@@ -32,7 +31,7 @@ exports.updateClientReviewValidator = [
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.companyNameRequired),
-    body("review")
+  body("review")
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.clientReviewIsviewRequired)

@@ -4,5 +4,6 @@ const activityRoute = require("express").Router();
 activityRoute.use(protect);
 activityRoute.post("/create-task", activityController.addTask);
 activityRoute.get("/get-list", activityController.statusList);
+activityRoute.post("/task-list", activityController.taskList);
 
 module.exports = activityRoute;

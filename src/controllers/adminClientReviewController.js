@@ -7,7 +7,10 @@ const clientReviewService = new ClientReviewService();
 
 // Add Client Review
 exports.addClientReview = catchAsyncError(async (req, res, next) => {
-  const addedClientReview = await clientReviewService.addClientReview(req.body);
+  const addedClientReview = await clientReviewService.addClientReview(
+    req.body,
+    req.file
+  );
   sendResponse(
     res,
     true,
@@ -43,7 +46,11 @@ exports.deleteClientReview = catchAsyncError(async (req, res, next) => {
 
 // Update Client Review
 exports.updateClientReview = catchAsyncError(async (req, res, next) => {
-  const updatedClientReview = await clientReviewService.updateClientReview(req.body, req?.params?.id);
+  const updatedClientReview = await clientReviewService.updateClientReview(
+    req.body,
+    req?.params?.id,
+    req.file
+  );
   sendResponse(
     res,
     true,
@@ -55,7 +62,9 @@ exports.updateClientReview = catchAsyncError(async (req, res, next) => {
 
 // Get Client Review BY ID
 exports.getClientReviewByID = catchAsyncError(async (req, res, next) => {
-  const getClientReviewByID = await clientReviewService.getClientReviewByID(req?.params?.id);
+  const getClientReviewByID = await clientReviewService.getClientReviewByID(
+    req?.params?.id
+  );
   sendResponse(
     res,
     true,

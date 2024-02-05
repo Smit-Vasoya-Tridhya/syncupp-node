@@ -69,7 +69,7 @@ class ActivityService {
     }
   };
 
-  taskList = async () => {
+  taskList = async (searchObj) => {
     try {
       const queryObj = { is_deleted: false };
       const pagination = paginationObject(searchObj);
@@ -108,37 +108,44 @@ class ActivityService {
         {
           $lookup: {
             from: "authentications",
-            localField: "receiver",
+            localField: "assign_by",
             foreignField: "_id",
-            as: "agreement_Data",
+            as: "client_Data",
+          },
+        },
+        // {
+        //   $unwind: "$client_Data",
+        // },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "_id",
+            as: "team_Data",
           },
         },
         {
-          $unwind: "$agreement_Data",
+          $unwind: "$team_Data",
         },
         {
           $match: queryObj,
         },
         {
           $project: {
-            first_name: "$agreement_Data.first_name",
-            last_name: "$agreement_Data.last_name",
-            email: "$agreement_Data.email",
-            receiver: "$agreement_Data.name",
             contact_number: 1,
             title: 1,
             status: 1,
-            agreement_content: 1,
+            due_time: 1,
             due_date: 1,
           },
         },
       ];
-      const agreements = await Activity.aggregate(aggregationPipeline)
+      const activity = await Activity.aggregate(taskPipeline)
         .skip(pagination.skip)
         .limit(pagination.result_per_page)
         .sort(pagination.sort);
 
-      const totalAgreementsCount = await Agreement.countDocuments(queryObj);
+      const totalAgreementsCount = await Activity.countDocuments(queryObj);
 
       // Calculating total pages
       const pages = Math.ceil(
@@ -146,7 +153,7 @@ class ActivityService {
       );
 
       return {
-        agreements,
+        activity,
         page_count: pages,
       };
     } catch (error) {

@@ -26,3 +26,14 @@ exports.statusList = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.taskList = catchAsyncError(async (req, res, next) => {
+  const taskList = await activityService.taskList(req.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "taskList"),
+    taskList,
+    statusCode.success
+  );
+});
