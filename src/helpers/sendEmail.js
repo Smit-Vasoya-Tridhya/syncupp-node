@@ -18,8 +18,8 @@ const sendEmail = async (payload) => {
     html: payload.message,
   };
 
-  const data = await transporter.sendMail(mailOptions);
-  return data;
+  await transporter.sendMail(mailOptions);
+  return;
 };
 
 module.exports = sendEmail;

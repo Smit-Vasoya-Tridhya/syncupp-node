@@ -12,7 +12,7 @@ const agreementService = new AgreementService();
 exports.addAgreement = catchAsyncError(async (req, res, next) => {
   const addedAgreement = await agreementService.addAgreement(
     req.body,
-    req?.user?._id
+    req?.user
   );
   sendResponse(
     res,
@@ -43,7 +43,7 @@ exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
 // delete Agreement
 
 exports.deleteAgreement = catchAsyncError(async (req, res, next) => {
-  await agreementService.deleteAgreement(req?.params?.id);
+  await agreementService.deleteAgreement(req.body);
   sendResponse(
     res,
     true,
@@ -94,6 +94,21 @@ exports.sendAgreement = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+exports.updateAgreementStatusAgency = catchAsyncError(
+  async (req, res, next) => {
+    const updatedAgreement = await agreementService.updateAgreementStatusAgency(
+      req.body,
+      req?.params?.id
+    );
+    sendResponse(
+      res,
+      true,
+      returnMessage("agreement", "agreementStatusUpdated"),
+      updatedAgreement,
+      statusCode.success
+    );
+  }
+);
 
 // -------------------   Clint API   ------------------------
 
@@ -109,6 +124,18 @@ exports.updateAgreementStatus = catchAsyncError(async (req, res, next) => {
     true,
     returnMessage("agreement", "agreementStatusUpdated"),
     updatedAgreement,
+    statusCode.success
+  );
+});
+
+exports.downloadPdf = catchAsyncError(async (req, res, next) => {
+  const downloadPdf = await agreementService.downloadPdf(req?.params?.id, res);
+
+  sendResponse(
+    res,
+    true,
+    returnMessage("agreement", "downloadPDF"),
+    downloadPdf,
     statusCode.success
   );
 });

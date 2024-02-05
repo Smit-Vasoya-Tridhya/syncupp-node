@@ -174,7 +174,7 @@ class AgencyService {
         address,
         state,
         country,
-        pin_code,
+        pincode,
       } = payload;
 
       const authData = {
@@ -191,12 +191,20 @@ class AgencyService {
         address,
         state,
         country,
-        pin_code,
+        pincode,
       };
 
       await Promise.all([
-        Authentication.updateOne({ _id: user_id }, { $set: authData }),
-        Agency.updateOne({ _id: reference_id }, { $set: agencyData }),
+        Authentication.updateOne(
+          { _id: user_id },
+          { $set: authData },
+          { new: true }
+        ),
+        Agency.updateOne(
+          { _id: reference_id },
+          { $set: agencyData },
+          { new: true }
+        ),
       ]);
 
       return;

@@ -408,6 +408,43 @@ const getAllClientAgreement = {
     },
   },
 };
+
+const downloadAgreement = {
+  tags: ["Agreement"],
+  description: "",
+  summary: "Download Agreement ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {},
+  parameters: [
+    {
+      name: "id",
+      in: "path", // or "query" depending on your use case
+      description: "ID of agreement",
+      required: true,
+      schema: {
+        type: "string", // adjust the type accordingly
+      },
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/pdf": {
+          schema: {
+            type: "string",
+            format: "binary",
+          },
+        },
+      },
+    },
+  },
+};
+
 const agreementRoutes = {
   "/api/v1/agency/agreement/add-agreement": {
     post: addAgreementAdmin,
@@ -436,6 +473,9 @@ const agreementRoutes = {
 
   "/api/v1/client/agreement/get-all-agreement": {
     post: getAllClientAgreement,
+  },
+  "/api/v1/agency/agreement/download-pdf/{id}": {
+    get: downloadAgreement,
   },
 };
 

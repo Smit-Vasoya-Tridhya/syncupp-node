@@ -416,6 +416,120 @@ const citiesList = {
   },
 };
 
+const getProfile = {
+  tags: ["CRM Panel"],
+  description: "",
+  summary: "Get profile",
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const updateProfile = {
+  tags: ["CRM Panel"],
+  description: "",
+  summary: "Update agency profile ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            first_name: {
+              type: "string",
+              description: "Enter first name",
+              required: true,
+            },
+            last_name: {
+              type: "string",
+              description: "Enter last name",
+              required: true,
+            },
+            contact_number: {
+              type: "string",
+              description: "Enter contact number",
+              required: true,
+            },
+            address: {
+              type: "string",
+              description: "Enter address",
+              required: true,
+            },
+            city: {
+              type: "string",
+              description: "Enter city id",
+              required: true,
+            },
+            company_name: {
+              type: "string",
+              description: "Enter company name ",
+              required: true,
+            },
+            company_website: {
+              type: "string",
+              description: "Enter Company Website",
+              required: true,
+            },
+            country: {
+              type: "string",
+              description: "Enter country id",
+              required: true,
+            },
+            industry: {
+              type: "string",
+              description: "Enter industry",
+              required: true,
+            },
+            no_of_people: {
+              type: "string",
+              description: "Enter No of people",
+              required: true,
+            },
+            pincode: {
+              type: "number",
+              description: "Enter Pin code",
+              required: true,
+            },
+            state: {
+              type: "string",
+              description: "Enter state Id",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const authRoutes = {
   "/api/v1/auth/signup": {
     post: registerAgency,
@@ -446,6 +560,12 @@ const authRoutes = {
   },
   "/api/v1/auth/cities/{stateId}": {
     post: citiesList,
+  },
+  "/api/v1/auth/profile": {
+    get: getProfile,
+  },
+  "/api/v1/auth/update-profile": {
+    patch: updateProfile,
   },
 };
 

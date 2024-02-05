@@ -7,7 +7,7 @@
     "invalidPassword": "Password should contain one uppercase letter, one lowercase letter, one special character, one number and minimum 8 length.",
     "googleAuthTokenNotFound": "Google oAuth token not found.",
     "facebookAuthTokenNotFound": "Facebook oAuth token not found.",
-    "dataNotFound": "Data not found.",
+    "dataNotFound": "User not found.",
     "emailRequired": "Email is required.",
     "emailNotFound": "Email does not exist.",
     "invalidToken": "Token is invalid.",
@@ -18,11 +18,12 @@
     "passwordRequired": "Old and new passwords are required.",
     "incorrectOldPassword": "Old password does not match.",
     "insufficientPermission": "In-sufficient permission.",
-    "profileFetched": "Profile fetched.",
-    "profileUpdated": "Profile updated.",
+    "profileFetched": "Profile fetched successfully.",
+    "profileUpdated": "Profile updated successfully.",
     "invalidContactNumber": "Contact number is invalid.",
     "countryIdRequired": "Country id is required.",
-    "stateIdRequired": "State id is required."
+    "stateIdRequired": "State id is required.",
+    "oldAndNewPasswordSame": "New password should be different from old password."
   },
 
   "admin": {
@@ -56,7 +57,7 @@
     "emailNotFound": "Email does not exist.",
     "oldPasswordMismatch": "Old password does not match.",
     "passwordUpdated": "Password updated successfully.",
-    "invalidToken": "Invalid token.",
+    "invalidToken": "Something went wrong with invitation link.",
     "registerFirst": "Register first.",
     "passwordSet": "Password set successfully.",
     "resetPassword": "Password reset successfully.",
@@ -64,15 +65,16 @@
     "passwordNotMatch": "Old password does not match.",
     "memberGet": "Team member details fetched successfully.",
     "deleted": "Team member deleted successfully.",
-    "TeamMemberFetched": "All team member fetched successfully.",
+    "TeamMemberFetched": "All team members fetched successfully.",
     "noDataFound": "All team member fetched successfully.",
     "updated": "Team member updated successfully.",
-    "agencyIdAlreadyExists": "Agency Id already exist for this teamMember.",
-    "fillAll": "Please fill all the required fields",
-    "agencyIdRequired": "Agency Id required",
-    "roleRequired": "Role required",
+    "agencyIdAlreadyExists": "Agency already exist for this teamMember.",
+    "fillAll": "Please fill all the required fields.",
+    "agencyIdRequired": "Agency required.",
+    "roleRequired": "Role is required.",
     "userNotFound": "User not found.",
-    "verified": "Verified successfully."
+    "verified": "Verified successfully.",
+    "alreadyVerified": "You have already verified for this client."
   },
 
   "agency": {
@@ -83,9 +85,12 @@
     "clientExist": "Client already exist.",
     "agencyNotFound": "Agency does not exist.",
     "agencyUpdated": "Updated successfully.",
-    "agencyGet": "Agency  profile fetched successfully.",
-    "agencyUpdate": "Agency  profile updated successfully."
+    "agencyGet": "Agency profile fetched successfully.",
+    "agencyUpdate": "Agency profile updated successfully.",
+    "clientUpdated": "Client details updated successfully.",
+    "alreadyVerified": "You have already verified for this agency."
   },
+
   "agreement": {
     "agreementAdded": "Agreement created successfully.",
     "deleteAgreement": "Agreement deleted successfully.",
@@ -95,7 +100,9 @@
     "canNotDelete": "Agreement can not be deleted.",
     "canNotUpdate": "Agreement can not be updated.",
     "agreementStatusUpdated": "Agreement status updated.",
-    "agreementSent": "Agreement sent to client successfully."
+    "agreementSent": "Agreement sent to client successfully.",
+    "downloadPDF": "Downlad PDF successfully.",
+    "clientnotexist": "Client doest not exist."
   },
   "invoice": {
     "invoiceCreated": "Invoice created successfully.",
@@ -122,7 +129,13 @@
     "clientVerified": "Verified successfully.",
     "clientDeleted": "Client deleted successfully.",
     "agenciesFetched": "Agencies fetched successfully.",
-    "clientsFetched": "Client list fetched successfully."
+    "clientsFetched": "Client list fetched successfully.",
+    "agencyRemovedBeforeVerify": "Agency has removed you. you can not verify."
+  },
+  "activity": {
+    "dateinvalid": "Date must be the present date or a future date.",
+    "statusList": "List fetch successfully.",
+    "createTask": "Add task successfully."
   },
 
   "default": { "default": "Something went wrong." }

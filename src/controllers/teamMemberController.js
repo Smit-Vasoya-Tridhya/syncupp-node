@@ -73,8 +73,7 @@ exports.deleteMember = catchAsyncError(async (req, res, next) => {
 //  Get All Team Member
 
 exports.getAll = catchAsyncError(async (req, res, next) => {
-  const user_id = req.user._id;
-  const teamMemberList = await teamMemberService.getAll(user_id, req.body);
+  const teamMemberList = await teamMemberService.getAllTeam(req.body, req.user);
   sendResponse(
     res,
     true,
@@ -89,7 +88,8 @@ exports.getAll = catchAsyncError(async (req, res, next) => {
 exports.editMember = catchAsyncError(async (req, res, next) => {
   const teamMember = await teamMemberService.editMember(
     req.body,
-    req.params.id
+    req.params.id,
+    req.user
   );
   sendResponse(
     res,

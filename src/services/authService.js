@@ -121,6 +121,9 @@ class AuthService {
       });
       agency_enroll = agency_enroll.toObject();
       agency_enroll.role = role;
+      delete agency_enroll?.password;
+      delete agency_enroll?.is_facebook_signup;
+      delete agency_enroll?.is_google_signup;
       return this.tokenGenerator({
         ...agency_enroll,
         rememberMe: payload?.rememberMe,
@@ -246,6 +249,9 @@ class AuthService {
           statusCode.notFound
         );
 
+      if (!existing_Data?.password)
+        return throwError(returnMessage("default", "default"));
+
       if (
         !(await this.passwordVerifier({
           password,
@@ -260,6 +266,9 @@ class AuthService {
       )
         return throwError(returnMessage("agency", "agencyInactive"));
 
+      delete existing_Data?.is_facebook_signup;
+      delete existing_Data?.is_google_signup;
+      delete existing_Data?.password;
       return this.tokenGenerator({
         ...existing_Data,
         rememberMe: payload?.rememberMe,
@@ -307,7 +316,7 @@ class AuthService {
       const link = `${process.env.RESET_PASSWORD_URL}?token=${token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(link);
 
-      sendEmail({
+      await sendEmail({
         email,
         subject: returnMessage("emailTemplate", "forgotPasswordSubject"),
         message: forgot_email_template,
@@ -347,6 +356,10 @@ class AuthService {
       if (!data) return throwError(returnMessage("auth", "invalidToken"));
 
       const hased_password = await this.passwordEncryption({ password });
+
+      if (hased_password === user.password)
+        return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
+
       await Authentication.findByIdAndUpdate(data?._id, {
         password: hased_password,
         reset_password_token: null,
@@ -377,6 +390,9 @@ class AuthService {
       const hash_password = await this.passwordEncryption({
         password: new_password,
       });
+
+      if (hash_password === user.password)
+        return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
 
       user.reset_password_token = null;
       user.password = hash_password;
@@ -441,6 +457,23 @@ class AuthService {
       return await City_Master.find(query_obj).select("name").lean();
     } catch (error) {
       logger.error(`Error while fectching cities list: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // set password is required
+  passwordSetRequired = async (payload) => {
+    try {
+      if (!payload.email)
+        return throwError(returnMessage("auth", "emailRequired"));
+      const password_required = await Authentication.findOne({
+        email: payload?.email,
+        is_deleted: false,
+      }).lean();
+      if (password_required?.password) return { password_required: false };
+      return { password_required: true };
+    } catch (error) {
+      logger.error(`Error while getting password required: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };
