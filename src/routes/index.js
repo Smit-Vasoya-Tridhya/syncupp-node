@@ -20,7 +20,7 @@ router.use("/agency", agencyRoute);
 router.use("/team-member", teamMemberRoute);
 // router.use("/agency/invoice", invoiceRoute);
 router.use("/client", clientRoute);
+router.use("/payment", paymentRoute);
 router.use("/", agreementRoute);
 
-router.use("/payment", paymentRoute);
 module.exports = router;
