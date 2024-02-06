@@ -29,6 +29,24 @@ const {
   addFaqValidator,
 } = require("../validators/faq.validator");
 
+//coupon code start
+const {
+  deleteCouponValidator,
+  updateCouponValidator,
+  addCouponValidator,
+} = require("../validators/coupon.validator");
+
+const {
+  addCoupon,
+  deleteCoupon,
+  updateCoupon,
+  getCoupon,
+} = require("../controllers/couponController");
+//coupon code end
+
+
+const { addCoupon } = require("../controllers/couponController");
+
 // this route is used for the ADMIN panel Login
 adminRoute.post("/login", login);
 adminRoute.post("/login", loginAdminValidator, validatorFunc, login);
@@ -64,4 +82,10 @@ adminRoute.get("/get-faq/:id", getFaq);
 
 adminRoute.post("/agencies", agencyController.getAllAgency);
 adminRoute.patch("/update-agency", agencyController.updateAgency);
+
+adminRoute.post("/add-coupon", addCouponValidator, validatorFunc, addCoupon);
+adminRoute.get("/get-coupon/:id", getCoupon);
+adminRoute.put("/update-coupon/:id", updateCouponValidator, validatorFunc, updateCoupon);
+adminRoute.delete("/delete-coupon", deleteCouponValidator, validatorFunc, deleteFaq);
+
 module.exports = adminRoute;
