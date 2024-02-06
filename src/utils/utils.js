@@ -199,6 +199,66 @@ exports.agrementEmail = (data) => {
 </body>
 </html>`;
 };
+
+exports.inquiryEmail = (inquiry) => {
+  return `<html>
+    <head>
+      <style>
+        /* Styles for the email template */
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f4f4f4;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #ffffff;
+          border-radius: 10px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          background-color: #4caf50;
+          color: white;
+          text-align: center;
+          padding: 10px;
+          border-radius: 10px 10px 0 0;
+        }
+        .content {
+          padding: 20px;
+        }
+        .button {
+          background-color: #4caf50;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          text-decoration: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>New Inquiry Received</h1>
+        </div>
+        <div class="content">
+          <p><strong>Name:</strong> ${inquiry.name}</p>
+          <p><strong>Contact Number:</strong> ${inquiry.contact_number}</p>
+          <p><strong>Email:</strong> ${inquiry.email}</p>
+          <p><strong>Message:</strong> ${inquiry.message}</p>
+          <p><strong>Received At:</strong> ${inquiry.createdAt}</p>
+          <hr>
+          <p>Thank you for your attention!</p>
+        </div>
+      </div>
+    </body>
+  </html>`;
+};
+
 exports.paginationObject = (paginationObject) => {
   const page = paginationObject.page || 1;
   const result_per_page = paginationObject.items_per_page || 5;

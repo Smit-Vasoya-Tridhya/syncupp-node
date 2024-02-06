@@ -7,6 +7,7 @@ const teamMembersRoutes = require("./swagger_helper/teamMember.swagger");
 const agenciesRoutes = require("./swagger_helper/agency.swagger");
 const agreementRoutes = require("./swagger_helper/agreement.swagger");
 const invoiceRoutes = require("./swagger_helper/invoice.swagger");
+const inquiryRoutes = require("./swagger_helper/inquiry.swagger");
 
 const swaggerDoc = {
   openapi: "3.0.0",
@@ -63,6 +64,7 @@ const swaggerDoc = {
     ...agenciesRoutes,
     ...agreementRoutes,
     ...invoiceRoutes,
+    ...inquiryRoutes,
   },
 };
 module.exports = swaggerDoc;

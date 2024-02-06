@@ -8,6 +8,7 @@ const teamMemberRoute = require("./teamMemberRoute");
 const invoiceRoute = require("./invoiceRoute");
 const agreementRoute = require("./agreementRoute");
 const activityRoute = require("./activityRoute");
+const inquiryRoute = require("./inquiryRoute");
 
 router.use("/api/v1/activity", activityRoute);
 router.use("/api/v1/auth", authRoute);
@@ -18,6 +19,7 @@ router.use("/api/v1/invoice", invoiceRoute);
 // router.use("/api/v1/client/team-member", teamMemberRoute);
 router.use("/api/v1/team-member", teamMemberRoute);
 router.use("/api/v1/client", clientRoute);
+router.use("/api/v1/inquiry", inquiryRoute);
 router.use("/api/v1", agreementRoute);
 
 module.exports = router;
