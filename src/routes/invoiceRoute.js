@@ -8,7 +8,12 @@ invoiceRoute.use(protect);
 
 invoiceRoute.get("/get-clients", invoiceController.getClients);
 invoiceRoute.post("/get-invoice-data", invoiceController.getInvoiceInformation);
-invoiceRoute.post("/create-invoice", invoiceController.addInvoice);
+invoiceRoute.post(
+  "/create-invoice",
+  validateCreateInvoice,
+  validatorFunc,
+  invoiceController.addInvoice
+);
 invoiceRoute.post("/get-all", invoiceController.getAllInvoice);
 invoiceRoute.get("/:id", invoiceController.getInvoice);
 invoiceRoute.delete("/delete-invoice", invoiceController.deleteInvoice);

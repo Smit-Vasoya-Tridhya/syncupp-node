@@ -1,30 +1,68 @@
-// const { body, validationResult } = require("express-validator");
-// const validationMessage = require("../messages/valiation.json");
+const { body } = require("express-validator");
+const validationMessage = require("../messages/valiation.json");
 
-// exports.validateCreateInvoice = [
-//   body("invoice_number").notEmpty().isString(),
-//   body("due_date").notEmpty().isISO8601(),
-//   body("status").notEmpty().isMongoId(),
-//   body("client_id").notEmpty().isMongoId(),
-//   body("agency_id").notEmpty().isMongoId(),
-//   body("invoice_content")
-//     .isArray({ min: 1 })
-//     .custom((value) => {
-//       // Custom validation for each element in invoice_content array
-//       value.forEach((item, index) => {
-//         if (
-//           !item.item ||
-//           !item.qty ||
-//           !item.rate ||
-//           !item.tax ||
-//           !item.amount
-//         ) {
-//           throw new Error(`Invalid data in invoice_content at index ${index}`);
-//         }
-//       });
-//       return true;
-//     }),
-//   body("is_delete").isBoolean(),
-//   body("sub_total").isNumeric(),
-//   body("total").isNumeric(),
-// ];
+exports.validateCreateInvoice = [
+  body("invoice_number")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.invoiceNumberRequired)
+    .isString()
+    .withMessage(validationMessage.invoice.invoiceNumberString),
+
+  body("client_id")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.clientIdRequired)
+    .isMongoId()
+    .withMessage(validationMessage.invoice.clientIdInvalid),
+
+  body("due_date")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.dueDateRequired)
+    .isISO8601()
+    .toDate()
+    .withMessage(validationMessage.invoice.dueDateInvalid),
+
+  body("invoice_date")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.invoiceDateRequired)
+    .isISO8601()
+    .toDate()
+    .withMessage(validationMessage.invoice.invoiceDateInvalid),
+
+  body("invoice_content")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.invoiceContentRequired)
+    .isArray()
+    .withMessage(validationMessage.invoice.invoiceContentArray),
+
+  body("invoice_content.*.item")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.itemRequired),
+
+  body("invoice_content.*.qty")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.qtyRequired)
+    .isNumeric()
+    .withMessage(validationMessage.invoice.qtyNumeric),
+
+  body("invoice_content.*.rate")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.rateRequired)
+    .isNumeric()
+    .withMessage(validationMessage.invoice.rateNumeric),
+
+  body("invoice_content.*.tax")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.taxRequired)
+    .isNumeric()
+    .withMessage(validationMessage.invoice.taxNumeric),
+
+  body("invoice_content.*.amount")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.amountRequired)
+    .isNumeric()
+    .withMessage(validationMessage.invoice.amountNumeric),
+
+  body("invoice_content.*.description")
+    .notEmpty()
+    .withMessage(validationMessage.invoice.descriptionRequired),
+];
