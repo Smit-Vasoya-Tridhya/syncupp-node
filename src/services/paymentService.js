@@ -169,6 +169,7 @@ class PaymentService {
 
       return proratedAmount.toFixed(2);
     } catch (error) {
+      console.log(error);
       logger.error(`Error while calculating the custom payment: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -231,6 +232,7 @@ class PaymentService {
         agency_id: user?.reference_id,
       };
     } catch (error) {
+      console.log(error);
       logger.error(`Error while doing the one time payment: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -258,6 +260,7 @@ class PaymentService {
       await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
+      console.log(error);
       logger.error(`Error while verifying signature: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -286,7 +289,7 @@ class PaymentService {
           agency_ids: {
             $elemMatch: {
               agency_id,
-              status: "pending",
+              status: "payment_pending",
             },
           },
         });
@@ -314,6 +317,7 @@ class PaymentService {
       }
       return false;
     } catch (error) {
+      console.log(error);
       logger.error(`Error while checking agency exist: ${error}`);
       return false;
     }
@@ -444,6 +448,8 @@ class PaymentService {
       }
       return false;
     } catch (error) {
+      console.log(error);
+
       logger.error(`Error while changing status after the payment: ${error}`);
       return false;
     }
@@ -464,6 +470,8 @@ class PaymentService {
       }
       return;
     } catch (error) {
+      console.log(error);
+
       logger.error(`Error while deleting the User: ${error}`);
       return false;
     }
