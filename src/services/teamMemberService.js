@@ -35,7 +35,7 @@ class TeamMemberService {
       }
     } catch (error) {
       logger.error(`Error While adding the Team member: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -60,20 +60,23 @@ class TeamMemberService {
 
       let invitation_token = crypto.randomBytes(32).toString("hex");
 
-      const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
-        user?.first_name + " " + user?.last_name
-      }&agencyId=${user?.reference_id}&email=${encodeURIComponent(
-        email
-      )}&token=${invitation_token}&redirect=false`;
+      // removed because of the payment integrations
+      // const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+      //   user?.first_name + " " + user?.last_name
+      // }&agencyId=${user?.reference_id}&email=${encodeURIComponent(
+      //   email
+      // )}&token=${invitation_token}&redirect=false`;
 
       const team_agency = await Team_Agency.create({
         agency_id: user?.reference_id,
         role: team_role?._id,
       });
-      invitation_token = crypto
-        .createHash("sha256")
-        .update(invitation_token)
-        .digest("hex");
+
+      // removed because of the payment
+      // invitation_token = crypto
+      //   .createHash("sha256")
+      //   .update(invitation_token)
+      //   .digest("hex");
 
       await Authentication.create({
         name,
@@ -84,17 +87,18 @@ class TeamMemberService {
         invitation_token,
         role: role_for_auth?._id,
       });
-      const invitation_template = invitationEmail(link, name);
 
-      await sendEmail({
-        email,
-        subject: returnMessage("emailTemplate", "invitation"),
-        message: invitation_template,
-      });
+      // const invitation_template = invitationEmail(link, name);
+
+      // await sendEmail({
+      //   email,
+      //   subject: returnMessage("emailTemplate", "invitation"),
+      //   message: invitation_template,
+      // });
       return;
     } catch (error) {
       logger.error(`Error While adding the Team member by agency: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -171,7 +175,7 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error While adding the Team member by client: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -336,7 +340,7 @@ class TeamMemberService {
   //     }
   //   } catch (error) {
   //     logger.error(`Error while Team Member register, ${error}`);
-  //     throwError(error?.message, error?.status);
+  //     throwError(error?.message, error?.statusCode);
   //   }
   // };
 
@@ -355,13 +359,14 @@ class TeamMemberService {
       } = payload;
 
       if (token && !redirect) {
-        const hash_token = crypto
-          .createHash("sha256")
-          .update(token)
-          .digest("hex");
+        // removed because of the payment
+        // const hash_token = crypto
+        //   .createHash("sha256")
+        //   .update(token)
+        //   .digest("hex");
         const teamMember = await Authentication.findOne({
           email: email,
-          invitation_token: hash_token,
+          invitation_token: token,
           is_deleted: false,
         });
 
@@ -413,7 +418,7 @@ class TeamMemberService {
         const agency_id_exist = team_client?.agency_ids.filter(
           (agency) =>
             agency?.agency_id.toString() === agency_id &&
-            agency?.status === "requested"
+            agency?.status === "confirmed"
         );
 
         if (agency_id_exist.length === 0)
