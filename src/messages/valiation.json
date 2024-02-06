@@ -12,6 +12,8 @@
     "invalidEmail": "Email is not valid.",
     "emailRequired": "Email is required",
     "tokenRequired": "Token is required",
+    "customerNameRequired": "Customer name is required",
+    "companyNameRequired": "Company name is required",
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
     "roleRequired": "Role is required",
@@ -19,9 +21,12 @@
     "nameRequired": "Name is required",
     "titleRequired": "Title required",
     "descriptionRequired": "Description required",
+    "clientReviewIsviewRequired": "Client Review is required",
     "titleLength": "Title must not exceed 100 characters",
     "descriptionLength": "Description must not exceed 1000 characters",
+    "clientReviewLength": "Client Review must not exceed 1000 characters",
     "faqIdsReq": "faqIdsToDelete key required",
+    "clientReviewIdsReq": "clientReviewIdsToDelete key required",
     "dateRequired": "Date is required"
   },
   "agreement": {

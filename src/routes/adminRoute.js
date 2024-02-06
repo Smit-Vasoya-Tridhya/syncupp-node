@@ -28,6 +28,10 @@ const {
   updateFaqValidator,
   addFaqValidator,
 } = require("../validators/faq.validator");
+const { addTermAndCondition } = require("../controllers/termAndConditionController");
+const { addTermAndConditionValidator } = require("../validators/termAndCondition.validator");
+const { addClientReview, getAllClientReview, deleteClientReview, updateClientReview, getClientReviewByID } = require("../controllers/adminClientReviewController");
+const { addClientReviewValidator, deleteClientReviewValidator, updateClientReviewValidator } = require("../validators/clientReview.validator");
 
 // this route is used for the ADMIN panel Login
 adminRoute.post("/login", login);
@@ -61,6 +65,14 @@ adminRoute.post("/get-all-faq", getAllFaq);
 adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
 adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
 adminRoute.get("/get-faq/:id", getFaq);
+adminRoute.post("/add-term-and-condition", addTermAndConditionValidator, validatorFunc, addTermAndCondition);
+// Client Review APIs
+// adminRoute.get("/get-client-review/:id", getClientReviewByID);
+// adminRoute.post("/get-client-review", getAllClientReview);
+// adminRoute.post("/add-client-review", addClientReviewValidator, validatorFunc, addClientReview);
+// adminRoute.put("/update-client-review/:id", updateClientReviewValidator, validatorFunc, updateClientReview);
+// adminRoute.delete("/delete-client-review", deleteClientReviewValidator, validatorFunc, deleteClientReview);
+
 
 adminRoute.post("/agencies", agencyController.getAllAgency);
 adminRoute.patch("/update-agency", agencyController.updateAgency);
