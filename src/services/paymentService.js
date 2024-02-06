@@ -245,21 +245,20 @@ class PaymentService {
     try {
       const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
         payload;
-      let expected_signature;
 
-      if (payload?.subscription_id) {
-        expected_signature = crypto
-          .createHmac("sha256", process.env.RAZORPAY_SECRET)
-          .update(razorpay_payment_id + "|" + razorpay_order_id, "utf-8")
-          .digest("hex");
-      } else if (payload?.payment_id) {
-        expected_signature = crypto
-          .createHmac("sha256", process.env.RAZORPAY_SECRET)
-          .update(razorpay_order_id + "|" + razorpay_payment_id, "utf-8")
-          .digest("hex");
-      }
+      const expected_signature_1 = crypto
+        .createHmac("sha256", process.env.RAZORPAY_SECRET)
+        .update(razorpay_payment_id + "|" + razorpay_order_id, "utf-8")
+        .digest("hex");
+      const expected_signature_2 = crypto
+        .createHmac("sha256", process.env.RAZORPAY_SECRET)
+        .update(razorpay_order_id + "|" + razorpay_payment_id, "utf-8")
+        .digest("hex");
 
-      if (expected_signature === razorpay_signature) {
+      if (
+        expected_signature_1 === razorpay_signature ||
+        expected_signature_2 === razorpay_signature
+      ) {
         const status_change = await this.statusChange(payload);
         if (!status_change) return { success: false };
         return { success: true };
