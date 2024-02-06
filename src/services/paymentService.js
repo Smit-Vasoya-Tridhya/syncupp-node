@@ -381,9 +381,9 @@ class PaymentService {
             process.env.REACT_APP_URL
           }/client/verify?name=${encodeURIComponent(
             agency_details?.first_name + " " + agency_details?.last_name
-          )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
-            agency_details?.reference_id
-          )}`;
+          )}&email=${encodeURIComponent(
+            user_details?.email
+          )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
           const invitation_mail = invitationEmail(link, user_details.name);
 
