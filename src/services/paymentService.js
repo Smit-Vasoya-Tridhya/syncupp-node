@@ -388,7 +388,7 @@ class PaymentService {
           const invitation_mail = invitationEmail(link, user_details.name);
 
           await sendEmail({
-            email,
+            email: user_details?.email,
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_mail,
           });
@@ -407,7 +407,7 @@ class PaymentService {
           const invitation_template = invitationEmail(link, user_details?.name);
 
           await sendEmail({
-            email,
+            email: user_details?.email,
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_template,
           });
@@ -421,7 +421,7 @@ class PaymentService {
           const invitation_template = invitationEmail(link, user_details?.name);
 
           await sendEmail({
-            email,
+            email: user_details?.email,
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_template,
           });
