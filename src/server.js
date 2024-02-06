@@ -42,7 +42,7 @@ const path = require("path");
 app.use(express.json());
 app.use(morgan("dev"));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-app.use(rootRoutes);
+app.use("/api/v1", rootRoutes);
 
 // handling error from all of the route
 app.use(errorHandler);
