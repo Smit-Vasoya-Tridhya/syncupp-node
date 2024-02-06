@@ -28,12 +28,48 @@ exports.statusList = catchAsyncError(async (req, res, next) => {
 });
 
 exports.taskList = catchAsyncError(async (req, res, next) => {
-  const taskList = await activityService.taskList(req.body);
+  let taskList;
+  if (req?.user?.role?.name === "agency") {
+    taskList = await activityService.taskList(req.body, req.user);
+  } else if (req?.user?.role?.name === "client") {
+    taskList = await activityService.clientTaskList(req.body, req.user);
+  }
   sendResponse(
     res,
     true,
     returnMessage("activity", "taskList"),
     taskList,
+    statusCode.success
+  );
+});
+
+exports.fetchTask = catchAsyncError(async (req, res, next) => {
+  const fetchTask = await activityService.getTaskById(req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "fetchTask"),
+    fetchTask,
+    statusCode.success
+  );
+});
+exports.updateTask = catchAsyncError(async (req, res, next) => {
+  const updateTask = await activityService.updateTask(req?.params?.id);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "updateTask"),
+    updateTask,
+    statusCode.success
+  );
+});
+exports.deleteTask = catchAsyncError(async (req, res, next) => {
+  const deleteTask = await activityService.deleteTask(req?.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "deleteTask"),
+    deleteTask,
     statusCode.success
   );
 });
