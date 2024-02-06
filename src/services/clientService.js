@@ -69,7 +69,7 @@ class ClientService {
         };
         await Authentication.create(client_auth_obj);
       } else {
-        const client = await Client.findById(client_exist?.reference_id);
+        const client = await Client.findById(client_exist?.reference_id).lean();
         // const already_exist = client?.agency_ids?.filter(
         //   (id) => id?.agency_id?.toString() == agency?.reference_id
         // );
@@ -81,7 +81,7 @@ class ClientService {
           ) {
             client?.agency_ids.splice(index, 1);
           } else if (
-            id?.agency_id?.toString() == agency?.reference_id &&
+            id?.agency_id?.toString() == agency?.reference_id.toString() &&
             id?.status != "deleted"
           )
             return throwError(returnMessage("agency", "clientExist"));
@@ -89,14 +89,21 @@ class ClientService {
           return;
         });
 
-        client.agency_ids = [
-          ...client?.agency_ids,
+        const client_agencies = client?.agency_ids || [];
+
+        const agency_ids = [
+          ...client_agencies,
           {
             agency_id: agency?.reference_id,
             status: "payment_pending",
           },
         ];
-        await client.save();
+
+        await Client.findByIdAndUpdate(
+          client?._id,
+          { agency_ids },
+          { new: true }
+        );
       }
       // removed because of the payment is added
       // const invitation_mail = invitationEmail(link, name);
@@ -106,8 +113,11 @@ class ClientService {
       //   subject: returnMessage("emailTemplate", "invitation"),
       //   message: invitation_mail,
       // });
-      return true;
+      return await Authentication.findOne({ email })
+        .select("reference_id")
+        .lean();
     } catch (error) {
+      console.log(error);
       logger.error(`Error while creating client: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -140,7 +150,7 @@ class ClientService {
         if (agency_exist.length == 0)
           return throwError(returnMessage("agency", "agencyNotFound"));
 
-        agency_exist.filter((agency) => {
+        agency_exist.forEach((agency) => {
           if (
             agency?.status !== "pending" &&
             agency?.agency_id?.toString() == agency_id
