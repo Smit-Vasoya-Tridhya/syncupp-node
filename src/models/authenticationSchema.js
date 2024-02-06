@@ -35,6 +35,9 @@ const authenticationSchema = new mongoose.Schema(
         "agency_inactive",
       ],
     },
+    subscription_id: { type: String },
+    subscribe_date: { typr: String },
+    order_id: { type: String },
   },
   { timestamps: true }
 );

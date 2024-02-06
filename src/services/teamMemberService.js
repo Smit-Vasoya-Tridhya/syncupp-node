@@ -35,7 +35,7 @@ class TeamMemberService {
       }
     } catch (error) {
       logger.error(`Error While adding the Team member: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -94,7 +94,7 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error While adding the Team member by agency: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -171,7 +171,7 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error While adding the Team member by client: ${error}`);
-      return throwError(error?.message, error?.status);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 
@@ -336,7 +336,7 @@ class TeamMemberService {
   //     }
   //   } catch (error) {
   //     logger.error(`Error while Team Member register, ${error}`);
-  //     throwError(error?.message, error?.status);
+  //     throwError(error?.message, error?.statusCode);
   //   }
   // };
 
