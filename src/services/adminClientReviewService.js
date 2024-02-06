@@ -6,10 +6,21 @@ const AdminClientReview = require("../models/adminClientReviewSchema");
 
 class ClientReviewService {
   // Add   Client Review
-  addClientReview = async (payload) => {
+  addClientReview = async (payload, files) => {
     try {
-      const clientReview = await AdminClientReview.create(payload);
-      return clientReview;
+      const { customer_name, company_name, review } = payload;
+      let clientImageFileName;
+      if (files?.fieldname === "client_review_image") {
+        clientImageFileName = "uploads/" + files?.filename;
+      }
+      const clientReview = new AdminClientReview({
+        customer_name,
+        company_name,
+        review,
+        client_review_image: clientImageFileName,
+      });
+
+      return clientReview.save();
     } catch (error) {
       logger.error(`Error while Admin add Client Review, ${error}`);
       throwError(error?.message, error?.statusCode);
@@ -50,7 +61,7 @@ class ClientReviewService {
 
       const [ClientReviews, totalClientReviewsCount] = await Promise.all([
         AdminClientReview.find(queryObj)
-          .select("customer_name company_name")
+          .select("customer_name company_name review client_review_image")
           .sort(pagination.sort)
           .skip(pagination.skip)
           .limit(pagination.result_per_page)
@@ -62,7 +73,9 @@ class ClientReviewService {
         ClientReviews,
         pagination: {
           current_page: pagination.page,
-          total_pages: Math.ceil(totalClientReviewsCount / pagination.result_per_page),
+          total_pages: Math.ceil(
+            totalClientReviewsCount / pagination.result_per_page
+          ),
         },
       };
     } catch (error) {
@@ -87,18 +100,22 @@ class ClientReviewService {
   };
 
   // Update   Client Review
-  updateClientReview = async (payload, clientReviewId) => {
+  updateClientReview = async (payload, clientReviewId, files) => {
     try {
-      const clientReview = await AdminClientReview.findByIdAndUpdate(
+      if (files?.fieldname === "client_review_image") {
+        payload.client_review_image = "uploads/" + files?.filename;
+      }
+      const { customer_name, company_name, review, client_review_image } =
+        payload;
+      return await AdminClientReview.findByIdAndUpdate(
         {
           _id: clientReviewId,
         },
-        payload,
+        { customer_name, company_name, review, client_review_image },
         { new: true, useFindAndModify: false }
       );
-      return clientReview;
     } catch (error) {
-      logger.error(`Error while updating FQA, ${error}`);
+      logger.error(`Error while updating  Client Review, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };

@@ -28,6 +28,8 @@ app.use("/swagger-doc", swagger.setup(swaggerDoc));
 // -----------------------------Swagger End-----------------------------------
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(
   "*",
   cors({
@@ -40,8 +42,7 @@ const path = require("path");
 app.use(express.json());
 app.use(morgan("dev"));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-
-app.use("/api/v1", rootRoutes);
+app.use(rootRoutes);
 
 // handling error from all of the route
 app.use(errorHandler);

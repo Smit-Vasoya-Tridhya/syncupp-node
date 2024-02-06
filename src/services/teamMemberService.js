@@ -883,6 +883,9 @@ class TeamMemberService {
   // Get all team members by Agency and by client
   getAllTeam = async (payload, user) => {
     try {
+      if (!payload?.pagination) {
+        return await this.teamListWithoutPagination(user);
+      }
       const pagination = paginationObject(payload);
       let search_obj = {};
       if (payload?.search && payload?.search !== "") {
@@ -999,6 +1002,42 @@ class TeamMemberService {
       }
     } catch (error) {
       logger.error(`Error while fetching all team members: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  teamListWithoutPagination = async (user) => {
+    try {
+      const teams = await Team_Agency.distinct("_id", {
+        agency_id: user?.reference_id,
+      }).lean();
+
+      const aggregateArray = [
+        {
+          $match: {
+            reference_id: { $in: teams },
+            is_deleted: false,
+            status: "confirmed",
+          },
+        },
+        {
+          $project: {
+            name: 1,
+            first_name: 1,
+            last_name: 1,
+            email: 1,
+            reference_id: 1,
+            createdAt: 1,
+            status: 1,
+          },
+        },
+      ];
+
+      const teamData = await Authentication.aggregate(aggregateArray);
+
+      return teamData;
+    } catch (error) {
+      logger.error(`Error while fetching list of teams: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };
