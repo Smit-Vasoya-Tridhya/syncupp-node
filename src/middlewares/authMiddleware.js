@@ -20,6 +20,15 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
       .populate("role", "name")
       .lean();
     if (!user) return throwError(returnMessage("auth", "unAuthorized"), 401);
+
+    const req_paths = ["/create-subscription", "/order"];
+    if (
+      user?.role?.name === "agency" &&
+      user?.status !== "confirmed" &&
+      !req_paths.includes(req.path)
+    )
+      return throwError(returnMessage("payment", "agencyPaymentPending"), 422);
+
     req.user = user;
     next();
   } else {

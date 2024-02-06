@@ -23,7 +23,9 @@
     "invalidContactNumber": "Contact number is invalid.",
     "countryIdRequired": "Country id is required.",
     "stateIdRequired": "State id is required.",
-    "oldAndNewPasswordSame": "New password should be different from old password."
+    "oldAndNewPasswordSame": "New password should be different from old password.",
+    "forbidden": "You are forbidden to perform this action.",
+    "userNotFound": "User does not exist."
   },
 
   "admin": {
@@ -49,6 +51,7 @@
     "invalidId": "invalidId.",
     "emailExist": "Email already registered.",
     "passwordAlreadySet": "Password already set.",
+    "teamMemberCreated": "Team member created successfully",
     "invitationSent": "Invitation email sent successfully.",
     "accountCreated": "Account created successfully.",
     "emailNotRegistered": "This email is not registered.",
@@ -81,7 +84,8 @@
     "agencyExist": "Agency already exists.",
     "agencyRegistered": "Agency registered successfully.",
     "agencyInactive": "Agency is in-active.",
-    "clientCreated": "Invitation mail sent to the client.",
+    "clientCreated": "Client created successfully.",
+    "clientInvited": "Invitation mail sent to the client.",
     "clientExist": "Client already exist.",
     "agencyNotFound": "Agency does not exist.",
     "agencyUpdated": "Updated successfully.",
@@ -137,6 +141,19 @@
     "dateinvalid": "Date must be the present date or a future date.",
     "statusList": "List fetch successfully.",
     "createTask": "Add task successfully."
+  },
+
+  "payment": {
+    "planExist": "Plan is already exist.",
+    "planCreated": "Plan is created successfully.",
+    "checkoutLinkGenerated": "Checkout link generated successfully.",
+    "invalidSignature": "Webhook signature is invalid.",
+    "userIdRequried": "User details are requried for the payment.",
+    "agencyPaymentPending": "Payment is pending. please complete the payment first.",
+    "alreadyPaid": "You have already paid.",
+    "paymentCompleted": "Payment completed successfully.",
+    "paymentFailed": "Payment failed.",
+    "orderCreated": "Order created successfully."
   },
 
   "default": { "default": "Something went wrong." }

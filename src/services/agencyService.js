@@ -1,13 +1,12 @@
 const Agency = require("../models/agencySchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const {
-  returnMessage,
-  paginationObject,
-  getKeywordType,
-} = require("../utils/utils");
+const { paginationObject } = require("../utils/utils");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const Authentication = require("../models/authenticationSchema");
+const SubscriptionPlan = require("../models/subscriptionplanSchema");
+const PaymentService = require("./paymentService");
+const paymentService = new PaymentService();
 
 // Register Agency
 class AgencyService {
@@ -143,15 +142,20 @@ class AgencyService {
   // Get Agency profile
   getAgencyProfile = async (agency) => {
     try {
-      const [agency_detail, agency_reference] = await Promise.all([
+      const [agency_detail, agency_reference, plan] = await Promise.all([
         Authentication.findById(agency?._id).select("-password").lean(),
         Agency.findById(agency?.reference_id)
           .populate("city", "name")
           .populate("state", "name")
           .populate("country", "name")
           .lean(),
+        SubscriptionPlan.findOne({ active: true }).lean(),
       ]);
       agency_detail.reference_id = agency_reference;
+      agency_detail.payable_amount = paymentService.customPaymentCalculator(
+        agency_detail?.subscribe_date,
+        plan
+      );
       return agency_detail;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
