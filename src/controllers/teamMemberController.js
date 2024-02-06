@@ -11,7 +11,7 @@ exports.add = catchAsyncError(async (req, res, next) => {
   sendResponse(
     res,
     true,
-    returnMessage("teamMember", "invitationSent"),
+    returnMessage("teamMember", "teamMemberCreated"),
     {},
     statusCode.success
   );
