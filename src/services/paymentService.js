@@ -245,11 +245,19 @@ class PaymentService {
     try {
       const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
         payload;
+      let expected_signature;
 
-      const expected_signature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_SECRET)
-        .update(razorpay_payment_id + "|" + razorpay_order_id, "utf-8")
-        .digest("hex");
+      if (payload?.subscription_id) {
+        expected_signature = crypto
+          .createHmac("sha256", process.env.RAZORPAY_SECRET)
+          .update(razorpay_payment_id + "|" + razorpay_order_id, "utf-8")
+          .digest("hex");
+      } else if (payload?.payment_id) {
+        expected_signature = crypto
+          .createHmac("sha256", process.env.RAZORPAY_SECRET)
+          .update(razorpay_order_id + "|" + razorpay_payment_id, "utf-8")
+          .digest("hex");
+      }
 
       if (expected_signature === razorpay_signature) {
         const status_change = await this.statusChange(payload);
@@ -331,7 +339,7 @@ class PaymentService {
         user_id,
         amount,
         subscription_id,
-        payment_id,
+        razorpay_order_id,
         currency,
       } = payload;
       if (payload?.agency_id && !payload?.user_id) {
@@ -424,7 +432,7 @@ class PaymentService {
           agency_id,
           user_id,
           amount,
-          order_id: payment_id,
+          order_id: razorpay_order_id,
           currency,
           role: user_details?.role?.name,
         });
