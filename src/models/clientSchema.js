@@ -16,7 +16,7 @@ const clientSchema = new mongoose.Schema(
         agency_id: { type: mongoose.Schema.Types.ObjectId, ref: "agency" },
         status: {
           type: String,
-          enum: ["active", "inactive", "pending", "deleted"],
+          enum: ["active", "inactive", "pending", "deleted", "payment_pending"],
         },
         createdAt: { type: Date, default: new Date() },
       },

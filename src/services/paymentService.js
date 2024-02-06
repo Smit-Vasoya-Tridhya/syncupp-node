@@ -6,43 +6,51 @@ const Authentication = require("../models/authenticationSchema");
 const Client = require("../models/clientSchema");
 const Team_Agency = require("../models/teamAgencySchema");
 const Team_Client = require("../models/teamClientSchema");
-const { returnMessage } = require("../utils/utils");
+const PaymentHistory = require("../models/paymentHistorySchema");
+const SheetManagement = require("../models/sheetManagementSchema");
+const { returnMessage, invitationEmail } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
 const moment = require("moment");
+const sendEmail = require("../helpers/sendEmail");
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_SECRET,
 });
 
 class PaymentService {
-  createPlan = async () => {
+  createPlan = async (payload) => {
     try {
-      const planExist = await SubscriptionPlan.findOne({
-        period: "monthly",
-      }).lean();
-      if (planExist) return throwError(returnMessage("payment", "planExist"));
+      // const planExist = await SubscriptionPlan.findOne({
+      //   period: "monthly",
+      // }).lean();
+      // if (planExist) return throwError(returnMessage("payment", "planExist"));
 
       const planData = {
-        period: "monthly",
+        period: payload?.period,
         interval: 1, // Charge every month
         item: {
-          name: "1 month plan",
-          description: "One month plan for the agencies.",
-          amount: 6000 * 100, // Amount in paise (6000 INR)
-          currency: "INR",
+          name: payload?.name,
+          description: payload?.description,
+          amount: payload?.amount * 100, // Amount in paise (6000 INR)
+          currency: payload?.currency,
         },
       };
       const plan = await Promise.resolve(razorpay.plans.create(planData));
 
-      await SubscriptionPlan.create({
-        amount: 600000,
-        currency: "INR",
-        description: "One month plan for the agencies.",
-        plan_id: plan?.id,
-        period: "monthly",
-        name: "1 month plan",
-      });
+      if (plan) {
+        await SubscriptionPlan.updateMany({}, { active: false }, { new: true });
+        await SubscriptionPlan.create({
+          amount: payload?.amount * 100,
+          currency: payload?.currency,
+          description: payload?.description,
+          plan_id: plan?.id,
+          period: payload?.period,
+          name: payload?.name,
+          active: true,
+        });
+      }
+
       return;
     } catch (error) {
       console.log(error);
@@ -64,10 +72,7 @@ class PaymentService {
         user?.status !== "payment_pending"
       )
         return throwError(returnMessage("payment", "alreadyPaid"));
-      const plan = await SubscriptionPlan.findOne({
-        period: "monthly",
-        amount: 600000,
-      }).lean();
+      const plan = await SubscriptionPlan.findOne({ active: true }).lean();
 
       if (!plan)
         return throwError(
@@ -98,6 +103,7 @@ class PaymentService {
         payment_id: subscription?.id,
         amount: plan?.amount,
         currency: plan?.currency,
+        agency_id: user?.reference_id,
       };
     } catch (error) {
       console.log(error);
@@ -186,10 +192,14 @@ class PaymentService {
       if (!payload?.user_id)
         return throwError(returnMessage("payment", "userIdRequried"));
 
-      const plan = await SubscriptionPlan.findOne({
-        period: "monthly",
-        amount: 600000,
-      }).lean();
+      const agency_exist = await this.checkAgencyExist(
+        payload?.user_id,
+        user?.reference_id
+      );
+
+      if (!agency_exist) return throwError(returnMessage("default", "default"));
+
+      const plan = await SubscriptionPlan.findOne({ active: true }).lean();
 
       if (!plan)
         return throwError(
@@ -217,6 +227,8 @@ class PaymentService {
         payment_id: order?.id,
         amount: plan?.amount,
         currency: plan?.currency,
+        user_id: payload?.user_id,
+        agency_id: user?.reference_id,
       };
     } catch (error) {
       logger.error(`Error while doing the one time payment: ${error}`);
@@ -237,7 +249,13 @@ class PaymentService {
         .update(razorpay_payment_id + "|" + razorpay_order_id, "utf-8")
         .digest("hex");
 
-      if (expected_signature === razorpay_signature) return { success: true };
+      if (expected_signature === razorpay_signature) {
+        const status_change = await this.statusChange(payload);
+        if (!status_change) return { success: false };
+        return { success: true };
+      }
+
+      await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
       logger.error(`Error while verifying signature: ${error}`);
@@ -248,6 +266,7 @@ class PaymentService {
     }
   };
 
+  // this function is used to check the agency is exist when doing the custompayment(single payment)
   checkAgencyExist = async (user_id, agency_id) => {
     try {
       const user_exist = await Authentication.findOne({
@@ -262,11 +281,11 @@ class PaymentService {
           statusCode?.notFound
         );
 
-      if (user?.role?.name === "client") {
+      if (user_exist?.role?.name === "client") {
         const client_exist = await Client.findOne({
           agency_ids: {
             $elemMatch: {
-              agency_id: agency_id,
+              agency_id,
               status: "pending",
             },
           },
@@ -274,13 +293,178 @@ class PaymentService {
 
         if (!client_exist) return false;
         return true;
-      } else if (user?.role?.name === "team_agency") {
-        // const team_agency_exist = await Authentication.findOne({reference_id:});
-      } else if (user?.role?.name === "team_client") {
+      } else if (user_exist?.role?.name === "team_agency") {
+        const team_agency_exist = await Team_Agency.findOne({
+          agency_id,
+        }).lean();
+        if (!team_agency_exist || user_exist?.status === "confirmed")
+          return false;
+        return true;
+      } else if (user_exist?.role?.name === "team_client") {
+        const team_client_exist = await Team_Client.findOne({
+          agency_ids: {
+            $elemMatch: {
+              agency_id,
+              status: "requested",
+            },
+          },
+        });
+        if (!team_client_exist) return false;
+        return true;
       }
       return false;
     } catch (error) {
       logger.error(`Error while checking agency exist: ${error}`);
+      return false;
+    }
+  };
+
+  // create the payemnt history and change the status based on that
+  statusChange = async (payload) => {
+    try {
+      const {
+        agency_id,
+        user_id,
+        amount,
+        subscription_id,
+        payment_id,
+        currency,
+      } = payload;
+      if (payload?.agency_id && !payload?.user_id) {
+        await Authentication.findOneAndUpdate(
+          { reference_id: agency_id },
+          {
+            status: "confirmed",
+            subscribe_date: moment().format("YYYY-MM-DD").toString(),
+          }
+        );
+        await PaymentHistory.create({
+          agency_id,
+          amount,
+          subscription_id,
+          currency,
+        });
+
+        await SheetManagement.findOneAndUpdate(
+          { agency_id },
+          {
+            agency_id,
+            total_sheets: 1,
+            occupied_sheets: [],
+          },
+          { upsert: true }
+        );
+        return true;
+      } else if (payload?.agency_id && payload?.user_id) {
+        const agency_details = await Authentication.findOne({
+          reference_id: agency_id,
+        }).lean();
+        const user_details = await Authentication.findOne({
+          reference_id: payload?.user_id,
+        })
+          .populate("role", "name")
+          .lean();
+
+        if (user_details?.role?.name === "client") {
+          let link = `${
+            process.env.REACT_APP_URL
+          }/client/verify?name=${encodeURIComponent(
+            agency_details?.first_name + " " + agency_details?.last_name
+          )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
+            agency_details?.reference_id
+          )}`;
+
+          const invitation_mail = invitationEmail(link, user_details.name);
+
+          await sendEmail({
+            email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_mail,
+          });
+          await Client.updateOne(
+            { _id: user_id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "pending" } },
+            { new: true }
+          );
+        } else if (user_details?.role?.name === "team_agency") {
+          const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+            agency_details?.first_name + " " + agency_details?.last_name
+          }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
+            user_details?.email
+          )}&token=${user_details?.invitation_token}&redirect=false`;
+
+          const invitation_template = invitationEmail(link, user_details?.name);
+
+          await sendEmail({
+            email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_template,
+          });
+        } else if (user_details?.role?.name === "team_client") {
+          const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+            agency_details?.first_name + " " + agency_details?.last_name
+          }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
+            user_details?.email
+          )}`;
+
+          const invitation_template = invitationEmail(link, user_details?.name);
+
+          await sendEmail({
+            email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_template,
+          });
+        }
+
+        await PaymentHistory.create({
+          agency_id,
+          user_id,
+          amount,
+          order_id: payment_id,
+          currency,
+          role: user_details?.role?.name,
+        });
+
+        const sheets = await SheetManagement.findOne({ agency_id }).lean();
+        if (!sheets) return false;
+        const occupied_sheets = [
+          ...sheets.occupied_sheets,
+          {
+            user_id,
+            role: user_details?.role?.name,
+          },
+        ];
+
+        const sheet_obj = {
+          total_sheets: sheets?.total_sheets + 1,
+          occupied_sheets,
+        };
+        await SheetManagement.findByIdAndUpdate(sheets._id, sheet_obj);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error(`Error while changing status after the payment: ${error}`);
+      return false;
+    }
+  };
+
+  // this functio will use if the signature fails to verify after the payment
+  deleteUsers = async (payload) => {
+    try {
+      const { user_id } = payload;
+      const user_details = await Authentication.findOne({
+        reference_id: user_id,
+      })
+        .populate("role", "name")
+        .lean();
+      if (user_details?.role?.name === "team_agency") {
+        await Authentication.findByIdAndDelete(user_details._id);
+        await Team_Agency.findByIdAndDelete(user_details.reference_id);
+      }
+      return;
+    } catch (error) {
+      logger.error(`Error while deleting the User: ${error}`);
       return false;
     }
   };

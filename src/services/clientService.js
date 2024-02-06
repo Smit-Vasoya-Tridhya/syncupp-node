@@ -35,13 +35,14 @@ class ClientService {
         is_deleted: false,
       });
 
-      let link = `${
-        process.env.REACT_APP_URL
-      }/client/verify?name=${encodeURIComponent(
-        agency?.first_name + " " + agency?.last_name
-      )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
-        agency?.reference_id
-      )}`;
+      // removed because of the payment integration
+      // let link = `${
+      //   process.env.REACT_APP_URL
+      // }/client/verify?name=${encodeURIComponent(
+      //   agency?.first_name + " " + agency?.last_name
+      // )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
+      //   agency?.reference_id
+      // )}`;
 
       if (!client_exist) {
         const client_obj = {
@@ -53,7 +54,9 @@ class ClientService {
           country: payload?.country,
           pincode: payload?.pincode,
           title: payload?.title,
-          agency_ids: [{ agency_id: agency?.reference_id, status: "pending" }],
+          agency_ids: [
+            { agency_id: agency?.reference_id, status: "payment_pending" },
+          ],
         };
         const new_client = await Client.create(client_obj);
         const client_auth_obj = {
@@ -90,18 +93,19 @@ class ClientService {
           ...client?.agency_ids,
           {
             agency_id: agency?.reference_id,
-            status: "pending",
+            status: "payment_pending",
           },
         ];
         await client.save();
       }
-      const invitation_mail = invitationEmail(link, name);
+      // removed because of the payment is added
+      // const invitation_mail = invitationEmail(link, name);
 
-      await sendEmail({
-        email,
-        subject: returnMessage("emailTemplate", "invitation"),
-        message: invitation_mail,
-      });
+      // await sendEmail({
+      //   email,
+      //   subject: returnMessage("emailTemplate", "invitation"),
+      //   message: invitation_mail,
+      // });
       return true;
     } catch (error) {
       logger.error(`Error while creating client: ${error}`);
