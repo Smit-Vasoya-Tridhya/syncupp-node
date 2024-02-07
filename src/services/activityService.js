@@ -196,7 +196,6 @@ class ActivityService {
             due_time: 1,
             due_date: 1,
             createdAt: 1,
-            client_name: "$client_Data.name",
             client_first_name: "$client_Data.first_name",
             client_last_name: "$client_Data.last_name",
             internal_info: 1,
@@ -211,6 +210,13 @@ class ActivityService {
             },
             assign_to_name: {
               $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
+            },
+            client_fullName: {
+              $concat: [
+                "$client_Data.first_name",
+                " ",
+                "$client_Data.last_name",
+              ],
             },
           },
         },
