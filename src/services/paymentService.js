@@ -155,7 +155,7 @@ class PaymentService {
       const paymentMoment = moment();
 
       // days difference between payment start and renew subscription date
-      const days_diff = Math.abs(paymentMoment.diff(renew_date, "days"));
+      const days_diff = Math.abs(paymentMoment.diff(renew_date, "days") + 1);
       console.log("Days diff", days_diff);
       // calculate the total days between subscription dates
       const total_days = Math.abs(renew_date.diff(start_date, "days") + 1);
