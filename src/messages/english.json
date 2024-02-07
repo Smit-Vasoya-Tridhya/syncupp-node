@@ -25,7 +25,10 @@
     "stateIdRequired": "State id is required.",
     "oldAndNewPasswordSame": "New password should be different from old password.",
     "forbidden": "You are forbidden to perform this action.",
-    "userNotFound": "User does not exist."
+    "userNotFound": "User does not exist.",
+    "registered": "User registered successfully.",
+    "passwordNotMatch": "Old password does not match.",
+    "resetPassword": "Password reset successfully."
   },
 
   "admin": {
@@ -161,6 +164,11 @@
     "paymentCompleted": "Payment completed successfully.",
     "paymentFailed": "Payment failed.",
     "orderCreated": "Order created successfully."
+  },
+  "affiliate": {
+    "registered": "User registered successfully.",
+    "emailExist": "Email already registered.",
+    "incorrectPassword": "Email or password is incorrect."
   },
 
   "default": { "default": "Something went wrong." }

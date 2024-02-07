@@ -10,10 +10,12 @@ const agreementRoute = require("./agreementRoute");
 const activityRoute = require("./activityRoute");
 const paymentRoute = require("./paymentRoute");
 const inquiryRoute = require("./inquiryRoute");
+const affiliateRoute = require("./affiliateRoute");
 
 router.use("/activity", activityRoute);
 router.use("/auth", authRoute);
 router.use("/admin", adminRoute);
+router.use("/affiliate", affiliateRoute);
 router.use("/agency", agencyRoute);
 // router.use("/api/v1/agency/team-member", teamMemberRoute);
 router.use("/invoice", invoiceRoute);
