@@ -392,7 +392,7 @@ class PaymentService {
             user_details?.email
           )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
-          const invitation_text = `${agency_details?.first_name} + " " + ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_mail = invitationEmail(
             link,
             user_details?.name,
@@ -416,7 +416,7 @@ class PaymentService {
             user_details?.email
           )}&token=${user_details?.invitation_token}&redirect=false`;
 
-          const invitation_text = `${agency_details?.first_name} + " " + ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_template = invitationEmail(
             link,
             user_details?.name,
@@ -434,7 +434,7 @@ class PaymentService {
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}`;
-          const invitation_text = `${agency_details?.first_name} + " " + ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
           const invitation_template = invitationEmail(
             link,

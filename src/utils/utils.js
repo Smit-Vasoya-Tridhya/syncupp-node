@@ -604,7 +604,7 @@ exports.invitationEmail = (link, username, invitation_text) => {
                                   >
                                     <a
                                       target="_blank"
-                                      href="https://www.tridhyatech.com"
+                                      href="${process.env.REACT_APP_URL}"
                                       style="
                                         -webkit-text-size-adjust: none;
                                         -ms-text-size-adjust: none;
@@ -915,7 +915,7 @@ exports.invitationEmail = (link, username, invitation_text) => {
                                           color: #2d3142;
                                           font-size: 16px;
                                         "
-                                        href="https://www.tridhyatech.com"
+                                        href="${process.env.REACT_APP_URL}"
                                       ></a>
                                     </p>
                                   </td>
@@ -1172,7 +1172,7 @@ exports.invitationEmail = (link, username, invitation_text) => {
                                               font-size: 14px;
                                             "
                                             ><img
-                                              src="${process.env.SERVER_URL}/template/facebook.png"
+                                              src="https://drive.google.com/file/d/1bp06sP-7PS-4feFZdPi-AW_WrqQhCen6/view?usp=drive_link"
                                               alt="Fb"
                                               title="Facebook"
                                               height="24"
@@ -1658,7 +1658,7 @@ exports.welcomeMail = (username) => {
                                     >
                                       <a
                                         target="_blank"
-                                        href="https://www.tridhyatech.com"
+                                        href="${process.env.REACT_APP_URL}"
                                         style="
                                           -webkit-text-size-adjust: none;
                                           -ms-text-size-adjust: none;
@@ -1944,7 +1944,7 @@ exports.welcomeMail = (username) => {
                                             color: #2d3142;
                                             font-size: 16px;
                                           "
-                                          href="https://www.tridhyatech.com"
+                                          href="${process.env.REACT_APP_URL}"
                                         ></a>
                                       </p>
                                     </td>
@@ -2201,7 +2201,7 @@ exports.welcomeMail = (username) => {
                                                 font-size: 14px;
                                               "
                                               ><img
-                                                src="${process.env.SERVER_URL}/template/facebook.png"
+                                                src="https://drive.google.com/file/d/1bp06sP-7PS-4feFZdPi-AW_WrqQhCen6/view?usp=drive_link"
                                                 alt="Fb"
                                                 title="Facebook"
                                                 height="24"
