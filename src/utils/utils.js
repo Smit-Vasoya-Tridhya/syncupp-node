@@ -107,61 +107,61 @@ exports.forgotPasswordEmailTemplate = (link) => {
   return html;
 };
 
-exports.invitationEmail = (link, name) => {
-  return `<html>
-  <head>
-    <style>
-      /* Styles for the email template */
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-      .header {
-        background-color: #4caf50;
-        color: white;
-        text-align: center;
-        padding: 10px;
-        border-radius: 10px 10px 0 0;
-      }
-      .content {
-        padding: 20px;
-      }
-      .button {
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        text-decoration: none;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>Invitation to the SyncUpp</h1>
-      </div>
-      <div class="content">
-      <p>hi, ${name}.</p>
-        <p>Click the button below to join SyncUpp:</p>
-        <a class="button" href="${link}">Join SyncUpp</a>
-        <p>Best regards,<br>SyncUpp</p>
-      </div>
-    </div>
-  </body>
-</html>`;
-};
+// exports.invitationEmail = (link, name) => {
+//   return `<html>
+//   <head>
+//     <style>
+//       /* Styles for the email template */
+//       body {
+//         font-family: Arial, sans-serif;
+//         background-color: #f4f4f4;
+//         margin: 0;
+//         padding: 0;
+//       }
+//       .container {
+//         max-width: 600px;
+//         margin: 0 auto;
+//         padding: 20px;
+//         background-color: #ffffff;
+//         border-radius: 10px;
+//         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+//       }
+//       .header {
+//         background-color: #4caf50;
+//         color: white;
+//         text-align: center;
+//         padding: 10px;
+//         border-radius: 10px 10px 0 0;
+//       }
+//       .content {
+//         padding: 20px;
+//       }
+//       .button {
+//         background-color: #4caf50;
+//         color: white;
+//         border: none;
+//         padding: 10px 20px;
+//         text-decoration: none;
+//         border-radius: 5px;
+//         cursor: pointer;
+//       }
+//     </style>
+//   </head>
+//   <body>
+//     <div class="container">
+//       <div class="header">
+//         <h1>Invitation to the SyncUpp</h1>
+//       </div>
+//       <div class="content">
+//       <p>hi, ${name}.</p>
+//         <p>Click the button below to join SyncUpp:</p>
+//         <a class="button" href="${link}">Join SyncUpp</a>
+//         <p>Best regards,<br>SyncUpp</p>
+//       </div>
+//     </div>
+//   </body>
+// </html>`;
+// };
 
 exports.agrementEmail = (data) => {
   return `<html lang="en">
@@ -222,4 +222,97 @@ exports.getKeywordType = (keyword) => {
   } else {
     return "string";
   }
+};
+
+exports.invitationEmail = (link, username, email) => {
+  return `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <style>
+        body {
+          background-color: #ffffff;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+        }
+        .container {
+          border-radius: 4px;
+          border: 1px solid #eaeaea;
+          padding: 20px;
+          width: 465px;
+          margin: 40px auto;
+        }
+        h1 {
+          padding: 0;
+          margin: 30px 0;
+          font-weight: 400;
+          text-align: center;
+          color: #111;
+          font-size: 24px;
+        }
+        .subheading {
+          color: #000000;
+          font-size: 14px;
+          line-height: 1.5;
+          margin: 16px 0;
+        }
+        .button {
+          background-color: #111;
+          font-size: 14px;
+          border: 0;
+          border-radius: 6px;
+          text-decoration: none;
+          padding: 14px 24px;
+          display: inline-block;
+          text-align: center;
+          font-weight: 500;
+          color: #fff;
+        }
+        hr {
+          border-color: #e5e5e5;
+          margin: 0;
+        }
+        .text {
+          margin: 0;
+          color: #afafaf;
+          font-size: 13px;
+          text-align: center;
+        }
+        .link {
+          margin: 0;
+          color: #afafaf;
+          font-size: 13px;
+          text-align: center;
+          text-decoration: underline;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <section style="margin-top: 32px">
+          <img
+            src="${process.env.SERVER_URL}/template/syncupp-logo.png"
+            alt="isomorphic furyroad logo"
+            style="margin: 0 auto"
+          />
+        </section>
+        <h1>Welcome to <strong>SyncUpp</strong></h1>
+        <p class="subheading">
+          Hello <strong>${username}</strong>,(<a href="${email}">${email}</a>)
+        </p>
+        <p class="subheading">Join Syncupp by clicking below button.</p>
+        <section style="text-align: center; margin: 32px 0">
+          <a class="button" href="${link}">Start Using SyncUpp</a>
+        </section>
+        <hr style="border-color: #e5e5e5; margin-top: 26px" />
+        <section style="padding-top: 22px">
+          <div style="width: 166px; margin: auto">
+            <a href="${process.env.REACT_APP_URL}" class="link">Web Version</a>
+          </div>
+        </section>
+      </div>
+    </body>
+  </html>
+  `;
 };

@@ -42,6 +42,8 @@ const path = require("path");
 app.use(express.json());
 app.use(morgan("dev"));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+app.use("/template", express.static(path.join(__dirname, "public/template")));
+
 app.use("/api/v1", rootRoutes);
 
 // handling error from all of the route

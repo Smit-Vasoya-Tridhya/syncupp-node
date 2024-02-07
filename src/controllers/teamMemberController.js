@@ -7,12 +7,12 @@ const teamMemberService = new TeamMemberService();
 
 // Team Member add
 exports.add = catchAsyncError(async (req, res, next) => {
-  await teamMemberService.addTeamMember(req.body, req.user);
+  const team_member = await teamMemberService.addTeamMember(req.body, req.user);
   sendResponse(
     res,
     true,
     returnMessage("teamMember", "teamMemberCreated"),
-    {},
+    team_member,
     statusCode.success
   );
 });
@@ -71,7 +71,6 @@ exports.deleteMember = catchAsyncError(async (req, res, next) => {
 });
 
 //  Get All Team Member
-
 exports.getAll = catchAsyncError(async (req, res, next) => {
   const teamMemberList = await teamMemberService.getAllTeam(req.body, req.user);
   sendResponse(
@@ -96,6 +95,18 @@ exports.editMember = catchAsyncError(async (req, res, next) => {
     true,
     returnMessage("teamMember", "updated"),
     teamMember,
+    statusCode.success
+  );
+});
+
+// reject client team member
+exports.rejectTeamMember = catchAsyncError(async (req, res, next) => {
+  await teamMemberService.rejectTeamMember(req.body, req.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("teamMember", "teamMemberRejected"),
+    {},
     statusCode.success
   );
 });

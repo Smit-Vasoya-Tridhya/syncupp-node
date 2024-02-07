@@ -95,7 +95,9 @@ class TeamMemberService {
       //   subject: returnMessage("emailTemplate", "invitation"),
       //   message: invitation_template,
       // });
-      return;
+      return {
+        reference_id: team_agency?._id,
+      };
     } catch (error) {
       logger.error(`Error While adding the Team member by agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -916,6 +918,7 @@ class TeamMemberService {
               .select(
                 "name first_name last_name email contact_number status createdAt reference_id"
               )
+              .populate({ path: "reference_id", model: "team_client" })
               .sort(pagination.sort)
               .skip(pagination.skip)
               .limit(pagination.result_per_page)
@@ -926,6 +929,16 @@ class TeamMemberService {
               ...search_obj,
             }),
           ]);
+
+          teams.forEach((team) => {
+            const agency_exists = team?.reference_id?.agency_ids?.find(
+              (ag) => ag?.agency_id?.toString() == user?.reference_id
+            );
+            if (agency_exists) {
+              team["status"] = agency_exists?.status;
+            }
+            delete team?.reference_id?.agency_ids;
+          });
 
           return {
             teamMemberList: teams,
@@ -1070,7 +1083,7 @@ class TeamMemberService {
     }
   };
 
-  // Update Agency profile
+  // Update Team member profile
   updateTeamMeberProfile = async (payload, user_id, reference_id, role) => {
     try {
       const {
@@ -1127,6 +1140,34 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // reject the client team member
+  rejectTeamMember = async (payload, agency) => {
+    try {
+      const team_member_exist = await Team_Client.findOne({
+        _id: payload?.id,
+        "agency_ids.agency_id": agency?.reference_id,
+        "agency_ids.status": "requested",
+      }).lean();
+
+      if (!team_member_exist)
+        return throwError(
+          returnMessage("teamMember", "teamMemberNotFound"),
+          statusCode?.notFound
+        );
+
+      await Team_Client.updateOne(
+        { _id: payload?.id, "agency_ids.agency_id": agency?.reference_id },
+        { $set: { "agency_ids.$.status": "rejected" } },
+        { new: true }
+      );
+
+      return;
+    } catch (error) {
+      logger.error(`Error while rejecting the team member by agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };

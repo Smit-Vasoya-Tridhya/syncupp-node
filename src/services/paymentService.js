@@ -389,7 +389,11 @@ class PaymentService {
             user_details?.email
           )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
-          const invitation_mail = invitationEmail(link, user_details.name);
+          const invitation_mail = invitationEmail(
+            link,
+            user_details?.name,
+            user_details?.email
+          );
 
           await sendEmail({
             email: user_details?.email,
@@ -408,7 +412,11 @@ class PaymentService {
             user_details?.email
           )}&token=${user_details?.invitation_token}&redirect=false`;
 
-          const invitation_template = invitationEmail(link, user_details?.name);
+          const invitation_template = invitationEmail(
+            link,
+            user_details?.name,
+            user_details?.email
+          );
 
           await sendEmail({
             email: user_details?.email,
@@ -422,7 +430,11 @@ class PaymentService {
             user_details?.email
           )}`;
 
-          const invitation_template = invitationEmail(link, user_details?.name);
+          const invitation_template = invitationEmail(
+            link,
+            user_details?.name,
+            user_details?.email
+          );
 
           await sendEmail({
             email: user_details?.email,
@@ -455,6 +467,11 @@ class PaymentService {
           occupied_sheets,
         };
         await SheetManagement.findByIdAndUpdate(sheets._id, sheet_obj);
+        await Team_Client.updateOne(
+          { _id: user_id, "agency_ids.agency_id": agency_id },
+          { $set: { "agency_ids.$.status": "confirmed" } },
+          { new: true }
+        );
         return true;
       }
       return false;
