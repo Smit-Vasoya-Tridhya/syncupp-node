@@ -143,29 +143,24 @@ class PaymentService {
     }
   };
 
-  customPaymentCalculator = (subscription_date, plan) => {
+  customPaymentCalculator = (
+    subscription_start_date,
+    renew_subscription_date,
+    plan
+  ) => {
     try {
-      const registrationMoment = moment(subscription_date, "YYYY-MM-DD");
+      const start_date = moment.unix(subscription_start_date);
+      const renew_date = moment.unix(renew_subscription_date);
+
       const paymentMoment = moment();
 
-      // Calculate the number of days remaining in the month from the registration date
-      const daysInMonth = registrationMoment.daysInMonth();
-      const remainingDays = daysInMonth - registrationMoment.date() + 1;
+      // days difference between payment start and renew subscription date
+      const days_diff = Math.abs(paymentMoment.diff(renew_date, "days"));
 
-      // Calculate the prorated amount based on the remaining days
-      const proratedAmount = (remainingDays / daysInMonth) * plan?.amount;
+      // calculate the total days between subscription dates
+      const total_days = Math.abs(renew_date.diff(start_date, "days") + 1);
 
-      // Adjust the payment if the user is created in a different month
-      if (registrationMoment.month() !== paymentMoment.month()) {
-        // Calculate the remaining days in the payment month
-        const remainingDaysInPaymentMonth = paymentMoment.date();
-
-        // Adjust the prorated amount based on the days in the payment month
-        const adjustedProratedAmount =
-          (remainingDaysInPaymentMonth / daysInMonth) * plan?.amount;
-
-        return adjustedProratedAmount.toFixed(2);
-      }
+      const proratedAmount = (plan?.amount / total_days) * days_diff;
 
       return proratedAmount.toFixed(2);
     } catch (error) {
@@ -207,8 +202,17 @@ class PaymentService {
           returnMessage("payment", "planNotFound"),
           statusCode.notFound
         );
+
+      const subscripion_detail = await this.subscripionDetail(
+        user?.subscription_id
+      );
+
       const prorate_value = parseInt(
-        this.customPaymentCalculator(user?.subscribe_date, plan)
+        this.customPaymentCalculator(
+          subscripion_detail?.current_start,
+          subscripion_detail?.current_end,
+          plan
+        )
       );
 
       const order = await Promise.resolve(
@@ -429,7 +433,7 @@ class PaymentService {
 
         await PaymentHistory.create({
           agency_id,
-          user_id,
+          user_id: user_details?.reference_id,
           amount,
           order_id: razorpay_order_id,
           currency,
@@ -480,6 +484,19 @@ class PaymentService {
       console.log(error);
 
       logger.error(`Error while deleting the User: ${error}`);
+      return false;
+    }
+  };
+
+  // fetch subscription by id
+  subscripionDetail = async (subscription_id) => {
+    try {
+      return await Promise.resolve(
+        razorpay.subscriptions.fetch(subscription_id)
+      );
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while gettign subscription detail: ${error}`);
       return false;
     }
   };
