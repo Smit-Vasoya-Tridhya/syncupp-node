@@ -178,7 +178,7 @@ class InvoiceService {
           },
 
           {
-            status: {
+            "status.name": {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -203,11 +203,6 @@ class InvoiceService {
 
       const pagination = paginationObject(searchObj);
       const pipeLine = [
-        {
-          $match: {
-            ...queryObj,
-          },
-        },
         {
           $lookup: {
             from: "invoice_status_masters",
@@ -243,6 +238,9 @@ class InvoiceService {
         },
         {
           $unwind: "$customerData",
+        },
+        {
+          $match: queryObj,
         },
         {
           $project: {
@@ -565,12 +563,7 @@ class InvoiceService {
     try {
       const { status } = payload;
 
-      if (
-        status === "draft" ||
-        status === "unpaid" ||
-        status === "paid" ||
-        status === "overdue"
-      ) {
+      if (status === "unpaid" || status === "paid" || status === "overdue") {
         // Get Invoice status
         const getInvoiceStatus = await Invoice_Status_Master.findOne({
           name: status,
@@ -641,7 +634,7 @@ class InvoiceService {
             },
           },
           {
-            status: {
+            "statusArray.name": {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -660,11 +653,6 @@ class InvoiceService {
       const pagination = paginationObject(searchObj);
       const pipeLine = [
         {
-          $match: {
-            ...queryObj,
-          },
-        },
-        {
           $lookup: {
             from: "invoice_status_masters",
             localField: "status",
@@ -680,6 +668,9 @@ class InvoiceService {
           $match: {
             "statusArray.name": { $ne: "draft" }, // Exclude documents with status "draft"
           },
+        },
+        {
+          $match: queryObj,
         },
         {
           $project: {
