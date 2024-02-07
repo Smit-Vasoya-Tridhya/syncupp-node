@@ -2,11 +2,10 @@ const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const {
   returnMessage,
-  invitationEmail,
   validateEmail,
-  passwordValidation,
   validateRequestFields,
   paginationObject,
+  welcomeMail,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
@@ -387,6 +386,13 @@ class TeamMemberService {
         teamMember.status = "confirmed";
 
         await teamMember.save();
+        const welcome_mail = welcomeMail(teamMember?.name);
+
+        await sendEmail({
+          email: teamMember?.email,
+          subject: returnMessage("emailTemplate", "welcomeMailSubject"),
+          message: welcome_mail,
+        });
         return;
       } else if (client_id && client_id !== "") {
         if (!validateEmail(email))
@@ -455,6 +461,13 @@ class TeamMemberService {
             { $set: { "agency_ids.$.status": "confirmed" } },
             { new: true }
           );
+          const welcome_mail = welcomeMail(client_team_member?.name);
+
+          await sendEmail({
+            email: client_team_member?.email,
+            subject: returnMessage("emailTemplate", "welcomeMailSubject"),
+            message: welcome_mail,
+          });
           return authService.tokenGenerator(client_team_member);
         }
       }

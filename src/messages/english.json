@@ -128,7 +128,8 @@
 
   "emailTemplate": {
     "forgotPasswordSubject": "Reset your password now.",
-    "invitation": "Join to SyncUpp"
+    "invitation": "Join to SyncUpp",
+    "welcomeMailSubject": "Welcome to Syncupp."
   },
 
   "client": {

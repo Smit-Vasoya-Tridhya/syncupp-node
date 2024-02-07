@@ -9,6 +9,7 @@ const {
   paginationObject,
   validateEmail,
   passwordValidation,
+  welcomeMail,
 } = require("../utils/utils");
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
@@ -180,13 +181,8 @@ class ClientService {
         return;
         // return authService.tokenGenerator(client_auth);
       } else {
-        validateRequestFields(payload, [
-          "password",
-          "email",
-          "first_name",
-          "last_name",
-          "agency_id",
-        ]);
+        // removed first_name and last_name from the validation
+        validateRequestFields(payload, ["password", "email", "agency_id"]);
 
         if (!validateEmail(email))
           return throwError(returnMessage("auth", "invalidEmail"));
@@ -244,6 +240,14 @@ class ClientService {
           },
           { new: true }
         );
+
+        const welcome_mail = welcomeMail(client_auth?.name);
+
+        await sendEmail({
+          email: client_auth?.email,
+          subject: returnMessage("emailTemplate", "welcomeMailSubject"),
+          message: welcome_mail,
+        });
         return;
         // return authService.tokenGenerator(client_exist);
       }

@@ -149,16 +149,16 @@ class PaymentService {
     plan
   ) => {
     try {
-      const start_date = moment.unix(subscription_start_date);
+      const start_date = moment.unix(subscription_start_date).startOf("day");
       const renew_date = moment.unix(renew_subscription_date);
 
-      const paymentMoment = moment();
+      const paymentMoment = moment().startOf("day");
 
       // days difference between payment start and renew subscription date
-      const days_diff = Math.abs(paymentMoment.diff(renew_date, "days") + 1);
+      const days_diff = Math.abs(paymentMoment.diff(renew_date, "days"));
       console.log("Days diff", days_diff);
       // calculate the total days between subscription dates
-      const total_days = Math.abs(renew_date.diff(start_date, "days") + 1);
+      const total_days = Math.abs(renew_date.diff(start_date, "days"));
       console.log("total days", total_days);
 
       const proratedAmount = (plan?.amount / total_days) * days_diff;
@@ -233,7 +233,7 @@ class PaymentService {
       );
       return {
         payment_id: order?.id,
-        amount: plan?.amount,
+        amount: prorate_value,
         currency: plan?.currency,
         user_id: payload?.user_id,
         agency_id: user?.reference_id,
@@ -392,10 +392,11 @@ class PaymentService {
             user_details?.email
           )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
+          const invitation_text = `${agency_details?.first_name} + " " + ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_mail = invitationEmail(
             link,
             user_details?.name,
-            user_details?.email
+            invitation_text
           );
 
           await sendEmail({
@@ -415,10 +416,11 @@ class PaymentService {
             user_details?.email
           )}&token=${user_details?.invitation_token}&redirect=false`;
 
+          const invitation_text = `${agency_details?.first_name} + " " + ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_template = invitationEmail(
             link,
             user_details?.name,
-            user_details?.email
+            invitation_text
           );
 
           await sendEmail({
@@ -432,11 +434,12 @@ class PaymentService {
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}`;
+          const invitation_text = `${agency_details?.first_name} + " " + ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
           const invitation_template = invitationEmail(
             link,
             user_details?.name,
-            user_details?.email
+            invitation_text
           );
 
           await sendEmail({
