@@ -67,5 +67,12 @@
     "subTotalNumeric": "Subtotal must be numeric",
     "totalRequired": "Total is required",
     "totalNumeric": "Total must be numeric"
+  },
+  "inquiry": {
+    "nameRequired": "Name is required",
+    "messageRequired": "Message is required",
+    "contactNumberRequired": "Contact number is required",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email format"
   }
 }

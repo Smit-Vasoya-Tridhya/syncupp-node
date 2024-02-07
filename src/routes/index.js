@@ -9,6 +9,7 @@ const invoiceRoute = require("./invoiceRoute");
 const agreementRoute = require("./agreementRoute");
 const activityRoute = require("./activityRoute");
 const paymentRoute = require("./paymentRoute");
+const inquiryRoute = require("./inquiryRoute");
 
 router.use("/activity", activityRoute);
 router.use("/auth", authRoute);
@@ -25,5 +26,6 @@ router.use("/client", clientRoute);
 // router.use("/agency/invoice", invoiceRoute);
 router.use("/payment", paymentRoute);
 router.use("/", agreementRoute);
+router.use("/inquiry", inquiryRoute);
 
 module.exports = router;

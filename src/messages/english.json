@@ -124,6 +124,13 @@
     "downloadPDF": "Download PDF successfully."
   },
 
+  "inquiry": {
+    "inquirySent": "Inquiry sent successfully.",
+    "inquiryList": "Inquiries fetched successfully.",
+    "inquiryDelete": "Inquiry deleted successfully.",
+    "mailSent": "Inquiry deleted successfully."
+  },
+
   "emailTemplate": {
     "forgotPasswordSubject": "Reset your password now.",
     "invitation": "Join to SyncUpp"
