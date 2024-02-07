@@ -36,5 +36,15 @@
     "statusRequired": "Agreements status required.",
     "descLength": "Description must not exceed 1000 characters",
     "titleLength": "Title must not exceed 100 characters"
+  },
+  "coupon":{
+    "brandRequired":"Brand name is required",
+    "brandMaxLength":"Brand name must not exceed 15 characters",
+    "coupenCodeRequired":"Coupon code is required",
+    "discountTitleRequired":"Discount title is required",
+    "discountTitleMaxLength":"Brand name must not exceed 15 characters",
+    "siteURLRequired":"Wensite url is required",
+    "couponIdsReq": "CouponIds To Delete key required"
+
   }
 }
