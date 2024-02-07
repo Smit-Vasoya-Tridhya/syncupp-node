@@ -356,7 +356,7 @@ class AuthService {
 
       const hased_password = await this.passwordEncryption({ password });
 
-      if (hased_password === user.password)
+      if (hased_password == user?.password)
         return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
 
       await Authentication.findByIdAndUpdate(data?._id, {

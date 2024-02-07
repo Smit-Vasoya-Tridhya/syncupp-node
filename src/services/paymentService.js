@@ -156,11 +156,14 @@ class PaymentService {
 
       // days difference between payment start and renew subscription date
       const days_diff = Math.abs(paymentMoment.diff(renew_date, "days"));
-
+      console.log("Days diff", days_diff);
       // calculate the total days between subscription dates
       const total_days = Math.abs(renew_date.diff(start_date, "days") + 1);
+      console.log("total days", total_days);
 
       const proratedAmount = (plan?.amount / total_days) * days_diff;
+      console.log("prorated value", proratedAmount);
+      if (paymentMoment.isSame(start_date)) return plan?.amount;
 
       return proratedAmount.toFixed(2);
     } catch (error) {

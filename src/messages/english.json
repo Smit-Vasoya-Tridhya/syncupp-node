@@ -84,7 +84,7 @@
 
   "agency": {
     "agencyExist": "Agency already exists.",
-    "agencyRegistered": "Agency registered successfully.",
+    "agencyRegistered": "Agency registred successfully, complete the payment to process further.",
     "agencyInactive": "Agency is in-active.",
     "clientCreated": "Client created successfully.",
     "clientInvited": "Invitation mail sent to the client.",
