@@ -1089,16 +1089,10 @@ class TeamMemberService {
       let team_reference;
       if (team?.role?.name === "team_agency") {
         team_reference = await Team_Agency.findById(team?.reference_id)
-          .populate("city", "name")
-          .populate("state", "name")
-          .populate("country", "name")
-          .lean();
+        .lean();
       } else if (team?.role?.name === "team_client") {
         team_reference = await Team_Client.findById(team?.reference_id)
-          .populate("city", "name")
-          .populate("state", "name")
-          .populate("country", "name")
-          .lean();
+        .lean();
       }
 
       team_detail.reference_id = team_reference;
