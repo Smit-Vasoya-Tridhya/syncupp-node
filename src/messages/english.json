@@ -46,7 +46,17 @@
     "faqUpdated": "FAQ updated successfully.",
     "getAllFaq": "FAQs fetched successfully.",
     "deleteFaq": "FAQ deleted successfully.",
-    "getFaq": "FAQ fetched successfully."
+    "getFaq": "FAQ fetched successfully.",
+    "getAllCoupon": "Coupon fetched successfully.",
+    "couponAdded": "Coupon created successfully.",
+    "deleteCoupon": "Coupon deleted successfully.",
+    "couponUpdated": "Coupon updated successfully.",
+    "getCoupon": "Coupon fetch successfully.",
+    "clientReviewAdded": "Client Review added successfully.",
+    "getAllClientReview": "Fetch client successfully.",
+    "deleteClientReview": "Client deleted successfully.",
+    "clientReviewUpdated": "Client updated successfully.",
+    "getClientReviewByID": "Fetch client successfully."
   },
 
   "teamMember": {
@@ -153,7 +163,9 @@
   "activity": {
     "dateinvalid": "Date must be the present date or a future date.",
     "statusList": "List fetch successfully.",
-    "createTask": "Add task successfully."
+    "createTask": "Add task successfully.",
+    "updateStatus": "Task Status updated successfully.",
+    "taskList": "Task List fetch successfully"
   },
 
   "payment": {

@@ -1034,9 +1034,17 @@ class TeamMemberService {
 
   teamListWithoutPagination = async (user) => {
     try {
-      const teams = await Team_Agency.distinct("_id", {
-        agency_id: user?.reference_id,
-      }).lean();
+      console.log(user);
+      let teams;
+      if (user.role.name === "team_agency") {
+        teams = await Team_Agency.distinct("_id", {
+          _id: user?.reference_id,
+        }).lean();
+      } else {
+        teams = await Team_Agency.distinct("_id", {
+          agency_id: user?.reference_id,
+        }).lean();
+      }
 
       const aggregateArray = [
         {
