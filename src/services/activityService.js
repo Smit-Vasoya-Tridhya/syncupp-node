@@ -25,8 +25,6 @@ class ActivityService {
         mark_as_done,
       } = payload;
 
-      console.log(due_date, "due Dtae");
-
       const dueDateObject = moment(due_date);
       const duetimeObject = moment(due_date);
 
@@ -205,28 +203,15 @@ class ActivityService {
               due_time: 1,
               due_date: 1,
               createdAt: 1,
-              client_first_name: "$client_Data.first_name",
-              client_last_name: "$client_Data.last_name",
               internal_info: 1,
               assigned_to_name: "$team_Data.name",
-              assigned_to_first_name: "$team_Data.first_name",
-              assigned_to_last_name: "$team_Data.last_name",
               assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
               assigned_by_name: {
                 $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
               },
-              assign_to_name: {
-                $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
-              },
-              client_fullName: {
-                $concat: [
-                  "$client_Data.first_name",
-                  " ",
-                  "$client_Data.last_name",
-                ],
-              },
+              client_name: "$client_Data.name",
               column_id: "$status.name",
             },
           },
@@ -317,6 +302,22 @@ class ActivityService {
             queryObj["$or"].push({ updatedAt: dateKeyword });
           }
         }
+        // const teamRole = await Team_Agency.findOne({
+        //   _id: user.reference_id,
+        // }).populate("role");
+
+        // let assignedByNameProjection = "$assign_by.name";
+        // if (teamRole?.role?.name === "admin") {
+        //   assignedByNameProjection = {
+        //     $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+        //   };
+        // } else if (teamRole?.role?.name === "team_member") {
+        //   assignedByNameProjection = "$assign_by.name";
+        // } else {
+        //   assignedByNameProjection = {
+        //     $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+        //   };
+        // }
         const taskPipeline = [
           {
             $lookup: {
@@ -383,28 +384,15 @@ class ActivityService {
               due_time: 1,
               due_date: 1,
               createdAt: 1,
-              client_first_name: "$client_Data.first_name",
-              client_last_name: "$client_Data.last_name",
               internal_info: 1,
               assigned_to_name: "$team_Data.name",
-              assigned_to_first_name: "$team_Data.first_name",
-              assigned_to_last_name: "$team_Data.last_name",
               assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
               assigned_by_name: {
                 $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
               },
-              assign_to_name: {
-                $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
-              },
-              client_fullName: {
-                $concat: [
-                  "$client_Data.first_name",
-                  " ",
-                  "$client_Data.last_name",
-                ],
-              },
+              client_name: "$client_Data.name",
               column_id: "$status.name",
             },
           },
@@ -440,7 +428,6 @@ class ActivityService {
           client_id: user.reference_id,
         };
         const pagination = paginationObject(searchObj);
-        console.log(user.reference_id);
         if (searchObj.search && searchObj.search !== "") {
           queryObj["$or"] = [
             {
@@ -581,12 +568,10 @@ class ActivityService {
               due_date: 1,
               createdAt: 1,
               client_name: "$client_Data.name",
-              client_first_name: "$client_Data.first_name",
-              client_last_name: "$client_Data.last_name",
+
               internal_info: 1,
               assigned_to_name: "$team_Data.name",
-              assigned_to_first_name: "$team_Data.first_name",
-              assigned_to_last_name: "$team_Data.last_name",
+
               assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
@@ -596,13 +581,8 @@ class ActivityService {
               assign_to_name: {
                 $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
               },
-              client_fullName: {
-                $concat: [
-                  "$client_Data.first_name",
-                  " ",
-                  "$client_Data.last_name",
-                ],
-              },
+              client_name: "$client_Data.name",
+
               column_id: "$status.name",
             },
           },
@@ -635,7 +615,6 @@ class ActivityService {
           client_id: user.reference_id,
         };
         const pagination = paginationObject(searchObj);
-        console.log(user.reference_id);
         if (searchObj.search && searchObj.search !== "") {
           queryObj["$or"] = [
             {
@@ -776,12 +755,8 @@ class ActivityService {
               due_date: 1,
               createdAt: 1,
               client_name: "$client_Data.name",
-              client_first_name: "$client_Data.first_name",
-              client_last_name: "$client_Data.last_name",
               internal_info: 1,
               assigned_to_name: "$team_Data.name",
-              assigned_to_first_name: "$team_Data.first_name",
-              assigned_to_last_name: "$team_Data.last_name",
               assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
@@ -791,13 +766,7 @@ class ActivityService {
               assign_to_name: {
                 $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
               },
-              client_fullName: {
-                $concat: [
-                  "$client_Data.first_name",
-                  " ",
-                  "$client_Data.last_name",
-                ],
-              },
+
               column_id: "$status.name",
             },
           },
@@ -828,12 +797,9 @@ class ActivityService {
   teamAdminTaskList = async (searchObj, user) => {
     if (!searchObj.pagination) {
       try {
-        console.log(user.reference_id);
         const teamRole = await Team_Agency.findOne({
           _id: user.reference_id,
         }).populate("role");
-
-        console.log(teamRole);
 
         if (teamRole?.role?.name === "admin") {
           const queryObj = {
@@ -841,7 +807,6 @@ class ActivityService {
             assign_by: user.reference_id,
           };
           const pagination = paginationObject(searchObj);
-          console.log(user.reference_id);
           if (searchObj.search && searchObj.search !== "") {
             queryObj["$or"] = [
               {
@@ -983,8 +948,7 @@ class ActivityService {
                 due_date: 1,
                 createdAt: 1,
                 client_name: "$client_Data.name",
-                client_first_name: "$client_Data.first_name",
-                client_last_name: "$client_Data.last_name",
+
                 internal_info: 1,
                 assigned_to_name: "$team_Data.name",
                 assigned_to_first_name: "$team_Data.first_name",
@@ -1000,20 +964,7 @@ class ActivityService {
                     "$assign_by.last_name",
                   ],
                 },
-                assign_to_name: {
-                  $concat: [
-                    "$team_Data.first_name",
-                    " ",
-                    "$team_Data.last_name",
-                  ],
-                },
-                client_fullName: {
-                  $concat: [
-                    "$client_Data.first_name",
-                    " ",
-                    "$client_Data.last_name",
-                  ],
-                },
+
                 column_id: "$status.name",
               },
             },
@@ -1041,7 +992,6 @@ class ActivityService {
             assign_to: user.reference_id,
           };
           const pagination = paginationObject(searchObj);
-          console.log(user.reference_id);
           if (searchObj.search && searchObj.search !== "") {
             queryObj["$or"] = [
               {
@@ -1183,12 +1133,8 @@ class ActivityService {
                 due_date: 1,
                 createdAt: 1,
                 client_name: "$client_Data.name",
-                client_first_name: "$client_Data.first_name",
-                client_last_name: "$client_Data.last_name",
                 internal_info: 1,
                 assigned_to_name: "$team_Data.name",
-                assigned_to_first_name: "$team_Data.first_name",
-                assigned_to_last_name: "$team_Data.last_name",
                 assigned_by_name: "$team_by.name",
                 assign_by: 1,
                 assigned_by_first_name: "$team_by.first_name",
@@ -1200,20 +1146,7 @@ class ActivityService {
                     "$assign_by.last_name",
                   ],
                 },
-                assign_to_name: {
-                  $concat: [
-                    "$team_Data.first_name",
-                    " ",
-                    "$team_Data.last_name",
-                  ],
-                },
-                client_fullName: {
-                  $concat: [
-                    "$client_Data.first_name",
-                    " ",
-                    "$client_Data.last_name",
-                  ],
-                },
+
                 column_id: "$status.name",
               },
             },
@@ -1247,8 +1180,6 @@ class ActivityService {
           _id: user.reference_id,
         }).populate("role");
 
-        console.log(teamRole);
-
         if (teamRole?.role?.name === "admin") {
           const queryObj = {
             $or: [
@@ -1258,7 +1189,6 @@ class ActivityService {
             is_deleted: false,
           };
           const pagination = paginationObject(searchObj);
-          console.log(user.reference_id);
           if (searchObj.search && searchObj.search !== "") {
             queryObj["$or"] = [
               {
@@ -1400,12 +1330,10 @@ class ActivityService {
                 due_date: 1,
                 createdAt: 1,
                 client_name: "$client_Data.name",
-                client_first_name: "$client_Data.first_name",
-                client_last_name: "$client_Data.last_name",
+
                 internal_info: 1,
                 assigned_to_name: "$team_Data.name",
-                assigned_to_first_name: "$team_Data.first_name",
-                assigned_to_last_name: "$team_Data.last_name",
+
                 assigned_by_name: "$team_by.name",
                 assign_by: 1,
                 assigned_by_first_name: "$team_by.first_name",
@@ -1413,20 +1341,7 @@ class ActivityService {
                 assigned_by_name: {
                   $concat: ["$team_by.first_name", " ", "$team_by.last_name"],
                 },
-                assign_to_name: {
-                  $concat: [
-                    "$team_Data.first_name",
-                    " ",
-                    "$team_Data.last_name",
-                  ],
-                },
-                client_fullName: {
-                  $concat: [
-                    "$client_Data.first_name",
-                    " ",
-                    "$client_Data.last_name",
-                  ],
-                },
+
                 column_id: "$status.name",
               },
             },
@@ -1453,7 +1368,6 @@ class ActivityService {
             assign_to: user.reference_id,
           };
           const pagination = paginationObject(searchObj);
-          console.log(user.reference_id);
           if (searchObj.search && searchObj.search !== "") {
             queryObj["$or"] = [
               {
@@ -1595,12 +1509,10 @@ class ActivityService {
                 due_date: 1,
                 createdAt: 1,
                 client_name: "$client_Data.name",
-                client_first_name: "$client_Data.first_name",
-                client_last_name: "$client_Data.last_name",
+
                 internal_info: 1,
                 assigned_to_name: "$team_Data.name",
-                assigned_to_first_name: "$team_Data.first_name",
-                assigned_to_last_name: "$team_Data.last_name",
+
                 assigned_by_name: "$team_by.name",
                 assign_by: 1,
                 assigned_by_first_name: "$team_by.first_name",
@@ -1608,20 +1520,7 @@ class ActivityService {
                 assigned_by_name: {
                   $concat: ["$team_by.first_name", " ", "$team_by.last_name"],
                 },
-                assign_to_name: {
-                  $concat: [
-                    "$team_Data.first_name",
-                    " ",
-                    "$team_Data.last_name",
-                  ],
-                },
-                client_fullName: {
-                  $concat: [
-                    "$client_Data.first_name",
-                    " ",
-                    "$client_Data.last_name",
-                  ],
-                },
+
                 column_id: "$status.name",
               },
             },
@@ -1767,10 +1666,14 @@ class ActivityService {
 
   updateTask = async (payload, id) => {
     try {
-      const { title, internal_info, due_date, assign_to, client_id, done } =
-        payload;
-
-      console.log(due_date, "due Dtae");
+      const {
+        title,
+        internal_info,
+        due_date,
+        assign_to,
+        client_id,
+        mark_as_done,
+      } = payload;
 
       const dueDateObject = moment(due_date);
       const duetimeObject = moment(due_date);
@@ -1783,7 +1686,7 @@ class ActivityService {
         return throwError(returnMessage("activity", "dateinvalid"));
       }
       let status;
-      if (done === true) {
+      if (mark_as_done === true) {
         status = await ActivityStatus.findOne({ name: "completed" }).lean();
       } else {
         status = await ActivityStatus.findOne({ name: "pending" }).lean();
