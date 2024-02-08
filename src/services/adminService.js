@@ -146,6 +146,9 @@ class AdminService {
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }
+      if (newPassword === oldPassword) {
+        return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
+      }
 
       const is_match = await bcrypt.compare(oldPassword, admin.password);
       if (!is_match) {

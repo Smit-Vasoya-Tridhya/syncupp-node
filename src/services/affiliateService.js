@@ -5,6 +5,8 @@ const { throwError } = require("../helpers/errorUtil");
 const {
   returnMessage,
   forgotPasswordEmailTemplate,
+  passwordValidation,
+  validateEmail,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
@@ -15,9 +17,7 @@ class AffiliateService {
   // Generate Token
   tokenGenerator = (payload) => {
     try {
-      const expiresIn = payload?.rememberMe
-        ? process.env.JWT_REMEMBER_EXPIRE
-        : process.env.JWT_EXPIRES_IN;
+      const expiresIn = process.env.JWT_EXPIRES_IN;
       const token = jwt.sign(
         { id: payload._id },
         process.env.JWT_AFFILIATE_SECRET_KEY,
@@ -42,6 +42,14 @@ class AffiliateService {
         return throwError(returnMessage("affiliate", "emailExist"));
       }
 
+      if (!validateEmail(email)) {
+        return throwError(returnMessage("auth", "invalidEmail"));
+      }
+
+      if (!passwordValidation(password)) {
+        return throwError(returnMessage("auth", "invalidEmail"));
+      }
+
       const hash_password = await bcrypt.hash(password, 14);
 
       let newUser = await Affiliate.create({
@@ -54,11 +62,9 @@ class AffiliateService {
 
       newUser = newUser.toObject();
       delete newUser?.password;
-      delete newUser?.remember_me;
       delete newUser?.is_deleted;
       return this.tokenGenerator({
         ...newUser,
-        rememberMe: payload?.rememberMe,
       });
     } catch (error) {
       logger.error(`Error while affiliate signup: ${error}`);
@@ -77,7 +83,7 @@ class AffiliateService {
 
       const user = await Affiliate.findOne(
         { email, is_deleted: false },
-        { is_deleted: 0, remember_me: 0 }
+        { is_deleted: 0 }
       );
 
       if (!user) {
@@ -91,7 +97,6 @@ class AffiliateService {
       delete user._doc?.password;
       return this.tokenGenerator({
         ...user._doc,
-        rememberMe: payload?.rememberMe,
       });
     } catch (error) {
       logger.error(`Error while affiliate signup: ${error}`);
