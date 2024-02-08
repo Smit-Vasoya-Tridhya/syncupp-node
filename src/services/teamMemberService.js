@@ -96,6 +96,7 @@ class TeamMemberService {
       // });
       return {
         reference_id: team_agency?._id,
+        referral_points: 0, // this wil be change in future when the referral point will be integrate
       };
     } catch (error) {
       logger.error(`Error While adding the Team member by agency: ${error}`);
@@ -1088,11 +1089,9 @@ class TeamMemberService {
         .lean();
       let team_reference;
       if (team?.role?.name === "team_agency") {
-        team_reference = await Team_Agency.findById(team?.reference_id)
-        .lean();
+        team_reference = await Team_Agency.findById(team?.reference_id).lean();
       } else if (team?.role?.name === "team_client") {
-        team_reference = await Team_Client.findById(team?.reference_id)
-        .lean();
+        team_reference = await Team_Client.findById(team?.reference_id).lean();
       }
 
       team_detail.reference_id = team_reference;

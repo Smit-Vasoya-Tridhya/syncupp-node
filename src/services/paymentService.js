@@ -232,6 +232,7 @@ class PaymentService {
         { new: true }
       );
       return {
+        referral_points: 0, // this wil be change in future when the referral point will be integrate
         payment_id: order?.id,
         amount: prorate_value,
         currency: plan?.currency,

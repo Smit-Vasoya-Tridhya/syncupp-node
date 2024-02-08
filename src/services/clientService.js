@@ -14,7 +14,6 @@ const {
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
-const { ObjectId } = require("mongodb");
 
 const authService = new AuthService();
 const statusCode = require("../messages/statusCodes.json");
@@ -122,9 +121,12 @@ class ClientService {
       //   subject: returnMessage("emailTemplate", "invitation"),
       //   message: invitation_mail,
       // });
-      return await Authentication.findOne({ email })
-        .select("reference_id")
-        .lean();
+      return {
+        client: await Authentication.findOne({ email })
+          .select("reference_id")
+          .lean(),
+        referral_points: 0, // this is set to 0 initially but it will update when the referral module imlement
+      };
     } catch (error) {
       console.log(error);
       logger.error(`Error while creating client: ${error}`);
