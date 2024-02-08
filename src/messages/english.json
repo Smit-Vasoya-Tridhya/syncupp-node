@@ -162,10 +162,13 @@
   },
   "activity": {
     "dateinvalid": "Date must be the present date or a future date.",
-    "statusList": "List fetch successfully.",
-    "createTask": "Add task successfully.",
+    "statusList": "Status List fetched successfully.",
+    "createTask": "Task added successfully.",
     "updateStatus": "Task Status updated successfully.",
-    "taskList": "Task List fetch successfully"
+    "taskList": "Task List fetched successfully",
+    "fetchTask": "Task fetched successfully.",
+    "updateTask": "Task updated  successfully.",
+    "deleteTask": "Task deleted successfully."
   },
 
   "payment": {

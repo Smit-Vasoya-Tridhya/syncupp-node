@@ -424,7 +424,6 @@ class ClientService {
       let clients;
       if (agency.role.name === "team_agency") {
         const agency_detail = await Team_Agency.findById(agency.reference_id);
-        console.log(agency_detail);
         clients = await Client.distinct("_id", {
           agency_ids: {
             $elemMatch: {

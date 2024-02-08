@@ -1034,12 +1034,18 @@ class TeamMemberService {
 
   teamListWithoutPagination = async (user) => {
     try {
-      console.log(user);
       let teams;
       if (user.role.name === "team_agency") {
+        const agency = await Team_Agency.findOne(user.reference_id);
+
         teams = await Team_Agency.distinct("_id", {
-          _id: user?.reference_id,
+          agency_id: agency?.agency_id,
         }).lean();
+        // console.log(agency_detail, "agency_detail");
+
+        // teams = await Team_Agency.distinct("_id", {
+        //   agency_id: agency_detail?.reference_id,
+        // }).lean();
       } else {
         teams = await Team_Agency.distinct("_id", {
           agency_id: user?.reference_id,
