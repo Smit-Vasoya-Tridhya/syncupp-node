@@ -79,7 +79,7 @@ class TeamMemberService {
 
       await Authentication.create({
         name,
-        status: "confirm_pending",
+        status: "payment_pending",
         email,
         reference_id: team_agency?._id,
         contact_number,
@@ -999,6 +999,7 @@ class TeamMemberService {
         return {
           teamMemberList: teams,
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
+          referral_points: 0, // this wil be change in future when the referral point will be integrate
         };
       } else if (user?.role?.name === "client") {
         const team_client_ids = await Team_Client.distinct("_id", {
@@ -1030,6 +1031,7 @@ class TeamMemberService {
         return {
           teamMemberList: teams,
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
+          referral_points: 0, // this wil be change in future when the referral point will be integrate
         };
       }
     } catch (error) {

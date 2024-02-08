@@ -315,7 +315,11 @@ class PaymentService {
         const team_agency_exist = await Team_Agency.findOne({
           agency_id,
         }).lean();
-        if (!team_agency_exist || user_exist?.status === "confirmed")
+        if (
+          !team_agency_exist ||
+          user_exist?.status === "confirmed" ||
+          user_exist?.status !== "payment_pending"
+        )
           return false;
         return true;
       } else if (user_exist?.role?.name === "team_client") {
@@ -422,6 +426,12 @@ class PaymentService {
             link,
             user_details?.name,
             invitation_text
+          );
+
+          await Authentication.findByIdAndUpdate(
+            user_details?._id,
+            { status: "confirm_pending" },
+            { new: true }
           );
 
           await sendEmail({
