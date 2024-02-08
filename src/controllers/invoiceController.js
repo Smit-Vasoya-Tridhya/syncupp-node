@@ -59,7 +59,7 @@ exports.getAllInvoice = catchAsyncError(async (req, res, next) => {
       req.body,
       req?.user?.reference_id
     );
-  } else {
+  } else if (req.user.role.name === "client") {
     invoicesList = await invoiceService.getClientInvoice(
       req.body,
       req?.user?.reference_id

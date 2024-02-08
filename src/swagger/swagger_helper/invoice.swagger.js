@@ -420,11 +420,6 @@ const createInvoice = {
                     description: "Tax percentage",
                     required: true,
                   },
-                  amount: {
-                    type: "integer",
-                    description: "Total amount for the item",
-                    required: true,
-                  },
                 },
               },
             },

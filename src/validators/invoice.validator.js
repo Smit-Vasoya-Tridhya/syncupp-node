@@ -56,12 +56,6 @@ exports.validateCreateInvoice = [
     .isNumeric()
     .withMessage(validationMessage.invoice.taxNumeric),
 
-  body("invoice_content.*.amount")
-    .notEmpty()
-    .withMessage(validationMessage.invoice.amountRequired)
-    .isNumeric()
-    .withMessage(validationMessage.invoice.amountNumeric),
-
   body("invoice_content.*.description")
     .notEmpty()
     .withMessage(validationMessage.invoice.descriptionRequired),

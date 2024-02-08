@@ -71,23 +71,6 @@ class InvoiceService {
   getInvoiceInformation = async (payload, user) => {
     try {
       const { client_id } = payload;
-      // const { reference_id } = user;
-      // const getAgencyData = await Agency.findOne(
-      //   {
-      //     _id: reference_id,
-      //   },
-      //   {
-      //     createdAt: 0,
-      //     updatedAt: 0,
-      //     __v: 0,
-      //     company_website: 0,
-      //     no_of_people: 0,
-      //     industry: 0,
-      //   }
-      // )
-      //   .populate("city", "name")
-      //   .populate("state", "name")
-      //   .populate("country", "name");
       const getClientData = await Client.findOne(
         {
           _id: client_id,
@@ -301,6 +284,19 @@ class InvoiceService {
         },
         {
           $lookup: {
+            from: "authentications",
+            localField: "agency_id",
+            foreignField: "reference_id",
+            as: "agencyInfo",
+            pipeline: [{ $project: { name: 1, _id: 0 } }],
+          },
+        },
+
+        {
+          $unwind: "$agencyInfo",
+        },
+        {
+          $lookup: {
             from: "invoice_status_masters",
             localField: "status",
             foreignField: "_id",
@@ -484,6 +480,7 @@ class InvoiceService {
             status: "$statusData.name",
             from: {
               _id: "$agencyData._id",
+              name: "$agencyInfo.name",
               company_name: "$agencyData.company_name",
               address: "$agencyData.address",
               pincode: "$agencyData.pincode",

@@ -35,7 +35,6 @@ class inquiryService {
   // GET All Inquires
   getAllInquiry = async (searchObj) => {
     try {
-      console.log(searchObj);
       const queryObj = { is_deleted: false };
 
       if (searchObj.search && searchObj.search !== "") {

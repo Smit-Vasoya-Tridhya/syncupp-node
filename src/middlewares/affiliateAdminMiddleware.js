@@ -6,7 +6,6 @@ const Affiliate = require("../models/affiliateSchema");
 
 exports.protect = catchAsyncErrors(async (req, res, next) => {
   const token = req.headers.authorization || req.headers.token;
-  console.log(token);
   if (token) {
     const Authorization = token.split(" ")[1];
     const decodedUserData = jwt.verify(
