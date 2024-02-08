@@ -275,7 +275,7 @@ class InvoiceService {
             localField: "client_id",
             foreignField: "reference_id",
             as: "clientInfo",
-            pipeline: [{ $project: { name: 1, _id: 0 } }],
+            pipeline: [{ $project: { name: 1, _id: 0, contact_number: 1 } }],
           },
         },
 
@@ -288,7 +288,7 @@ class InvoiceService {
             localField: "agency_id",
             foreignField: "reference_id",
             as: "agencyInfo",
-            pipeline: [{ $project: { name: 1, _id: 0 } }],
+            pipeline: [{ $project: { name: 1, _id: 0, contact_number: 1 } }],
           },
         },
 
@@ -481,6 +481,7 @@ class InvoiceService {
             from: {
               _id: "$agencyData._id",
               name: "$agencyInfo.name",
+              contact_number: "$agencyInfo.contact_number",
               company_name: "$agencyData.company_name",
               address: "$agencyData.address",
               pincode: "$agencyData.pincode",
@@ -492,6 +493,7 @@ class InvoiceService {
             to: {
               _id: "$clientData._id",
               name: "$clientInfo.name",
+              contact_number: "$clientInfo.contact_number",
               company_name: "$clientData.company_name",
               address: "$clientData.address",
               pincode: "$clientData.pincode",
