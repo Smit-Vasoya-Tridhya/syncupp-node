@@ -8,6 +8,6 @@ activityRoute.post("/task-list", activityController.taskList);
 activityRoute.get("/get-task/:id", activityController.fetchTask);
 activityRoute.delete("/delete-task", activityController.deleteTask);
 activityRoute.put("/update-task/:id", activityController.updateTask);
-activityRoute.put("/update-status", activityController.updateStatus);
+activityRoute.put("/update-status/:id", activityController.updateStatus);
 
 module.exports = activityRoute;
