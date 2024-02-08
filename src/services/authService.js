@@ -321,7 +321,10 @@ class AuthService {
       const { token, hash_token } = this.resetPasswordTokenGenerator();
       const encode = encodeURIComponent(email);
       const link = `${process.env.RESET_PASSWORD_URL}?token=${token}&email=${encode}`;
-      const forgot_email_template = forgotPasswordEmailTemplate(link);
+      const forgot_email_template = forgotPasswordEmailTemplate(
+        link,
+        data_exist?.first_name + " " + data_exist?.last_name || data_exist?.name
+      );
 
       await sendEmail({
         email,
@@ -364,7 +367,7 @@ class AuthService {
 
       const hased_password = await this.passwordEncryption({ password });
 
-      if (hased_password == user?.password)
+      if (hased_password == data?.password)
         return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
 
       await Authentication.findByIdAndUpdate(data?._id, {
