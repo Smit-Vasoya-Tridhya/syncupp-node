@@ -264,7 +264,7 @@ const deleteFaq = {
           properties: {
             faqIdsToDelete: {
               type: "array",
-              description: "Enter FQA IDS to be deleted",
+              description: "Enter FQA IDS to be delete",
               default: [],
             },
           },

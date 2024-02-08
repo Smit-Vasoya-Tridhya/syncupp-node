@@ -274,7 +274,7 @@ const deleteTeamMember = {
           properties: {
             teamMemberIds: {
               type: "array",
-              description: "Enter team member IDS to be deleted",
+              description: "Enter team member IDS to be delete",
             },
           },
         },

@@ -1,8 +1,13 @@
 const Inquiry = require("../models/inquirySchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const { paginationObject, inquiryEmail } = require("../utils/utils");
+const {
+  paginationObject,
+  inquiryEmail,
+  returnMessage,
+} = require("../utils/utils");
 const sendEmail = require("../helpers/sendEmail");
+const Admin = require("../models/adminSchema");
 
 class inquiryService {
   // Add   Inquiry
@@ -16,12 +21,14 @@ class inquiryService {
         message,
       });
 
+      const admin = await Admin.findOne({});
+
       // Use a template or format the invoice message accordingly
       const formattedInquiryEmail = inquiryEmail(inquiry);
 
       await sendEmail({
-        email: "admintest@yopmail.com",
-        subject: "New Inquiry Received",
+        email: admin?.email,
+        subject: returnMessage("inquiry", "newInquiry"),
         message: formattedInquiryEmail,
       });
 
@@ -103,41 +110,6 @@ class inquiryService {
       return true;
     } catch (error) {
       logger.error(`Error while Inquiry Delete, ${error}`);
-      throwError(error?.message, error?.statusCode);
-    }
-  };
-
-  //  send Mail
-
-  sendMail = async (payload) => {
-    try {
-      const { inquiry_id } = payload;
-
-      const inquiry = await Invoice.findOne({
-        _id: inquiry_id,
-        is_deleted: false,
-      });
-
-      const inquiryDetails = await Authentication.findOne({
-        reference_id: invoice.client_id,
-      });
-
-      // Use a template or format the invoice message accordingly
-      const formattedMessage = `Invoice Details:\n${JSON.stringify(
-        invoice,
-        null,
-        2
-      )}`;
-
-      await sendEmail({
-        email: clientDetails?.email,
-        subject: "Invoice",
-        message: formattedMessage,
-      });
-
-      return true;
-    } catch (error) {
-      logger.error(`Error while send inquiry, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };
