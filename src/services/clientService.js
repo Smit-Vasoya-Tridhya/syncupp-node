@@ -37,7 +37,9 @@ class ClientService {
       const client_exist = await Authentication.findOne({
         email,
         is_deleted: false,
-      });
+      })
+        .populate("role", "name")
+        .lean();
 
       // removed because of the payment integration
       // let link = `${
@@ -73,6 +75,9 @@ class ClientService {
         };
         await Authentication.create(client_auth_obj);
       } else {
+        if (client_exist?.role?.name !== "client")
+          return throwError(returnMessage("auth", "emailExist"));
+
         const client = await Client.findById(client_exist?.reference_id).lean();
         // const already_exist = client?.agency_ids?.filter(
         //   (id) => id?.agency_id?.toString() == agency?.reference_id

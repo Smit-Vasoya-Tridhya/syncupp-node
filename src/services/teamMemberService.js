@@ -124,7 +124,9 @@ class TeamMemberService {
         Authentication.findOne({
           email,
           is_deleted: false,
-        }).lean(),
+        })
+          .populate("role", "name")
+          .lean(),
         Team_Role_Master.findOne({ name: "team_client" }).lean(),
         Role_Master.findOne({ name: "team_client" }).lean(),
       ]);
@@ -146,6 +148,9 @@ class TeamMemberService {
         });
         return;
       } else {
+        if (team_client_exist?.role?.name !== "team_client")
+          return throwError(returnMessage("auth", "emailExist"));
+
         const team_member = await Team_Client.findById(
           team_client_exist?.reference_id
         ).lean();

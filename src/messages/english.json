@@ -28,7 +28,8 @@
     "userNotFound": "User does not exist.",
     "registered": "User registered successfully.",
     "passwordNotMatch": "Old password does not match.",
-    "resetPassword": "Password reset successfully."
+    "resetPassword": "Password reset successfully.",
+    "emailExist": "Email already exist. please choose another email."
   },
 
   "admin": {
