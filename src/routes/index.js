@@ -27,7 +27,7 @@ router.use("/client", clientRoute);
 // router.use("/client/team-member", teamMemberRoute);
 // router.use("/agency/invoice", invoiceRoute);
 router.use("/payment", paymentRoute);
-router.use("/", agreementRoute);
 router.use("/inquiry", inquiryRoute);
+router.use("/", agreementRoute);
 
 module.exports = router;

@@ -16,7 +16,7 @@ const deleteInquiry = {
           properties: {
             inquiryIdsToDelete: {
               type: "array",
-              description: "Enter FQA IDS to be deleted",
+              description: "Enter Inquiry IDS to be delete",
               items: {
                 type: "string",
               },

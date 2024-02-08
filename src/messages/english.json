@@ -106,11 +106,11 @@
     "agreementUpdated": "Agreement updated successfully.",
     "getAgreement": "Agreement fetched successfully.",
     "getAllAgreement": "Agreements fetched successfully.",
-    "canNotDelete": "Agreement can not be deleted.",
+    "canNotDelete": "Agreement can not be delete.",
     "canNotUpdate": "Agreement can not be updated.",
     "agreementStatusUpdated": "Agreement status updated.",
     "agreementSent": "Agreement sent to client successfully.",
-    "downloadPDF": "Downlad PDF successfully.",
+    "downloadPDF": "PDF Downloaded successfully.",
     "clientnotexist": "Client doest not exist."
   },
   "invoice": {
@@ -119,7 +119,7 @@
     "clientFetched": "Clients Fetched successfully",
     "getAllInvoices": "Invoices fetched successfully.",
     "invoiceDeleted": "Invoice deleted successfully.",
-    "canNotDelete": "Invoice can not be deleted.",
+    "canNotDelete": "Invoice can not be delete.",
     "invoiceInfo": "Invoice information fetched successfully.",
     "invoiceStatusUpdated": "Invoice status updated successfully.",
     "invoiceUpdated": "Invoice updated successfully.",
@@ -133,7 +133,7 @@
     "inquirySent": "Inquiry sent successfully.",
     "inquiryList": "Inquiries fetched successfully.",
     "inquiryDelete": "Inquiry deleted successfully.",
-    "mailSent": "Inquiry deleted successfully."
+    "newInquiry": "New Inquiry Received"
   },
 
   "emailTemplate": {

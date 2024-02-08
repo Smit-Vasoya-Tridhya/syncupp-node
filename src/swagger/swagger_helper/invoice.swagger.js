@@ -115,7 +115,7 @@ const deleteInvoice = {
           properties: {
             invoiceIdsToDelete: {
               type: "array",
-              description: "Enter FQA IDS to be deleted",
+              description: "Enter FQA IDS to be delete",
               items: {
                 type: "string",
               },
