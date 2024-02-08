@@ -8,7 +8,7 @@ const couponService = new CouponService();
 // Add coupon
 
 exports.addCoupon = catchAsyncError(async (req, res, next) => {
-  const addedCoupen = await couponService.addCoupon(req.body);
+  const addedCoupen = await couponService.addCoupon(req.body, req.file);
   sendResponse(
     res,
     true,
@@ -20,25 +20,25 @@ exports.addCoupon = catchAsyncError(async (req, res, next) => {
 
 // // get All FQA
 
-// exports.getAllFaq = catchAsyncError(async (req, res, next) => {
-//   const faqs = await couponService.getAllFaq(req.body);
-//   sendResponse(
-//     res,
-//     true,
-//     returnMessage("admin", "getAllFaq"),
-//     faqs,
-//     statusCode.success
-//   );
-// });
+exports.getCouponList = catchAsyncError(async (req, res, next) => {
+  const getCouponList = await couponService.getAllCoupon(req.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "getAllCoupon"),
+    getCouponList,
+    statusCode.success
+  );
+});
 
 // delete coupon
 
 exports.deleteCoupon = catchAsyncError(async (req, res, next) => {
-  await couponService.deleteFaq(req?.body);
+  await couponService.deleteCoupon(req?.body);
   sendResponse(
     res,
     true,
-    returnMessage("admin", "deleteFaq"),
+    returnMessage("admin", "deleteCoupon"),
     null,
     statusCode.success
   );
@@ -47,11 +47,15 @@ exports.deleteCoupon = catchAsyncError(async (req, res, next) => {
 // Update coupon
 
 exports.updateCoupon = catchAsyncError(async (req, res, next) => {
-  const updatedFaq = await couponService.updateFaq(req.body, req?.params?.id);
+  const updatedFaq = await couponService.updateCoupon(
+    req.body,
+    req?.params?.id,
+    req.file
+  );
   sendResponse(
     res,
     true,
-    returnMessage("admin", "faqUpdated"),
+    returnMessage("admin", "couponUpdated"),
     updatedFaq,
     statusCode.success
   );

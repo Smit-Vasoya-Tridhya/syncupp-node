@@ -8,7 +8,7 @@ exports.addCouponValidator = [
     .withMessage(validationMessage.coupon.titleRequired)
     .isLength({ max: 15 }) // specify the maximum length for the title
     .withMessage(validationMessage.coupon.brandMaxLength),
-    body("couponCode")
+  body("couponCode")
     .not()
     .isEmpty()
     .withMessage(validationMessage.coupon.titleRequired)
@@ -20,11 +20,11 @@ exports.addCouponValidator = [
     .withMessage(validationMessage.general.descriptionRequired)
     .isLength({ max: 115 }) // specify the maximum length for the description
     .withMessage(validationMessage.general.descriptionLength),
-    body("siteURL")
+  body("siteURL")
     .not()
     .isEmpty()
     .withMessage(validationMessage.coupon.titleRequired),
-    body("brandLogo")
+  body("brandLogo")
     .not()
     .isEmpty()
     .withMessage(validationMessage.coupon.titleRequired)
@@ -32,7 +32,7 @@ exports.addCouponValidator = [
     .withMessage(validationMessage.coupon.brandMaxLength),
 ];
 exports.deleteCouponValidator = [
-  body("faqIdsToDelete")
+  body("couponIdsToDelete")
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.couponIdsReq),
@@ -44,7 +44,7 @@ exports.updateCouponValidator = [
     .withMessage(validationMessage.coupon.titleRequired)
     .isLength({ max: 15 }) // specify the maximum length for the title
     .withMessage(validationMessage.coupon.brandMaxLength),
-    body("couponCode")
+  body("couponCode")
     .not()
     .isEmpty()
     .withMessage(validationMessage.coupon.titleRequired)
@@ -56,11 +56,11 @@ exports.updateCouponValidator = [
     .withMessage(validationMessage.general.descriptionRequired)
     .isLength({ max: 115 }) // specify the maximum length for the description
     .withMessage(validationMessage.general.descriptionLength),
-    body("siteURL")
+  body("siteURL")
     .not()
     .isEmpty()
     .withMessage(validationMessage.coupon.titleRequired),
-    body("brandLogo")
+  body("brandLogo")
     .not()
     .isEmpty()
     .withMessage(validationMessage.coupon.titleRequired)

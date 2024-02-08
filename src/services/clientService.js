@@ -15,6 +15,7 @@ const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
 const authService = new AuthService();
 const statusCode = require("../messages/statusCodes.json");
+const Team_Agency = require("../models/teamAgencySchema");
 
 class ClientService {
   // create client for the agency
@@ -398,12 +399,25 @@ class ClientService {
   // Get the client ist for the Agency without pagination
   clientListWithoutPagination = async (agency) => {
     try {
-      const clients = await Client.distinct("_id", {
-        agency_ids: {
-          $elemMatch: { agency_id: agency?.reference_id, status: "active" },
-        },
-      }).lean();
-
+      let clients;
+      if (agency.role.name === "team_agency") {
+        const agency_detail = await Team_Agency.findById(agency.reference_id);
+        console.log(agency_detail);
+        clients = await Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: {
+              agency_id: agency_detail?.agency_id,
+              status: "active",
+            },
+          },
+        }).lean();
+      } else {
+        clients = await Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: { agency_id: agency?.reference_id, status: "active" },
+          },
+        }).lean();
+      }
       const aggrage_array = [
         { $match: { reference_id: { $in: clients }, is_deleted: false } },
         {

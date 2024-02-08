@@ -13,5 +13,5 @@ const adminCouponSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const AdminFaq = admin_connection.model("admin_faq", adminCouponSchema);
-module.exports = AdminFaq;
+const AdminCoupon = admin_connection.model("admin_coupon", adminCouponSchema);
+module.exports = AdminCoupon;

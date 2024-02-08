@@ -5,10 +5,23 @@ const { returnMessage, paginationObject } = require("../utils/utils");
 
 class CouponService {
   // Add Coupon
-  addCoupon = async (payload) => {
+  addCoupon = async (payload, files) => {
     try {
-      const faq = await AdminCoupon.create(payload);
-      return faq;
+      const { brand, couponCode, discountTitle, siteURL } = payload;
+
+      let couponImageFileName;
+      if (files?.fieldname === "brandLogo") {
+        couponImageFileName = "uploads/" + files?.filename;
+      }
+      const newCoupon = new AdminCoupon({
+        brand,
+        couponCode,
+        discountTitle,
+        siteURL,
+        brandLogo: couponImageFileName,
+      });
+
+      return newCoupon.save();
     } catch (error) {
       logger.error(`Error while Admin add Coupon, ${error}`);
       throwError(error?.message, error?.statusCode);
@@ -16,66 +29,67 @@ class CouponService {
   };
 
   // GET All FQA
-  // getAllFaq = async (searchObj) => {
-  //   try {
-  //     const queryObj = { is_deleted: false };
+  getAllCoupon = async (searchObj) => {
+    try {
+      const queryObj = { is_deleted: false };
 
-  //     if (searchObj.search && searchObj.search !== "") {
-  //       queryObj["$or"] = [
-  //         {
-  //           title: {
-  //             $regex: searchObj.search.toLowerCase(),
-  //             $options: "i",
-  //           },
-  //         },
-  //         {
-  //           description: {
-  //             $regex: searchObj.search.toLowerCase(),
-  //             $options: "i",
-  //           },
-  //         },
-  //       ];
+      if (searchObj.search && searchObj.search !== "") {
+        queryObj["$or"] = [
+          {
+            brand: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            couponCode: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            discountTitle: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            siteURL: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+        ];
+      }
 
-  //       // const keywordType = getKeywordType(searchObj.search);
-  //       // if (keywordType === "number") {
-  //       //   const numericKeyword = parseInt(searchObj.search);
-  //       //   queryObj["$or"].push({
-  //       //     contact_number: numericKeyword,
-  //       //   });
-  //       // }
-  //     }
+      const pagination = paginationObject(searchObj);
 
-  //     const pagination = paginationObject(searchObj);
+      const [coupon, totalcoupon] = await Promise.all([
+        AdminCoupon.find(queryObj)
+          .select("brand couponCode discountTitle siteURL brandLogo")
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
+          .lean(),
+        AdminCoupon.countDocuments(queryObj),
+      ]);
 
-  //     const [faqs, totalFaqsCount] = await Promise.all([
-  //       AdminCoupon.find(queryObj)
-  //         .select("title description")
-  //         .sort(pagination.sort)
-  //         .skip(pagination.skip)
-  //         .limit(pagination.result_per_page)
-  //         .lean(),
-  //       AdminCoupon.countDocuments(queryObj),
-  //     ]);
-
-  //     return {
-  //       faqs,
-  //       pagination: {
-  //         current_page: pagination.page,
-  //         total_pages: Math.ceil(totalFaqsCount / pagination.result_per_page),
-  //       },
-  //     };
-  //   } catch (error) {
-  //     logger.error(`Error while Admin FQA Listing, ${error}`);
-  //     throwError(error?.message, error?.statusCode);
-  //   }
-  // };
+      return {
+        coupon,
+        page_count: Math.ceil(totalcoupon / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while Admin FQA Listing, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
 
   // Delete Coupon
   deleteCoupon = async (payload) => {
-    const { faqIdsToDelete } = payload;
+    const { couponIdsToDelete } = payload;
     try {
       const deletedFaqs = await AdminCoupon.updateMany(
-        { _id: { $in: faqIdsToDelete } },
+        { _id: { $in: couponIdsToDelete } },
         { $set: { is_deleted: true } }
       );
       return deletedFaqs;
@@ -86,13 +100,25 @@ class CouponService {
   };
 
   // Update Coupon
-  updateCoupon = async (payload, faqId) => {
+  updateCoupon = async (payload, faqId, files) => {
     try {
+      const { brand, couponCode, discountTitle, siteURL } = payload;
+      let couponImageFileName;
+      if (files?.fieldname === "brandLogo") {
+        couponImageFileName = "uploads/" + files?.filename;
+      }
+
       const faq = await AdminCoupon.findByIdAndUpdate(
         {
           _id: faqId,
         },
-        payload,
+        {
+          brand,
+          couponCode,
+          discountTitle,
+          siteURL,
+          brandLogo: couponImageFileName,
+        },
         { new: true, useFindAndModify: false }
       );
       return faq;
@@ -107,28 +133,28 @@ class CouponService {
     try {
       const queryObj = { is_deleted: false };
 
-      if (searchObj.search && searchObj.search !== "") {
-        queryObj["$or"] = [
-          {
-            brand: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            discountTitle: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            couponCode: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-        ];
-      }
+      // if (searchObj.search && searchObj.search !== "") {
+      //   queryObj["$or"] = [
+      //     {
+      //       brand: {
+      //         $regex: searchObj.search.toLowerCase(),
+      //         $options: "i",
+      //       },
+      //     },
+      //     {
+      //       discountTitle: {
+      //         $regex: searchObj.search.toLowerCase(),
+      //         $options: "i",
+      //       },
+      //     },
+      //     {
+      //       couponCode: {
+      //         $regex: searchObj.search.toLowerCase(),
+      //         $options: "i",
+      //       },
+      //     },
+      //   ];
+      // }
 
       const faq = await AdminCoupon.findById({
         _id: faqId,

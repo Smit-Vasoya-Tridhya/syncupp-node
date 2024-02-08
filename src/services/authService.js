@@ -22,6 +22,7 @@ require("dotenv").config();
 const Country_Master = require("../models/masters/countryMasterSchema");
 const City_Master = require("../models/masters/cityMasterSchema");
 const State_Master = require("../models/masters/stateMasterSchema");
+const Team_Agency = require("../models/teamAgencySchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
@@ -266,6 +267,13 @@ class AuthService {
       )
         return throwError(returnMessage("agency", "agencyInactive"));
 
+      if (existing_Data?.role?.name === "team_agency") {
+        existing_Data.team_agency_detail = await Team_Agency.findById(
+          existing_Data?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+      }
       delete existing_Data?.is_facebook_signup;
       delete existing_Data?.is_google_signup;
       delete existing_Data?.password;
