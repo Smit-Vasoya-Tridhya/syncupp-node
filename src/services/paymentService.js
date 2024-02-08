@@ -143,32 +143,31 @@ class PaymentService {
     }
   };
 
-  customPaymentCalculator = (subscription_date, plan) => {
+  customPaymentCalculator = (
+    subscription_start_date,
+    renew_subscription_date,
+    plan
+  ) => {
     try {
-      const registrationMoment = moment(subscription_date, "YYYY-MM-DD");
-      const paymentMoment = moment();
+      const start_date = moment.unix(subscription_start_date).startOf("day");
+      const renew_date = moment.unix(renew_subscription_date);
 
-      // Calculate the number of days remaining in the month from the registration date
-      const daysInMonth = registrationMoment.daysInMonth();
-      const remainingDays = daysInMonth - registrationMoment.date() + 1;
+      const paymentMoment = moment().startOf("day");
 
-      // Calculate the prorated amount based on the remaining days
-      const proratedAmount = (remainingDays / daysInMonth) * plan?.amount;
+      // days difference between payment start and renew subscription date
+      const days_diff = Math.abs(paymentMoment.diff(renew_date, "days"));
+      console.log("Days diff", days_diff);
+      // calculate the total days between subscription dates
+      const total_days = Math.abs(renew_date.diff(start_date, "days"));
+      console.log("total days", total_days);
 
-      // Adjust the payment if the user is created in a different month
-      if (registrationMoment.month() !== paymentMoment.month()) {
-        // Calculate the remaining days in the payment month
-        const remainingDaysInPaymentMonth = paymentMoment.date();
-
-        // Adjust the prorated amount based on the days in the payment month
-        const adjustedProratedAmount =
-          (remainingDaysInPaymentMonth / daysInMonth) * plan?.amount;
-
-        return adjustedProratedAmount.toFixed(2);
-      }
+      const proratedAmount = (plan?.amount / total_days) * days_diff;
+      console.log("prorated value", proratedAmount);
+      if (paymentMoment.isSame(start_date)) return plan?.amount;
 
       return proratedAmount.toFixed(2);
     } catch (error) {
+      console.log(error);
       logger.error(`Error while calculating the custom payment: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -206,8 +205,17 @@ class PaymentService {
           returnMessage("payment", "planNotFound"),
           statusCode.notFound
         );
+
+      const subscripion_detail = await this.subscripionDetail(
+        user?.subscription_id
+      );
+
       const prorate_value = parseInt(
-        this.customPaymentCalculator(user?.subscribe_date, plan)
+        this.customPaymentCalculator(
+          subscripion_detail?.current_start,
+          subscripion_detail?.current_end,
+          plan
+        )
       );
 
       const order = await Promise.resolve(
@@ -225,12 +233,13 @@ class PaymentService {
       );
       return {
         payment_id: order?.id,
-        amount: plan?.amount,
+        amount: prorate_value,
         currency: plan?.currency,
         user_id: payload?.user_id,
         agency_id: user?.reference_id,
       };
     } catch (error) {
+      console.log(error);
       logger.error(`Error while doing the one time payment: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -244,12 +253,19 @@ class PaymentService {
       const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
         payload;
 
-      const expected_signature = crypto
+      const expected_signature_1 = crypto
         .createHmac("sha256", process.env.RAZORPAY_SECRET)
         .update(razorpay_payment_id + "|" + razorpay_order_id, "utf-8")
         .digest("hex");
+      const expected_signature_2 = crypto
+        .createHmac("sha256", process.env.RAZORPAY_SECRET)
+        .update(razorpay_order_id + "|" + razorpay_payment_id, "utf-8")
+        .digest("hex");
 
-      if (expected_signature === razorpay_signature) {
+      if (
+        expected_signature_1 === razorpay_signature ||
+        expected_signature_2 === razorpay_signature
+      ) {
         const status_change = await this.statusChange(payload);
         if (!status_change) return { success: false };
         return { success: true };
@@ -258,6 +274,7 @@ class PaymentService {
       await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
+      console.log(error);
       logger.error(`Error while verifying signature: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -286,7 +303,7 @@ class PaymentService {
           agency_ids: {
             $elemMatch: {
               agency_id,
-              status: "pending",
+              status: "payment_pending",
             },
           },
         });
@@ -314,6 +331,7 @@ class PaymentService {
       }
       return false;
     } catch (error) {
+      console.log(error);
       logger.error(`Error while checking agency exist: ${error}`);
       return false;
     }
@@ -327,7 +345,7 @@ class PaymentService {
         user_id,
         amount,
         subscription_id,
-        payment_id,
+        razorpay_order_id,
         currency,
       } = payload;
       if (payload?.agency_id && !payload?.user_id) {
@@ -370,14 +388,19 @@ class PaymentService {
             process.env.REACT_APP_URL
           }/client/verify?name=${encodeURIComponent(
             agency_details?.first_name + " " + agency_details?.last_name
-          )}&email=${encodeURIComponent(email)}&agency=${encodeURIComponent(
-            agency_details?.reference_id
-          )}`;
+          )}&email=${encodeURIComponent(
+            user_details?.email
+          )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
-          const invitation_mail = invitationEmail(link, user_details.name);
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_mail = invitationEmail(
+            link,
+            user_details?.name,
+            invitation_text
+          );
 
           await sendEmail({
-            email,
+            email: user_details?.email,
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_mail,
           });
@@ -393,10 +416,15 @@ class PaymentService {
             user_details?.email
           )}&token=${user_details?.invitation_token}&redirect=false`;
 
-          const invitation_template = invitationEmail(link, user_details?.name);
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_template = invitationEmail(
+            link,
+            user_details?.name,
+            invitation_text
+          );
 
           await sendEmail({
-            email,
+            email: user_details?.email,
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_template,
           });
@@ -406,11 +434,16 @@ class PaymentService {
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}`;
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
-          const invitation_template = invitationEmail(link, user_details?.name);
+          const invitation_template = invitationEmail(
+            link,
+            user_details?.name,
+            invitation_text
+          );
 
           await sendEmail({
-            email,
+            email: user_details?.email,
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_template,
           });
@@ -418,9 +451,9 @@ class PaymentService {
 
         await PaymentHistory.create({
           agency_id,
-          user_id,
+          user_id: user_details?.reference_id,
           amount,
-          order_id: payment_id,
+          order_id: razorpay_order_id,
           currency,
           role: user_details?.role?.name,
         });
@@ -440,10 +473,17 @@ class PaymentService {
           occupied_sheets,
         };
         await SheetManagement.findByIdAndUpdate(sheets._id, sheet_obj);
+        await Team_Client.updateOne(
+          { _id: user_id, "agency_ids.agency_id": agency_id },
+          { $set: { "agency_ids.$.status": "confirmed" } },
+          { new: true }
+        );
         return true;
       }
       return false;
     } catch (error) {
+      console.log(error);
+
       logger.error(`Error while changing status after the payment: ${error}`);
       return false;
     }
@@ -464,7 +504,22 @@ class PaymentService {
       }
       return;
     } catch (error) {
+      console.log(error);
+
       logger.error(`Error while deleting the User: ${error}`);
+      return false;
+    }
+  };
+
+  // fetch subscription by id
+  subscripionDetail = async (subscription_id) => {
+    try {
+      return await Promise.resolve(
+        razorpay.subscriptions.fetch(subscription_id)
+      );
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while gettign subscription detail: ${error}`);
       return false;
     }
   };

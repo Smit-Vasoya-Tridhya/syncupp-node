@@ -21,8 +21,8 @@
     "profileFetched": "Profile fetched successfully.",
     "profileUpdated": "Profile updated successfully.",
     "invalidContactNumber": "Contact number is invalid.",
-    "countryIdRequired": "Country id is required.",
-    "stateIdRequired": "State id is required.",
+    "countryIdRequired": "Country is required.",
+    "stateIdRequired": "State is required.",
     "oldAndNewPasswordSame": "New password should be different from old password.",
     "forbidden": "You are forbidden to perform this action.",
     "userNotFound": "User does not exist.",
@@ -80,12 +80,14 @@
     "roleRequired": "Role is required.",
     "userNotFound": "User not found.",
     "verified": "Verified successfully.",
-    "alreadyVerified": "You have already verified for this client."
+    "alreadyVerified": "You have already verified for this client.",
+    "teamMemberNotFound": "Team member not found.",
+    "teamMemberRejected": "Team member rejected successfully."
   },
 
   "agency": {
     "agencyExist": "Agency already exists.",
-    "agencyRegistered": "Agency registered successfully.",
+    "agencyRegistered": "Agency registred successfully, complete the payment to process further.",
     "agencyInactive": "Agency is in-active.",
     "clientCreated": "Client created successfully.",
     "clientInvited": "Invitation mail sent to the client.",
@@ -136,7 +138,8 @@
 
   "emailTemplate": {
     "forgotPasswordSubject": "Reset your password now.",
-    "invitation": "Join to SyncUpp"
+    "invitation": "Join to SyncUpp",
+    "welcomeMailSubject": "Welcome to Syncupp."
   },
 
   "client": {

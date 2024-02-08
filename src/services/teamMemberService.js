@@ -2,11 +2,10 @@ const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
 const {
   returnMessage,
-  invitationEmail,
   validateEmail,
-  passwordValidation,
   validateRequestFields,
   paginationObject,
+  welcomeMail,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
@@ -95,7 +94,9 @@ class TeamMemberService {
       //   subject: returnMessage("emailTemplate", "invitation"),
       //   message: invitation_template,
       // });
-      return;
+      return {
+        reference_id: team_agency?._id,
+      };
     } catch (error) {
       logger.error(`Error While adding the Team member by agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -385,6 +386,13 @@ class TeamMemberService {
         teamMember.status = "confirmed";
 
         await teamMember.save();
+        const welcome_mail = welcomeMail(teamMember?.name);
+
+        await sendEmail({
+          email: teamMember?.email,
+          subject: returnMessage("emailTemplate", "welcomeMailSubject"),
+          message: welcome_mail,
+        });
         return;
       } else if (client_id && client_id !== "") {
         if (!validateEmail(email))
@@ -453,6 +461,13 @@ class TeamMemberService {
             { $set: { "agency_ids.$.status": "confirmed" } },
             { new: true }
           );
+          const welcome_mail = welcomeMail(client_team_member?.name);
+
+          await sendEmail({
+            email: client_team_member?.email,
+            subject: returnMessage("emailTemplate", "welcomeMailSubject"),
+            message: welcome_mail,
+          });
           return authService.tokenGenerator(client_team_member);
         }
       }
@@ -883,6 +898,9 @@ class TeamMemberService {
   // Get all team members by Agency and by client
   getAllTeam = async (payload, user) => {
     try {
+      if (!payload?.pagination) {
+        return await this.teamListWithoutPagination(user);
+      }
       const pagination = paginationObject(payload);
       let search_obj = {};
       if (payload?.search && payload?.search !== "") {
@@ -913,6 +931,7 @@ class TeamMemberService {
               .select(
                 "name first_name last_name email contact_number status createdAt reference_id"
               )
+              .populate({ path: "reference_id", model: "team_client" })
               .sort(pagination.sort)
               .skip(pagination.skip)
               .limit(pagination.result_per_page)
@@ -923,6 +942,16 @@ class TeamMemberService {
               ...search_obj,
             }),
           ]);
+
+          teams.forEach((team) => {
+            const agency_exists = team?.reference_id?.agency_ids?.find(
+              (ag) => ag?.agency_id?.toString() == user?.reference_id
+            );
+            if (agency_exists) {
+              team["status"] = agency_exists?.status;
+            }
+            delete team?.reference_id?.agency_ids;
+          });
 
           return {
             teamMemberList: teams,
@@ -1003,6 +1032,42 @@ class TeamMemberService {
     }
   };
 
+  teamListWithoutPagination = async (user) => {
+    try {
+      const teams = await Team_Agency.distinct("_id", {
+        agency_id: user?.reference_id,
+      }).lean();
+
+      const aggregateArray = [
+        {
+          $match: {
+            reference_id: { $in: teams },
+            is_deleted: false,
+            status: "confirmed",
+          },
+        },
+        {
+          $project: {
+            name: 1,
+            first_name: 1,
+            last_name: 1,
+            email: 1,
+            reference_id: 1,
+            createdAt: 1,
+            status: 1,
+          },
+        },
+      ];
+
+      const teamData = await Authentication.aggregate(aggregateArray);
+
+      return teamData;
+    } catch (error) {
+      logger.error(`Error while fetching list of teams: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
   getProfile = async (team) => {
     try {
       const team_detail = await Authentication.findById(team?._id)
@@ -1031,7 +1096,7 @@ class TeamMemberService {
     }
   };
 
-  // Update Agency profile
+  // Update Team member profile
   updateTeamMeberProfile = async (payload, user_id, reference_id, role) => {
     try {
       const {
@@ -1088,6 +1153,34 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // reject the client team member
+  rejectTeamMember = async (payload, agency) => {
+    try {
+      const team_member_exist = await Team_Client.findOne({
+        _id: payload?.id,
+        "agency_ids.agency_id": agency?.reference_id,
+        "agency_ids.status": "requested",
+      }).lean();
+
+      if (!team_member_exist)
+        return throwError(
+          returnMessage("teamMember", "teamMemberNotFound"),
+          statusCode?.notFound
+        );
+
+      await Team_Client.updateOne(
+        { _id: payload?.id, "agency_ids.agency_id": agency?.reference_id },
+        { $set: { "agency_ids.$.status": "rejected" } },
+        { new: true }
+      );
+
+      return;
+    } catch (error) {
+      logger.error(`Error while rejecting the team member by agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };

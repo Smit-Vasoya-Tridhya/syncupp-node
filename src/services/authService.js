@@ -6,7 +6,6 @@ const {
   validateEmail,
   passwordValidation,
   forgotPasswordEmailTemplate,
-  paginationObject,
 } = require("../utils/utils");
 const bcrypt = require("bcrypt");
 const { throwError } = require("../helpers/errorUtil");
@@ -250,7 +249,7 @@ class AuthService {
         );
 
       if (!existing_Data?.password)
-        return throwError(returnMessage("default", "default"));
+        return throwError(returnMessage("auth", "emailPassNotFound"));
 
       if (
         !(await this.passwordVerifier({
@@ -357,7 +356,7 @@ class AuthService {
 
       const hased_password = await this.passwordEncryption({ password });
 
-      if (hased_password === user.password)
+      if (hased_password == user?.password)
         return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
 
       await Authentication.findByIdAndUpdate(data?._id, {

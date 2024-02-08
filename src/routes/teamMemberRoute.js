@@ -7,6 +7,7 @@ const {
   getAll,
   editMember,
   getMember,
+  rejectTeamMember,
 } = require("../controllers/teamMemberController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const {
@@ -26,5 +27,6 @@ teamMemberRoute.get("/details/:id", getMember);
 teamMemberRoute.delete("/delete", deleteMember);
 teamMemberRoute.post("/get-all", getAll);
 teamMemberRoute.put("/edit/:id", editMember);
+teamMemberRoute.patch("/reject", rejectTeamMember);
 
 module.exports = teamMemberRoute;

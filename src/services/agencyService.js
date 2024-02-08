@@ -152,8 +152,12 @@ class AgencyService {
         SubscriptionPlan.findOne({ active: true }).lean(),
       ]);
       agency_detail.reference_id = agency_reference;
+      const subscription_detail = await paymentService.subscripionDetail(
+        agency_detail?.subscription_id
+      );
       agency_detail.payable_amount = paymentService.customPaymentCalculator(
-        agency_detail?.subscribe_date,
+        subscription_detail?.current_start,
+        subscription_detail?.current_end,
         plan
       );
       return agency_detail;
