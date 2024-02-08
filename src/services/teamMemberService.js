@@ -1100,6 +1100,7 @@ class TeamMemberService {
         team_reference = await Team_Client.findById(team?.reference_id).lean();
       }
 
+      team_detail.first_name = team_detail?.name;
       team_detail.reference_id = team_reference;
       return team_detail;
     } catch (error) {

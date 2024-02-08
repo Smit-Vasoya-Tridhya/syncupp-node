@@ -268,11 +268,11 @@ class PaymentService {
         expected_signature_2 === razorpay_signature
       ) {
         const status_change = await this.statusChange(payload);
-        if (!status_change) return { success: false };
-        return { success: true };
+        if (!status_change.success) return { success: false };
+        return { success: true, message: status_change?.message };
       }
 
-      await this.deleteUsers(payload);
+      // await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
       console.log(error);
@@ -479,9 +479,19 @@ class PaymentService {
           { $set: { "agency_ids.$.status": "confirmed" } },
           { new: true }
         );
-        return true;
+
+        let message;
+        if (user_details?.role?.name === "client") {
+          message = returnMessage("agency", "clientCreated");
+        } else if (user_details?.role?.name === "team_agency") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        } else if (user_details?.role?.name === "team_client") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        }
+
+        return { success: true, message };
       }
-      return false;
+      return { success: false };
     } catch (error) {
       console.log(error);
 
