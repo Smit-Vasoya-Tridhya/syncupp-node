@@ -21,6 +21,7 @@ require("dotenv").config();
 const Country_Master = require("../models/masters/countryMasterSchema");
 const City_Master = require("../models/masters/cityMasterSchema");
 const State_Master = require("../models/masters/stateMasterSchema");
+const Team_Agency = require("../models/teamAgencySchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
@@ -265,6 +266,13 @@ class AuthService {
       )
         return throwError(returnMessage("agency", "agencyInactive"));
 
+      if (existing_Data?.role?.name === "team_agency") {
+        existing_Data.team_agency_detail = await Team_Agency.findById(
+          existing_Data?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+      }
       delete existing_Data?.is_facebook_signup;
       delete existing_Data?.is_google_signup;
       delete existing_Data?.password;
@@ -313,7 +321,10 @@ class AuthService {
       const { token, hash_token } = this.resetPasswordTokenGenerator();
       const encode = encodeURIComponent(email);
       const link = `${process.env.RESET_PASSWORD_URL}?token=${token}&email=${encode}`;
-      const forgot_email_template = forgotPasswordEmailTemplate(link);
+      const forgot_email_template = forgotPasswordEmailTemplate(
+        link,
+        data_exist?.first_name + " " + data_exist?.last_name || data_exist?.name
+      );
 
       await sendEmail({
         email,
@@ -356,7 +367,7 @@ class AuthService {
 
       const hased_password = await this.passwordEncryption({ password });
 
-      if (hased_password == user?.password)
+      if (hased_password == data?.password)
         return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
 
       await Authentication.findByIdAndUpdate(data?._id, {

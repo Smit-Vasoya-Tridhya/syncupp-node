@@ -14,10 +14,10 @@ const {
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
 const AuthService = require("../services/authService");
-const { ObjectId } = require("mongodb");
 
 const authService = new AuthService();
 const statusCode = require("../messages/statusCodes.json");
+const Team_Agency = require("../models/teamAgencySchema");
 
 class ClientService {
   // create client for the agency
@@ -36,7 +36,9 @@ class ClientService {
       const client_exist = await Authentication.findOne({
         email,
         is_deleted: false,
-      });
+      })
+        .populate("role", "name")
+        .lean();
 
       // removed because of the payment integration
       // let link = `${
@@ -72,6 +74,9 @@ class ClientService {
         };
         await Authentication.create(client_auth_obj);
       } else {
+        if (client_exist?.role?.name !== "client")
+          return throwError(returnMessage("auth", "emailExist"));
+
         const client = await Client.findById(client_exist?.reference_id).lean();
         // const already_exist = client?.agency_ids?.filter(
         //   (id) => id?.agency_id?.toString() == agency?.reference_id
@@ -116,9 +121,12 @@ class ClientService {
       //   subject: returnMessage("emailTemplate", "invitation"),
       //   message: invitation_mail,
       // });
-      return await Authentication.findOne({ email })
-        .select("reference_id")
-        .lean();
+      return {
+        client: await Authentication.findOne({ email })
+          .select("reference_id")
+          .lean(),
+        referral_points: 0, // this is set to 0 initially but it will update when the referral module imlement
+      };
     } catch (error) {
       console.log(error);
       logger.error(`Error while creating client: ${error}`);
@@ -420,12 +428,24 @@ class ClientService {
   // Get the client ist for the Agency without pagination
   clientListWithoutPagination = async (agency) => {
     try {
-      const clients = await Client.distinct("_id", {
-        agency_ids: {
-          $elemMatch: { agency_id: agency?.reference_id, status: "active" },
-        },
-      }).lean();
-
+      let clients;
+      if (agency.role.name === "team_agency") {
+        const agency_detail = await Team_Agency.findById(agency.reference_id);
+        clients = await Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: {
+              agency_id: agency_detail?.agency_id,
+              status: "active",
+            },
+          },
+        }).lean();
+      } else {
+        clients = await Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: { agency_id: agency?.reference_id, status: "active" },
+          },
+        }).lean();
+      }
       const aggrage_array = [
         { $match: { reference_id: { $in: clients }, is_deleted: false } },
         {

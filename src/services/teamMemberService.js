@@ -96,6 +96,7 @@ class TeamMemberService {
       // });
       return {
         reference_id: team_agency?._id,
+        referral_points: 0, // this wil be change in future when the referral point will be integrate
       };
     } catch (error) {
       logger.error(`Error While adding the Team member by agency: ${error}`);
@@ -124,7 +125,9 @@ class TeamMemberService {
         Authentication.findOne({
           email,
           is_deleted: false,
-        }).lean(),
+        })
+          .populate("role", "name")
+          .lean(),
         Team_Role_Master.findOne({ name: "team_client" }).lean(),
         Role_Master.findOne({ name: "team_client" }).lean(),
       ]);
@@ -146,6 +149,9 @@ class TeamMemberService {
         });
         return;
       } else {
+        if (team_client_exist?.role?.name !== "team_client")
+          return throwError(returnMessage("auth", "emailExist"));
+
         const team_member = await Team_Client.findById(
           team_client_exist?.reference_id
         ).lean();
@@ -1034,9 +1040,23 @@ class TeamMemberService {
 
   teamListWithoutPagination = async (user) => {
     try {
-      const teams = await Team_Agency.distinct("_id", {
-        agency_id: user?.reference_id,
-      }).lean();
+      let teams;
+      if (user.role.name === "team_agency") {
+        const agency = await Team_Agency.findOne(user.reference_id);
+
+        teams = await Team_Agency.distinct("_id", {
+          agency_id: agency?.agency_id,
+        }).lean();
+        // console.log(agency_detail, "agency_detail");
+
+        // teams = await Team_Agency.distinct("_id", {
+        //   agency_id: agency_detail?.reference_id,
+        // }).lean();
+      } else {
+        teams = await Team_Agency.distinct("_id", {
+          agency_id: user?.reference_id,
+        }).lean();
+      }
 
       const aggregateArray = [
         {
@@ -1075,17 +1095,9 @@ class TeamMemberService {
         .lean();
       let team_reference;
       if (team?.role?.name === "team_agency") {
-        team_reference = await Team_Agency.findById(team?.reference_id)
-          .populate("city", "name")
-          .populate("state", "name")
-          .populate("country", "name")
-          .lean();
+        team_reference = await Team_Agency.findById(team?.reference_id).lean();
       } else if (team?.role?.name === "team_client") {
-        team_reference = await Team_Client.findById(team?.reference_id)
-          .populate("city", "name")
-          .populate("state", "name")
-          .populate("country", "name")
-          .lean();
+        team_reference = await Team_Client.findById(team?.reference_id).lean();
       }
 
       team_detail.reference_id = team_reference;

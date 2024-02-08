@@ -90,7 +90,10 @@ class AdminService {
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
       const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
-      const forgot_email_template = forgotPasswordEmailTemplate(link);
+      const forgot_email_template = forgotPasswordEmailTemplate(
+        link,
+        admin?.first_name + " " + admin?.last_name
+      );
 
       await sendEmail({
         email: email,

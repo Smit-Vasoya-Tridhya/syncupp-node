@@ -155,11 +155,13 @@ class AgencyService {
       const subscription_detail = await paymentService.subscripionDetail(
         agency_detail?.subscription_id
       );
-      agency_detail.payable_amount = paymentService.customPaymentCalculator(
-        subscription_detail?.current_start,
-        subscription_detail?.current_end,
-        plan
-      );
+      agency_detail.payable_amount = (
+        paymentService.customPaymentCalculator(
+          subscription_detail?.current_start,
+          subscription_detail?.current_end,
+          plan
+        ) / 100
+      ).toFixed(2);
       return agency_detail;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);

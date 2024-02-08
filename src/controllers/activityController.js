@@ -33,6 +33,8 @@ exports.taskList = catchAsyncError(async (req, res, next) => {
     taskList = await activityService.taskList(req.body, req.user);
   } else if (req?.user?.role?.name === "client") {
     taskList = await activityService.clientTaskList(req.body, req.user);
+  } else if (req?.user?.role?.name === "team_agency") {
+    taskList = await activityService.teamAdminTaskList(req.body, req.user);
   }
   sendResponse(
     res,
@@ -54,7 +56,10 @@ exports.fetchTask = catchAsyncError(async (req, res, next) => {
   );
 });
 exports.updateTask = catchAsyncError(async (req, res, next) => {
-  const updateTask = await activityService.updateTask(req?.params?.id);
+  const updateTask = await activityService.updateTask(
+    req.body,
+    req?.params?.id
+  );
   sendResponse(
     res,
     true,
@@ -70,6 +75,20 @@ exports.deleteTask = catchAsyncError(async (req, res, next) => {
     true,
     returnMessage("activity", "deleteTask"),
     deleteTask,
+    statusCode.success
+  );
+});
+
+exports.updateStatus = catchAsyncError(async (req, res, next) => {
+  const updateStatus = await activityService.statusUpdate(
+    req?.body,
+    req.params.id
+  );
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "updateStatus"),
+    updateStatus,
     statusCode.success
   );
 });

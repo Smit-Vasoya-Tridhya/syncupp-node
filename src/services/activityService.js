@@ -11,6 +11,7 @@ const {
 const moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const { ObjectId } = require("mongodb");
+const Team_Agency = require("../models/teamAgencySchema");
 class ActivityService {
   createTask = async (payload, id) => {
     try {
@@ -28,12 +29,11 @@ class ActivityService {
       const duetimeObject = moment(due_date);
 
       const timeOnly = duetimeObject.format("HH:mm:ss");
-      dueDateObject.startOf("day");
 
       const currentDate = moment().startOf("day");
 
       if (dueDateObject.isSameOrBefore(currentDate)) {
-        return returnMessage("activity", "dateinvalid");
+        return throwError(returnMessage("activity", "dateinvalid"));
       }
       let status;
       if (mark_as_done === true) {
@@ -72,507 +72,1480 @@ class ActivityService {
   };
 
   taskList = async (searchObj, user) => {
-    try {
-      const queryObj = { is_deleted: false };
-      const pagination = paginationObject(searchObj);
+    if (!searchObj.pagination) {
+      try {
+        const queryObj = { is_deleted: false };
+        const pagination = paginationObject(searchObj);
 
-      if (searchObj.search && searchObj.search !== "") {
-        queryObj["$or"] = [
-          {
-            title: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+        if (searchObj.search && searchObj.search !== "") {
+          queryObj["$or"] = [
+            {
+              title: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
             },
-          },
 
+            {
+              status: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              client_name: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+          ];
+
+          const keywordType = getKeywordType(searchObj.search);
+          if (keywordType === "number") {
+            const numericKeyword = parseInt(searchObj.search);
+
+            queryObj["$or"].push({
+              revenue_made: numericKeyword,
+            });
+          } else if (keywordType === "date") {
+            const dateKeyword = new Date(searchObj.search);
+            queryObj["$or"].push({ due_date: dateKeyword });
+            queryObj["$or"].push({ updatedAt: dateKeyword });
+          }
+        }
+        const taskPipeline = [
           {
-            status: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+            $lookup: {
+              from: "authentications",
+              localField: "client_id",
+              foreignField: "reference_id",
+              as: "client_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
             },
           },
           {
-            client_name: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+            $unwind: "$client_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_to",
+              foreignField: "reference_id",
+              as: "team_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
             },
           },
           {
-            "assign_by.first_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+            $unwind: "$team_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_by",
+              foreignField: "_id",
+              as: "assign_by",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
             },
           },
           {
-            "team_Data.first_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+            $unwind: "$assign_by",
+          },
+          {
+            $lookup: {
+              from: "activity_status_masters",
+              localField: "activity_status",
+              foreignField: "_id",
+              as: "status",
+              pipeline: [{ $project: { name: 1 } }],
             },
           },
           {
-            "team_Data.last_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
+            $unwind: "$status",
           },
           {
-            "assign_by.last_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+            $match: queryObj,
+          },
+          {
+            $project: {
+              contact_number: 1,
+              title: 1,
+              status: "$status.name",
+              due_time: 1,
+              due_date: 1,
+              createdAt: 1,
+              internal_info: 1,
+              assigned_to_name: "$team_Data.name",
+              assigned_by_name: "$assign_by.name",
+              assigned_by_first_name: "$assign_by.first_name",
+              assigned_by_last_name: "$assign_by.last_name",
+              assigned_by_name: {
+                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+              },
+              client_name: "$client_Data.name",
+              column_id: "$status.name",
             },
           },
         ];
+        const activity = await Activity.aggregate(taskPipeline).sort({
+          createdAt: -1,
+        });
+        // .skip(pagination.skip)
+        // .limit(pagination.result_per_page);
 
-        const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
+        const totalAgreementsCount = await Activity.countDocuments(queryObj);
 
-          queryObj["$or"].push({
-            revenue_made: numericKeyword,
-          });
-        } else if (keywordType === "date") {
-          const dateKeyword = new Date(searchObj.search);
-          queryObj["$or"].push({ due_date: dateKeyword });
-          queryObj["$or"].push({ updatedAt: dateKeyword });
-        }
+        // Calculating total pages
+        const pages = Math.ceil(
+          totalAgreementsCount / pagination.result_per_page
+        );
+
+        return {
+          activity,
+          // page_count: pages,
+        };
+      } catch (error) {
+        logger.error(`Error while fetch list : ${error}`);
+        return throwError(error?.message, error?.statusCode);
       }
-      const taskPipeline = [
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "client_id",
-            foreignField: "reference_id",
-            as: "client_Data",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$client_Data",
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "assign_to",
-            foreignField: "reference_id",
-            as: "team_Data",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$team_Data",
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "assign_by",
-            foreignField: "_id",
-            as: "assign_by",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$assign_by",
-        },
-        {
-          $lookup: {
-            from: "activity_status_masters",
-            localField: "activity_status",
-            foreignField: "_id",
-            as: "status",
-            pipeline: [{ $project: { name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$status",
-        },
-        {
-          $match: queryObj,
-        },
-        {
-          $project: {
-            contact_number: 1,
-            title: 1,
-            status: "$status.name",
-            due_time: 1,
-            due_date: 1,
-            createdAt: 1,
-            client_name: "$client_Data.name",
-            client_first_name: "$client_Data.first_name",
-            client_last_name: "$client_Data.last_name",
-            internal_info: 1,
-            assigned_to_name: "$team_Data.name",
-            assigned_to_first_name: "$team_Data.first_name",
-            assigned_to_last_name: "$team_Data.last_name",
-            assigned_by_name: "$assign_by.name",
-            assigned_by_first_name: "$assign_by.first_name",
-            assigned_by_last_name: "$assign_by.last_name",
-            assigned_by_name: {
-              $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+    } else {
+      try {
+        const queryObj = { is_deleted: false };
+        const pagination = paginationObject(searchObj);
+
+        if (searchObj.search && searchObj.search !== "") {
+          queryObj["$or"] = [
+            {
+              title: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
             },
-            assign_to_name: {
-              $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
+
+            {
+              status: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              client_name: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+          ];
+
+          const keywordType = getKeywordType(searchObj.search);
+          if (keywordType === "number") {
+            const numericKeyword = parseInt(searchObj.search);
+
+            queryObj["$or"].push({
+              revenue_made: numericKeyword,
+            });
+          } else if (keywordType === "date") {
+            const dateKeyword = new Date(searchObj.search);
+            queryObj["$or"].push({ due_date: dateKeyword });
+            queryObj["$or"].push({ updatedAt: dateKeyword });
+          }
+        }
+        // const teamRole = await Team_Agency.findOne({
+        //   _id: user.reference_id,
+        // }).populate("role");
+
+        // let assignedByNameProjection = "$assign_by.name";
+        // if (teamRole?.role?.name === "admin") {
+        //   assignedByNameProjection = {
+        //     $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+        //   };
+        // } else if (teamRole?.role?.name === "team_member") {
+        //   assignedByNameProjection = "$assign_by.name";
+        // } else {
+        //   assignedByNameProjection = {
+        //     $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+        //   };
+        // }
+        const taskPipeline = [
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "client_id",
+              foreignField: "reference_id",
+              as: "client_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
             },
           },
-        },
-      ];
-      const activity = await Activity.aggregate(taskPipeline)
-        .skip(pagination.skip)
-        .limit(pagination.result_per_page)
-        .sort(pagination.sort);
+          {
+            $unwind: "$client_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_to",
+              foreignField: "reference_id",
+              as: "team_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
+            },
+          },
+          {
+            $unwind: "$team_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_by",
+              foreignField: "_id",
+              as: "assign_by",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
+            },
+          },
+          {
+            $unwind: "$assign_by",
+          },
+          {
+            $lookup: {
+              from: "activity_status_masters",
+              localField: "activity_status",
+              foreignField: "_id",
+              as: "status",
+              pipeline: [{ $project: { name: 1 } }],
+            },
+          },
+          {
+            $unwind: "$status",
+          },
+          {
+            $match: queryObj,
+          },
+          {
+            $project: {
+              contact_number: 1,
+              title: 1,
+              status: "$status.name",
+              due_time: 1,
+              due_date: 1,
+              createdAt: 1,
+              internal_info: 1,
+              assigned_to_name: "$team_Data.name",
+              assigned_by_name: "$assign_by.name",
+              assigned_by_first_name: "$assign_by.first_name",
+              assigned_by_last_name: "$assign_by.last_name",
+              assigned_by_name: {
+                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+              },
+              client_name: "$client_Data.name",
+              column_id: "$status.name",
+            },
+          },
+        ];
+        const activity = await Activity.aggregate(taskPipeline)
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page);
 
-      const totalAgreementsCount = await Activity.countDocuments(queryObj);
+        const totalAgreementsCount = await Activity.aggregate(taskPipeline);
 
-      // Calculating total pages
-      const pages = Math.ceil(
-        totalAgreementsCount / pagination.result_per_page
-      );
+        // Calculating total pages
+        const pages = Math.ceil(
+          totalAgreementsCount.length / pagination.result_per_page
+        );
 
-      return {
-        activity,
-        page_count: pages,
-      };
-    } catch (error) {
-      logger.error(`Error while fetch list : ${error}`);
-      return throwError(error?.message, error?.statusCode);
+        return {
+          activity,
+          page_count: pages,
+        };
+      } catch (error) {
+        logger.error(`Error while fetch list : ${error}`);
+        return throwError(error?.message, error?.statusCode);
+      }
     }
   };
 
   clientTaskList = async (searchObj, user) => {
-    try {
-      console.log(user.reference_id);
-      const queryObj = {
-        is_deleted: false,
-        client_id: user.reference_id,
-      };
-      const pagination = paginationObject(searchObj);
-      console.log(user.reference_id);
-      if (searchObj.search && searchObj.search !== "") {
-        queryObj["$or"] = [
-          {
-            title: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+    if (!searchObj.pagination) {
+      try {
+        const queryObj = {
+          is_deleted: false,
+          client_id: user.reference_id,
+        };
+        const pagination = paginationObject(searchObj);
+        if (searchObj.search && searchObj.search !== "") {
+          queryObj["$or"] = [
+            {
+              title: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
             },
+
+            {
+              status: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+          ];
+
+          const keywordType = getKeywordType(searchObj.search);
+          if (keywordType === "number") {
+            const numericKeyword = parseInt(searchObj.search);
+
+            queryObj["$or"].push({
+              revenue_made: numericKeyword,
+            });
+          } else if (keywordType === "date") {
+            const dateKeyword = new Date(searchObj.search);
+            queryObj["$or"].push({ due_date: dateKeyword });
+            queryObj["$or"].push({ updatedAt: dateKeyword });
+          }
+        }
+        const taskPipeline = [
+          {
+            $match: queryObj,
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "client_id",
+              foreignField: "reference_id",
+              as: "client_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
+            },
+          },
+          {
+            $unwind: "$client_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_to",
+              foreignField: "reference_id",
+              as: "team_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
+            },
+          },
+          {
+            $unwind: "$team_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_by",
+              foreignField: "_id",
+              as: "assign_by",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
+            },
+          },
+          {
+            $unwind: "$assign_by",
+          },
+          {
+            $lookup: {
+              from: "activity_status_masters",
+              localField: "activity_status",
+              foreignField: "_id",
+              as: "status",
+              pipeline: [{ $project: { name: 1 } }],
+            },
+          },
+          {
+            $unwind: "$status",
           },
 
           {
-            status: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            client_name: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "assign_by.first_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "team_Data.first_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "team_Data.last_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "assign_by.last_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
+            $project: {
+              title: 1,
+              client_id: 1,
+              status: "$status.name",
+              due_time: 1,
+              due_date: 1,
+              createdAt: 1,
+              client_name: "$client_Data.name",
+
+              internal_info: 1,
+              assigned_to_name: "$team_Data.name",
+
+              assigned_by_name: "$assign_by.name",
+              assigned_by_first_name: "$assign_by.first_name",
+              assigned_by_last_name: "$assign_by.last_name",
+              assigned_by_name: {
+                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+              },
+              assign_to_name: {
+                $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
+              },
+              client_name: "$client_Data.name",
+
+              column_id: "$status.name",
             },
           },
         ];
+        const activity = await Activity.aggregate(taskPipeline).sort({
+          createdAt: -1,
+        });
+        // .skip(pagination.skip)
+        // .limit(pagination.result_per_page);
 
-        const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
+        const totalAgreementsCount = await Activity.countDocuments(queryObj);
 
-          queryObj["$or"].push({
-            revenue_made: numericKeyword,
-          });
-        } else if (keywordType === "date") {
-          const dateKeyword = new Date(searchObj.search);
-          queryObj["$or"].push({ due_date: dateKeyword });
-          queryObj["$or"].push({ updatedAt: dateKeyword });
-        }
+        // Calculating total pages
+        const pages = Math.ceil(
+          totalAgreementsCount / pagination.result_per_page
+        );
+
+        return {
+          activity,
+          // page_count: pages,
+        };
+      } catch (error) {
+        logger.error(`Error while fetch list : ${error}`);
+        return throwError(error?.message, error?.statusCode);
       }
-      const taskPipeline = [
-        {
-          $match: queryObj,
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "client_id",
-            foreignField: "reference_id",
-            as: "client_Data",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$client_Data",
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "assign_to",
-            foreignField: "reference_id",
-            as: "team_Data",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$team_Data",
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "assign_by",
-            foreignField: "_id",
-            as: "assign_by",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$assign_by",
-        },
-        {
-          $lookup: {
-            from: "activity_status_masters",
-            localField: "activity_status",
-            foreignField: "_id",
-            as: "status",
-            pipeline: [{ $project: { name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$status",
-        },
-
-        {
-          $project: {
-            contact_number: 1,
-            title: 1,
-            client_id: 1,
-            status: "$status.name",
-            due_time: 1,
-            due_date: 1,
-            createdAt: 1,
-            client_name: "$client_Data.name",
-            client_first_name: "$client_Data.first_name",
-            client_last_name: "$client_Data.last_name",
-            internal_info: 1,
-            assigned_to_name: "$team_Data.name",
-            assigned_to_first_name: "$team_Data.first_name",
-            assigned_to_last_name: "$team_Data.last_name",
-            assigned_by_name: "$assign_by.name",
-            assigned_by_first_name: "$assign_by.first_name",
-            assigned_by_last_name: "$assign_by.last_name",
-            assigned_by_name: {
-              $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+    } else {
+      try {
+        const queryObj = {
+          is_deleted: false,
+          client_id: user.reference_id,
+        };
+        const pagination = paginationObject(searchObj);
+        if (searchObj.search && searchObj.search !== "") {
+          queryObj["$or"] = [
+            {
+              title: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
             },
-            assign_to_name: {
-              $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
+
+            {
+              status: {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.first_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.last_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+          ];
+
+          const keywordType = getKeywordType(searchObj.search);
+          if (keywordType === "number") {
+            const numericKeyword = parseInt(searchObj.search);
+
+            queryObj["$or"].push({
+              revenue_made: numericKeyword,
+            });
+          } else if (keywordType === "date") {
+            const dateKeyword = new Date(searchObj.search);
+            queryObj["$or"].push({ due_date: dateKeyword });
+            queryObj["$or"].push({ updatedAt: dateKeyword });
+          }
+        }
+        const taskPipeline = [
+          {
+            $match: queryObj,
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "client_id",
+              foreignField: "reference_id",
+              as: "client_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
             },
           },
-        },
-      ];
-      const activity = await Activity.aggregate(taskPipeline)
-        .skip(pagination.skip)
-        .limit(pagination.result_per_page)
-        .sort(pagination.sort);
+          {
+            $unwind: "$client_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_to",
+              foreignField: "reference_id",
+              as: "team_Data",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
+            },
+          },
+          {
+            $unwind: "$team_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "assign_by",
+              foreignField: "_id",
+              as: "assign_by",
+              pipeline: [
+                { $project: { name: 1, first_name: 1, last_name: 1 } },
+              ],
+            },
+          },
+          {
+            $unwind: "$assign_by",
+          },
+          {
+            $lookup: {
+              from: "activity_status_masters",
+              localField: "activity_status",
+              foreignField: "_id",
+              as: "status",
+              pipeline: [{ $project: { name: 1 } }],
+            },
+          },
+          {
+            $unwind: "$status",
+          },
 
-      const totalAgreementsCount = await Activity.countDocuments(queryObj);
+          {
+            $project: {
+              title: 1,
+              client_id: 1,
+              status: "$status.name",
+              due_time: 1,
+              due_date: 1,
+              createdAt: 1,
+              client_name: "$client_Data.name",
+              internal_info: 1,
+              assigned_to_name: "$team_Data.name",
+              assigned_by_name: "$assign_by.name",
+              assigned_by_first_name: "$assign_by.first_name",
+              assigned_by_last_name: "$assign_by.last_name",
+              assigned_by_name: {
+                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
+              },
+              assign_to_name: {
+                $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
+              },
 
-      // Calculating total pages
-      const pages = Math.ceil(
-        totalAgreementsCount / pagination.result_per_page
-      );
+              column_id: "$status.name",
+            },
+          },
+        ];
+        const activity = await Activity.aggregate(taskPipeline)
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page);
 
-      return {
-        activity,
-        page_count: pages,
-      };
-    } catch (error) {
-      logger.error(`Error while fetch list : ${error}`);
-      return throwError(error?.message, error?.statusCode);
+        const totalAgreementsCount = await Activity.aggregate(taskPipeline);
+
+        // Calculating total pages
+        const pages = Math.ceil(
+          totalAgreementsCount.length / pagination.result_per_page
+        );
+
+        return {
+          activity,
+          page_count: pages,
+        };
+      } catch (error) {
+        logger.error(`Error while fetch list : ${error}`);
+        return throwError(error?.message, error?.statusCode);
+      }
     }
   };
 
-  teamTaskList = async (searchObj, user) => {
-    try {
-      console.log(user.reference_id);
-      const queryObj = {
-        is_deleted: false,
-        assign_by: user.reference_id,
-      };
-      const pagination = paginationObject(searchObj);
-      console.log(user.reference_id);
-      if (searchObj.search && searchObj.search !== "") {
-        queryObj["$or"] = [
-          {
-            title: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
+  teamAdminTaskList = async (searchObj, user) => {
+    if (!searchObj.pagination) {
+      try {
+        const teamRole = await Team_Agency.findOne({
+          _id: user.reference_id,
+        }).populate("role");
 
-          {
-            status: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            client_name: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "assign_by.first_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "team_Data.first_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "team_Data.last_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          {
-            "assign_by.last_name": {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-        ];
+        if (teamRole?.role?.name === "admin") {
+          const queryObj = {
+            is_deleted: false,
+            assign_by: user.reference_id,
+          };
+          const pagination = paginationObject(searchObj);
+          if (searchObj.search && searchObj.search !== "") {
+            queryObj["$or"] = [
+              {
+                title: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
 
-        const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
+              {
+                status: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "assign_by.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_by.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_by.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+            ];
 
-          queryObj["$or"].push({
-            revenue_made: numericKeyword,
+            const keywordType = getKeywordType(searchObj.search);
+            if (keywordType === "number") {
+              const numericKeyword = parseInt(searchObj.search);
+
+              queryObj["$or"].push({
+                revenue_made: numericKeyword,
+              });
+            } else if (keywordType === "date") {
+              const dateKeyword = new Date(searchObj.search);
+              queryObj["$or"].push({ due_date: dateKeyword });
+              queryObj["$or"].push({ updatedAt: dateKeyword });
+            }
+          }
+          const taskPipeline = [
+            {
+              $match: queryObj,
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "client_id",
+                foreignField: "reference_id",
+                as: "client_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$client_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_to",
+                foreignField: "reference_id",
+                as: "team_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_by",
+                foreignField: "_id",
+                as: "team_by",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_by",
+            },
+            {
+              $lookup: {
+                from: "activity_status_masters",
+                localField: "activity_status",
+                foreignField: "_id",
+                as: "status",
+                pipeline: [{ $project: { name: 1 } }],
+              },
+            },
+            {
+              $unwind: "$status",
+            },
+
+            {
+              $project: {
+                contact_number: 1,
+                title: 1,
+                client_id: 1,
+                status: "$status.name",
+                due_time: 1,
+                due_date: 1,
+                createdAt: 1,
+                client_name: "$client_Data.name",
+
+                internal_info: 1,
+                assigned_to_name: "$team_Data.name",
+                assigned_to_first_name: "$team_Data.first_name",
+                assigned_to_last_name: "$team_Data.last_name",
+                assigned_by_name: "$team_by.name",
+                assign_by: 1,
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
+                assigned_by_name: {
+                  $concat: [
+                    "$assign_by.first_name",
+                    " ",
+                    "$assign_by.last_name",
+                  ],
+                },
+
+                column_id: "$status.name",
+              },
+            },
+          ];
+          const activity = await Activity.aggregate(taskPipeline).sort({
+            createdAt: -1,
           });
-        } else if (keywordType === "date") {
-          const dateKeyword = new Date(searchObj.search);
-          queryObj["$or"].push({ due_date: dateKeyword });
-          queryObj["$or"].push({ updatedAt: dateKeyword });
+          // .sort(pagination.sort)
+          // .skip(pagination.skip)
+          // .limit(pagination.result_per_page);
+
+          const totalAgreementsCount = await Activity.countDocuments(queryObj);
+
+          // Calculating total pages
+          const pages = Math.ceil(
+            totalAgreementsCount / pagination.result_per_page
+          );
+
+          return {
+            activity,
+          };
+        } else if (teamRole.role.name === "team_member") {
+          const queryObj = {
+            is_deleted: false,
+            assign_to: user.reference_id,
+          };
+          const pagination = paginationObject(searchObj);
+          if (searchObj.search && searchObj.search !== "") {
+            queryObj["$or"] = [
+              {
+                title: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+
+              {
+                status: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "assign_by.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "assign_by.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+            ];
+
+            const keywordType = getKeywordType(searchObj.search);
+            if (keywordType === "number") {
+              const numericKeyword = parseInt(searchObj.search);
+
+              queryObj["$or"].push({
+                revenue_made: numericKeyword,
+              });
+            } else if (keywordType === "date") {
+              const dateKeyword = new Date(searchObj.search);
+              queryObj["$or"].push({ due_date: dateKeyword });
+              queryObj["$or"].push({ updatedAt: dateKeyword });
+            }
+          }
+          const taskPipeline = [
+            {
+              $match: queryObj,
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "client_id",
+                foreignField: "reference_id",
+                as: "client_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$client_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_to",
+                foreignField: "reference_id",
+                as: "team_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_by",
+                foreignField: "_id",
+                as: "team_by",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_by",
+            },
+            {
+              $lookup: {
+                from: "activity_status_masters",
+                localField: "activity_status",
+                foreignField: "_id",
+                as: "status",
+                pipeline: [{ $project: { name: 1 } }],
+              },
+            },
+            {
+              $unwind: "$status",
+            },
+
+            {
+              $project: {
+                contact_number: 1,
+                title: 1,
+                client_id: 1,
+                status: "$status.name",
+                due_time: 1,
+                due_date: 1,
+                createdAt: 1,
+                client_name: "$client_Data.name",
+                internal_info: 1,
+                assigned_to_name: "$team_Data.name",
+                assigned_by_name: "$team_by.name",
+                assign_by: 1,
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
+                assigned_by_name: {
+                  $concat: [
+                    "$assign_by.first_name",
+                    " ",
+                    "$assign_by.last_name",
+                  ],
+                },
+
+                column_id: "$status.name",
+              },
+            },
+          ];
+          const activity = await Activity.aggregate(taskPipeline).sort({
+            createdAt: -1,
+          });
+          // .sort(pagination.sort)
+          // .skip(pagination.skip)
+          // .limit(pagination.result_per_page);
+
+          const totalAgreementsCount = await Activity.countDocuments(queryObj);
+
+          // Calculating total pages
+          const pages = Math.ceil(
+            totalAgreementsCount / pagination.result_per_page
+          );
+
+          return {
+            activity,
+            // page_count: pages,
+          };
         }
+      } catch (error) {
+        logger.error(`Error while fetch list : ${error}`);
+        return throwError(error?.message, error?.statusCode);
       }
-      const taskPipeline = [
-        {
-          $match: queryObj,
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "client_id",
-            foreignField: "reference_id",
-            as: "client_Data",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$client_Data",
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "assign_to",
-            foreignField: "reference_id",
-            as: "team_Data",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$team_Data",
-        },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "assign_by",
-            foreignField: "_id",
-            as: "assign_by",
-            pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$assign_by",
-        },
-        {
-          $lookup: {
-            from: "activity_status_masters",
-            localField: "activity_status",
-            foreignField: "_id",
-            as: "status",
-            pipeline: [{ $project: { name: 1 } }],
-          },
-        },
-        {
-          $unwind: "$status",
-        },
+    } else {
+      try {
+        const teamRole = await Team_Agency.findOne({
+          _id: user.reference_id,
+        }).populate("role");
 
-        {
-          $project: {
-            contact_number: 1,
-            title: 1,
-            client_id: 1,
-            status: "$status.name",
-            due_time: 1,
-            due_date: 1,
-            createdAt: 1,
-            client_name: "$client_Data.name",
-            client_first_name: "$client_Data.first_name",
-            client_last_name: "$client_Data.last_name",
-            internal_info: 1,
-            assigned_to_name: "$team_Data.name",
-            assigned_to_first_name: "$team_Data.first_name",
-            assigned_to_last_name: "$team_Data.last_name",
-            assigned_by_name: "$assign_by.name",
-            assign_by: 1,
-            assigned_by_first_name: "$assign_by.first_name",
-            assigned_by_last_name: "$assign_by.last_name",
-          },
-        },
-      ];
-      const activity = await Activity.aggregate(taskPipeline)
-        .skip(pagination.skip)
-        .limit(pagination.result_per_page)
-        .sort(pagination.sort);
+        if (teamRole?.role?.name === "admin") {
+          const queryObj = {
+            $or: [
+              { assign_by: user.reference_id },
+              { assign_to: user.reference_id },
+            ],
+            is_deleted: false,
+          };
+          const pagination = paginationObject(searchObj);
+          if (searchObj.search && searchObj.search !== "") {
+            queryObj["$or"] = [
+              {
+                title: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
 
-      const totalAgreementsCount = await Activity.countDocuments(queryObj);
+              {
+                status: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "assign_by.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_by.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_by.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+            ];
 
-      // Calculating total pages
-      const pages = Math.ceil(
-        totalAgreementsCount / pagination.result_per_page
-      );
+            const keywordType = getKeywordType(searchObj.search);
+            if (keywordType === "number") {
+              const numericKeyword = parseInt(searchObj.search);
 
-      return {
-        activity,
-        page_count: pages,
-      };
-    } catch (error) {
-      logger.error(`Error while fetch list : ${error}`);
-      return throwError(error?.message, error?.statusCode);
+              queryObj["$or"].push({
+                revenue_made: numericKeyword,
+              });
+            } else if (keywordType === "date") {
+              const dateKeyword = new Date(searchObj.search);
+              queryObj["$or"].push({ due_date: dateKeyword });
+              queryObj["$or"].push({ updatedAt: dateKeyword });
+            }
+          }
+          const taskPipeline = [
+            {
+              $match: queryObj,
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "client_id",
+                foreignField: "reference_id",
+                as: "client_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$client_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_to",
+                foreignField: "reference_id",
+                as: "team_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_by",
+                foreignField: "_id",
+                as: "team_by",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_by",
+            },
+            {
+              $lookup: {
+                from: "activity_status_masters",
+                localField: "activity_status",
+                foreignField: "_id",
+                as: "status",
+                pipeline: [{ $project: { name: 1 } }],
+              },
+            },
+            {
+              $unwind: "$status",
+            },
+
+            {
+              $project: {
+                contact_number: 1,
+                title: 1,
+                client_id: 1,
+                status: "$status.name",
+                due_time: 1,
+                due_date: 1,
+                createdAt: 1,
+                client_name: "$client_Data.name",
+
+                internal_info: 1,
+                assigned_to_name: "$team_Data.name",
+
+                assigned_by_name: "$team_by.name",
+                assign_by: 1,
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
+                assigned_by_name: {
+                  $concat: ["$team_by.first_name", " ", "$team_by.last_name"],
+                },
+
+                column_id: "$status.name",
+              },
+            },
+          ];
+          const activity = await Activity.aggregate(taskPipeline)
+            .sort(pagination.sort)
+            .skip(pagination.skip)
+            .limit(pagination.result_per_page);
+          const totalAgreementsCount = await Activity.aggregate(taskPipeline);
+
+          // Calculating total pages
+          const pages = Math.ceil(
+            totalAgreementsCount.length / pagination.result_per_page
+          );
+
+          return {
+            activity,
+            page_count: pages,
+            team_member_role: teamRole?.role?.name,
+          };
+        } else if (teamRole.role.name === "team_member") {
+          const queryObj = {
+            is_deleted: false,
+            assign_to: user.reference_id,
+          };
+          const pagination = paginationObject(searchObj);
+          if (searchObj.search && searchObj.search !== "") {
+            queryObj["$or"] = [
+              {
+                title: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+
+              {
+                status: {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "assign_by.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.first_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "assign_by.last_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+            ];
+
+            const keywordType = getKeywordType(searchObj.search);
+            if (keywordType === "number") {
+              const numericKeyword = parseInt(searchObj.search);
+
+              queryObj["$or"].push({
+                revenue_made: numericKeyword,
+              });
+            } else if (keywordType === "date") {
+              const dateKeyword = new Date(searchObj.search);
+              queryObj["$or"].push({ due_date: dateKeyword });
+              queryObj["$or"].push({ updatedAt: dateKeyword });
+            }
+          }
+          const taskPipeline = [
+            {
+              $match: queryObj,
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "client_id",
+                foreignField: "reference_id",
+                as: "client_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$client_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_to",
+                foreignField: "reference_id",
+                as: "team_Data",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_Data",
+            },
+            {
+              $lookup: {
+                from: "authentications",
+                localField: "assign_by",
+                foreignField: "_id",
+                as: "team_by",
+                pipeline: [
+                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                ],
+              },
+            },
+            {
+              $unwind: "$team_by",
+            },
+            {
+              $lookup: {
+                from: "activity_status_masters",
+                localField: "activity_status",
+                foreignField: "_id",
+                as: "status",
+                pipeline: [{ $project: { name: 1 } }],
+              },
+            },
+            {
+              $unwind: "$status",
+            },
+
+            {
+              $project: {
+                contact_number: 1,
+                title: 1,
+                client_id: 1,
+                status: "$status.name",
+                due_time: 1,
+                due_date: 1,
+                createdAt: 1,
+                client_name: "$client_Data.name",
+
+                internal_info: 1,
+                assigned_to_name: "$team_Data.name",
+
+                assigned_by_name: "$team_by.name",
+                assign_by: 1,
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
+                assigned_by_name: {
+                  $concat: ["$team_by.first_name", " ", "$team_by.last_name"],
+                },
+
+                column_id: "$status.name",
+              },
+            },
+          ];
+          const activity = await Activity.aggregate(taskPipeline)
+            .sort(pagination.sort)
+            .skip(pagination.skip)
+            .limit(pagination.result_per_page);
+          const totalAgreementsCount = await Activity.aggregate(taskPipeline);
+
+          // Calculating total pages
+          const pages = Math.ceil(
+            totalAgreementsCount.length / pagination.result_per_page
+          );
+
+          return {
+            activity,
+            page_count: pages,
+            team_member_role: teamRole?.role?.name,
+          };
+        }
+      } catch (error) {
+        logger.error(`Error while fetch list : ${error}`);
+        return throwError(error?.message, error?.statusCode);
+      }
     }
   };
 
@@ -616,6 +1589,18 @@ class ActivityService {
           $unwind: "$assign_by",
         },
         {
+          $lookup: {
+            from: "activity_status_masters",
+            localField: "activity_status",
+            foreignField: "_id",
+            as: "status",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$status",
+        },
+        {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
             is_deleted: false,
@@ -624,10 +1609,10 @@ class ActivityService {
         {
           $project: {
             title: 1,
-            status: 1,
             due_time: 1,
             due_date: 1,
             createdAt: 1,
+            status: "$status.name",
             client_id: 1,
             client_name: "$client_Data.name",
             client_first_name: "$client_Data.first_name",
@@ -679,13 +1664,12 @@ class ActivityService {
     }
   };
 
-  updateTask = async (payload, id, user_id) => {
+  updateTask = async (payload, id) => {
     try {
       const {
         title,
         internal_info,
         due_date,
-        // due_time,
         assign_to,
         client_id,
         mark_as_done,
@@ -695,12 +1679,11 @@ class ActivityService {
       const duetimeObject = moment(due_date);
 
       const timeOnly = duetimeObject.format("HH:mm:ss");
-      dueDateObject.startOf("day");
 
       const currentDate = moment().startOf("day");
 
       if (dueDateObject.isSameOrBefore(currentDate)) {
-        return returnMessage("activity", "dateinvalid");
+        return throwError(returnMessage("activity", "dateinvalid"));
       }
       let status;
       if (mark_as_done === true) {
@@ -708,8 +1691,6 @@ class ActivityService {
       } else {
         status = await ActivityStatus.findOne({ name: "pending" }).lean();
       }
-
-      const type = await ActivityType.findOne({ name: "task" }).lean();
 
       const updateTasks = await Activity.findByIdAndUpdate(
         {
@@ -721,16 +1702,48 @@ class ActivityService {
           due_date: dueDateObject.toDate(),
           due_time: timeOnly,
           assign_to,
-          assign_by: id,
           client_id,
           activity_status: status._id,
-          activity_type: type._id,
         },
         { new: true, useFindAndModify: false }
       );
       return updateTasks;
     } catch (error) {
       logger.error(`Error while Updating task, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  statusUpdate = async (payload, id) => {
+    try {
+      const { status } = payload;
+      let update_status;
+      if (status === "completed") {
+        update_status = await ActivityStatus.findOne({
+          name: "completed",
+        }).lean();
+      } else if (status === "pending") {
+        update_status = await ActivityStatus.findOne({
+          name: "pending",
+        }).lean();
+      } else if (status === "in_progress") {
+        update_status = await ActivityStatus.findOne({
+          name: "in_progress",
+        }).lean();
+      }
+
+      const updateTasks = await Activity.findByIdAndUpdate(
+        {
+          _id: id,
+        },
+        {
+          activity_status: update_status._id,
+        },
+        { new: true, useFindAndModify: false }
+      );
+      return updateTasks;
+    } catch (error) {
+      logger.error(`Error while Updating status, ${error}`);
       throwError(error?.message, error?.statusCode);
     }
   };

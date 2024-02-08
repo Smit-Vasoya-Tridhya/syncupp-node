@@ -27,7 +27,7 @@ agencyRoute.patch(
   agencyController.updateClient
 );
 
-agencyRoute.post("/clients", authorizeRole("agency"), clientController.clients);
+agencyRoute.post("/clients", clientController.clients);
 agencyRoute.get("/get-profile", agencyController.getAgencyProfile);
 agencyRoute.put("/update-profile", agencyController.updateAgencyProfile);
 
