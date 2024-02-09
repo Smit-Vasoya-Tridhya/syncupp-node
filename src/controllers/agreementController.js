@@ -26,10 +26,19 @@ exports.addAgreement = catchAsyncError(async (req, res, next) => {
 // get All Agreement
 
 exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
-  const agreements = await agreementService.getAllAgreement(
-    req.body,
-    req?.user?._id
-  );
+  let agreements;
+  if (req.user.role.name === "agency") {
+    agreements = await agreementService.getAllAgreement(
+      req.body,
+      req?.user?._id
+    );
+  } else if (req.user.role.name === "client") {
+    agreements = await agreementService.getAllClientAgreement(
+      req.body,
+      req?.user?._id
+    );
+  }
+
   sendResponse(
     res,
     true,
@@ -142,14 +151,15 @@ exports.downloadPdf = catchAsyncError(async (req, res, next) => {
 // get All Agreement
 
 exports.getAllClientAgreement = catchAsyncError(async (req, res, next) => {
-  const { agreements, pagination } =
-    await agreementService.getAllClientAgreement(req.body, req?.user?._id);
+  const agreements = await agreementService.getAllClientAgreement(
+    req.body,
+    req?.user?._id
+  );
   sendResponse(
     res,
     true,
     returnMessage("agreement", "getAllAgreement"),
     agreements,
-    statusCode.success,
-    pagination
+    statusCode.success
   );
 });
