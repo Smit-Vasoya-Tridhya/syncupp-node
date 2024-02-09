@@ -93,7 +93,8 @@
     "verified": "Verified successfully.",
     "alreadyVerified": "You have already verified for this agency.",
     "teamMemberNotFound": "Team member not found.",
-    "teamMemberRejected": "Team member rejected successfully."
+    "teamMemberRejected": "Team member rejected successfully.",
+    "invalidVerificationLink": "Invitation link is invalid."
   },
 
   "agency": {

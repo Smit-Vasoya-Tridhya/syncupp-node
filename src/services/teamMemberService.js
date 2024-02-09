@@ -438,7 +438,7 @@ class TeamMemberService {
         if (agency_id_exist.length === 0)
           return throwError(returnMessage("agency", "agencyNotFound"));
 
-        if (redirect) {
+        if (redirect && !(client_team_member && client_team_member?.password)) {
           await Team_Client.updateOne(
             { _id: team_client?._id, "agency_ids.agency_id": agency_id },
             { $set: { "agency_ids.$.status": "confirmed" } },
@@ -478,7 +478,7 @@ class TeamMemberService {
         }
       }
       return throwError(
-        returnMessage("teamMember", "alreadyVerified"),
+        returnMessage("teamMember", "invalidVerificationLink"),
         statusCode.unprocessableEntity
       );
     } catch (error) {
