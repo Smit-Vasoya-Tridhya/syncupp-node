@@ -6,24 +6,24 @@ const agencyController = require("../controllers/agencyController");
 agencyRoute.use(protect);
 agencyRoute.post(
   "/create-client",
-  authorizeRole("agency"),
+  // authorizeRole("agency"),// removed because to give access of team agency of type admin
   clientController.createClient
 );
 agencyRoute.delete(
   "/delete-client",
-  authorizeRole("agency"),
+  // authorizeRole("agency"), // removed because to give access of team agency of type admin
   clientController.deleteClient
 );
 
 agencyRoute.get(
   "/get-client/:clientId",
-  authorizeRole("agency"),
+  // authorizeRole("agency"),// removed because to give access of team agency of type admin
   agencyController.getClient
 );
 
 agencyRoute.patch(
   "/update-client/:clientId",
-  authorizeRole("agency"),
+  // authorizeRole("agency"),// removed because to give access of team agency of type admin
   agencyController.updateClient
 );
 
