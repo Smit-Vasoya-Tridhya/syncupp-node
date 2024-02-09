@@ -92,9 +92,10 @@
     "roleRequired": "Role is required.",
     "userNotFound": "User not found.",
     "verified": "Verified successfully.",
-    "alreadyVerified": "You have already verified for this client.",
+    "alreadyVerified": "You have already verified for this agency.",
     "teamMemberNotFound": "Team member not found.",
-    "teamMemberRejected": "Team member rejected successfully."
+    "teamMemberRejected": "Team member rejected successfully.",
+    "invalidVerificationLink": "Invitation link is invalid."
   },
 
   "agency": {
@@ -169,7 +170,7 @@
     "updateStatus": "Task Status updated successfully.",
     "taskList": "Task List fetched successfully",
     "fetchTask": "Task fetched successfully.",
-    "updateTask": "Task updated  successfully.",
+    "updateTask": "Task updated successfully.",
     "deleteTask": "Task deleted successfully."
   },
 

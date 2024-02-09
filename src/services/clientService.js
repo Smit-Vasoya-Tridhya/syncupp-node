@@ -121,10 +121,12 @@ class ClientService {
       //   subject: returnMessage("emailTemplate", "invitation"),
       //   message: invitation_mail,
       // });
+      const client = await Authentication.findOne({ email })
+        .select("reference_id")
+        .lean();
+
       return {
-        client: await Authentication.findOne({ email })
-          .select("reference_id")
-          .lean(),
+        ...client,
         referral_points: 0, // this is set to 0 initially but it will update when the referral module imlement
       };
     } catch (error) {
@@ -517,7 +519,7 @@ class ClientService {
           .populate("state", "name")
           .lean(),
       ]);
-
+      client_auth.first_name = client_auth?.name;
       client_auth["client"] = client_data;
       return client_auth;
     } catch (error) {

@@ -104,6 +104,8 @@ class PaymentService {
         amount: plan?.amount,
         currency: plan?.currency,
         agency_id: user?.reference_id,
+        email: user?.email,
+        contact_number: user?.contact_number,
       };
     } catch (error) {
       console.log(error);
@@ -238,6 +240,8 @@ class PaymentService {
         currency: plan?.currency,
         user_id: payload?.user_id,
         agency_id: user?.reference_id,
+        email: user?.email,
+        contact_number: user?.contact_number,
       };
     } catch (error) {
       console.log(error);
@@ -268,11 +272,11 @@ class PaymentService {
         expected_signature_2 === razorpay_signature
       ) {
         const status_change = await this.statusChange(payload);
-        if (!status_change) return { success: false };
-        return { success: true };
+        if (!status_change.success) return { success: false };
+        return { success: true, message: status_change?.message };
       }
 
-      await this.deleteUsers(payload);
+      // await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
       console.log(error);
@@ -315,7 +319,11 @@ class PaymentService {
         const team_agency_exist = await Team_Agency.findOne({
           agency_id,
         }).lean();
-        if (!team_agency_exist || user_exist?.status === "confirmed")
+        if (
+          !team_agency_exist ||
+          user_exist?.status === "confirmed" ||
+          user_exist?.status !== "payment_pending"
+        )
           return false;
         return true;
       } else if (user_exist?.role?.name === "team_client") {
@@ -373,16 +381,32 @@ class PaymentService {
           },
           { upsert: true }
         );
-        return true;
+        return {
+          success: true,
+          message: returnMessage("payment", "paymentCompleted"),
+        };
       } else if (payload?.agency_id && payload?.user_id) {
-        const agency_details = await Authentication.findOne({
-          reference_id: agency_id,
-        }).lean();
-        const user_details = await Authentication.findOne({
-          reference_id: payload?.user_id,
-        })
-          .populate("role", "name")
-          .lean();
+        const [agency_details, user_details, sheets] = await Promise.all([
+          Authentication.findOne({
+            reference_id: agency_id,
+          }).lean(),
+          Authentication.findOne({
+            reference_id: payload?.user_id,
+          })
+            .populate("role", "name")
+            .lean(),
+          SheetManagement.findOne({ agency_id }).lean(),
+        ]);
+        // const agency_details = await Authentication.findOne({
+        //   reference_id: agency_id,
+        // }).lean();
+        // const user_details = await Authentication.findOne({
+        //   reference_id: payload?.user_id,
+        // })
+        //   .populate("role", "name")
+        //   .lean();
+        // const sheets = await SheetManagement.findOne({ agency_id }).lean();
+        if (!sheets) return { success: false };
 
         if (user_details?.role?.name === "client") {
           let link = `${
@@ -424,17 +448,27 @@ class PaymentService {
             invitation_text
           );
 
+          await Authentication.findByIdAndUpdate(
+            user_details?._id,
+            { status: "confirm_pending" },
+            { new: true }
+          );
+
           await sendEmail({
             email: user_details?.email,
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_template,
           });
         } else if (user_details?.role?.name === "team_client") {
+          const team_client_detail = await Team_Client.findById(
+            user_details.reference_id
+          ).lean();
+
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
             agency_details?.first_name + " " + agency_details?.last_name
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
-          )}`;
+          )}&clientId=${team_client_detail.client_id}`;
           const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
           const invitation_template = invitationEmail(
@@ -448,6 +482,12 @@ class PaymentService {
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_template,
           });
+
+          await Team_Client.updateOne(
+            { _id: user_id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "pending" } },
+            { new: true }
+          );
         }
 
         await PaymentHistory.create({
@@ -459,8 +499,6 @@ class PaymentService {
           role: user_details?.role?.name,
         });
 
-        const sheets = await SheetManagement.findOne({ agency_id }).lean();
-        if (!sheets) return false;
         const occupied_sheets = [
           ...sheets.occupied_sheets,
           {
@@ -479,9 +517,19 @@ class PaymentService {
           { $set: { "agency_ids.$.status": "confirmed" } },
           { new: true }
         );
-        return true;
+
+        let message;
+        if (user_details?.role?.name === "client") {
+          message = returnMessage("agency", "clientCreated");
+        } else if (user_details?.role?.name === "team_agency") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        } else if (user_details?.role?.name === "team_client") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        }
+
+        return { success: true, message };
       }
-      return false;
+      return { success: false };
     } catch (error) {
       console.log(error);
 

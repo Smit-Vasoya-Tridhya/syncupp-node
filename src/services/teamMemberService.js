@@ -79,7 +79,7 @@ class TeamMemberService {
 
       await Authentication.create({
         name,
-        status: "confirm_pending",
+        status: "payment_pending",
         email,
         reference_id: team_agency?._id,
         contact_number,
@@ -438,7 +438,7 @@ class TeamMemberService {
         if (agency_id_exist.length === 0)
           return throwError(returnMessage("agency", "agencyNotFound"));
 
-        if (redirect) {
+        if (redirect && !(client_team_member && client_team_member?.password)) {
           await Team_Client.updateOne(
             { _id: team_client?._id, "agency_ids.agency_id": agency_id },
             { $set: { "agency_ids.$.status": "confirmed" } },
@@ -478,7 +478,7 @@ class TeamMemberService {
         }
       }
       return throwError(
-        returnMessage("teamMember", "alreadyVerified"),
+        returnMessage("teamMember", "invalidVerificationLink"),
         statusCode.unprocessableEntity
       );
     } catch (error) {
@@ -999,6 +999,7 @@ class TeamMemberService {
         return {
           teamMemberList: teams,
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
+          referral_points: 0, // this wil be change in future when the referral point will be integrate
         };
       } else if (user?.role?.name === "client") {
         const team_client_ids = await Team_Client.distinct("_id", {
@@ -1030,6 +1031,7 @@ class TeamMemberService {
         return {
           teamMemberList: teams,
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
+          referral_points: 0, // this wil be change in future when the referral point will be integrate
         };
       }
     } catch (error) {
@@ -1100,6 +1102,7 @@ class TeamMemberService {
         team_reference = await Team_Client.findById(team?.reference_id).lean();
       }
 
+      team_detail.first_name = team_detail?.name;
       team_detail.reference_id = team_reference;
       return team_detail;
     } catch (error) {
