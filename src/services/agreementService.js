@@ -292,10 +292,12 @@ class AgreementService {
         _id: agreementId,
         is_deleted: false,
       }).lean();
+
       if (status === "sent") {
         const clientDetails = await Authentication.findOne({
-          _id: agreement.client_id,
+          _id: agreement.receiver,
         });
+
         const ageremantMessage = agrementEmail(agreement);
         await sendEmail({
           email: clientDetails?.email,
@@ -304,6 +306,7 @@ class AgreementService {
         });
         payload.status = "sent";
       }
+
       if (agreement.status === "draft") {
         const updatedAgreement = await Agreement.findByIdAndUpdate(
           {
@@ -340,7 +343,7 @@ class AgreementService {
       }).lean();
 
       const clientDetails = await Authentication.findOne({
-        _id: agreement.client_id,
+        _id: agreement.receiver,
       });
       const ageremantMessage = agrementEmail(agreement);
       await sendEmail({
@@ -348,6 +351,20 @@ class AgreementService {
         subject: "New agreement",
         message: ageremantMessage,
       });
+
+      console.log(agreement.status);
+
+      if (agreement.status === "sent" || agreement.status === "draft") {
+        const updatedAgreement = await Agreement.findByIdAndUpdate(
+          {
+            _id: agreementId,
+          },
+          {
+            status: "sent",
+          },
+          { new: true, useFindAndModify: false }
+        );
+      }
 
       return true;
     } catch (error) {
