@@ -26,7 +26,7 @@ exports.addAgreement = catchAsyncError(async (req, res, next) => {
 // get All Agreement
 
 exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
-  const { agreements, pagination } = await agreementService.getAllAgreement(
+  const agreements = await agreementService.getAllAgreement(
     req.body,
     req?.user?._id
   );
@@ -35,8 +35,7 @@ exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
     true,
     returnMessage("agreement", "getAllAgreement"),
     agreements,
-    statusCode.success,
-    pagination
+    statusCode.success
   );
 });
 

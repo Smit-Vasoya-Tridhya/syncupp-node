@@ -3,11 +3,6 @@ const { admin_connection, crm_connection } = require("../config/connection");
 
 const agreementSchema = new mongoose.Schema(
   {
-    client_id: {
-      type: mongoose.Types.ObjectId,
-      ref: "authentication",
-      required: true,
-    },
     agency_id: {
       type: mongoose.Types.ObjectId,
       ref: "authentication",

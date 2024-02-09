@@ -30,21 +30,20 @@ class AgreementService {
       } = payload;
       const dueDate = new Date(due_date);
 
-      const auth = await Authentication.findById(client_id).populate("role");
-
+      const auth = await Authentication.findById(receiver).populate("role");
       if (auth.role.name === "client") {
         const client = await Client.findOne({
           _id: auth.reference_id,
-          "agency_ids.agency_id": user._id,
+          "agency_ids.agency_id": user.reference_id,
         });
+
         if (!client) {
-          return returnMessage("agreement", "clientnotexist");
+          return throwError(returnMessage("agreement", "clientnotexist"));
         }
       }
-
       if (send === true) {
         const clientDetails = await Authentication.findOne({
-          _id: client_id,
+          _id: receiver,
         });
         const ageremantMessage = agrementEmail(payload);
         await sendEmail({
@@ -56,7 +55,6 @@ class AgreementService {
       }
 
       const agreement = await Agreement.create({
-        client_id,
         title,
         agreement_content,
         due_date: dueDate,
@@ -76,6 +74,8 @@ class AgreementService {
     try {
       const queryObj = { is_deleted: false, agency_id: user_id };
       const pagination = paginationObject(searchObj);
+
+      console.log(queryObj);
 
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
@@ -138,13 +138,14 @@ class AgreementService {
             status: 1,
             agreement_content: 1,
             due_date: 1,
+            createdAt: 1,
           },
         },
       ];
       const agreements = await Agreement.aggregate(aggregationPipeline)
+        .sort(pagination.sort)
         .skip(pagination.skip)
-        .limit(pagination.result_per_page)
-        .sort(pagination.sort);
+        .limit(pagination.result_per_page);
 
       const totalAgreementsCount = await Agreement.countDocuments(queryObj);
 
@@ -152,7 +153,7 @@ class AgreementService {
       const pages = Math.ceil(
         totalAgreementsCount / pagination.result_per_page
       );
-
+      console.log(pages);
       return {
         agreements,
         page_count: pages,
@@ -167,7 +168,6 @@ class AgreementService {
 
   getAgreement = async (agreementId) => {
     try {
-      const queryObj = { _id: agreementId, is_deleted: false };
       const aggregationPipeline = [
         {
           $lookup: {
@@ -177,20 +177,11 @@ class AgreementService {
             as: "receiver_Data",
           },
         },
-        {
-          $lookup: {
-            from: "authentications",
-            localField: "client_id",
-            foreignField: "_id",
-            as: "sender_Data",
-          },
-        },
+
         {
           $unwind: "$receiver_Data",
         },
-        {
-          $unwind: "$sender_Data",
-        },
+
         {
           $match: {
             _id: new mongoose.Types.ObjectId(agreementId),
@@ -229,30 +220,6 @@ class AgreementService {
       throwError(error?.message, error?.statusCode);
     }
   };
-
-  // Delete Agreement
-  // deleteAgreement = async (payload) => {
-  //   try {
-  //     const agreementIdToDelete = payload;
-  //     const agreement = await Agreement.findOne({
-  //       _id: agreementIdToDelete,
-  //       is_deleted: false,
-  //     }).lean();
-
-  //     if (agreement.status === "draft") {
-  //       await Agreement.updateOne(
-  //         { _id: agreementIdToDelete },
-  //         { $set: { is_deleted: true } }
-  //       );
-  //       return true;
-  //     } else {
-  //       return throwError(returnMessage("agreement", "canNotDelete"));
-  //     }
-  //   } catch (error) {
-  //     logger.error(`Error while Deleting Agreement, ${error}`);
-  //     throwError(error?.message, error?.statusCode);
-  //   }
-  // };
 
   deleteAgreement = async (payload) => {
     try {
@@ -385,7 +352,9 @@ class AgreementService {
         const clientDetails = await Authentication.findOne({
           _id: agreement.client_id,
         });
-        const ageremantMessage = agrementEmail(agreement);
+        const agreement_detail = await this.getAgreement(agreementId);
+
+        const ageremantMessage = agrementEmail(agreement_detail);
         await sendEmail({
           email: clientDetails?.email,
           subject: "Updated agreement",
@@ -421,7 +390,9 @@ class AgreementService {
         const clientDetails = await Authentication.findOne({
           _id: agreement.client_id,
         });
-        const ageremantMessage = agrementEmail(agreement);
+        const agreement_detail = await this.getAgreement(agreementId);
+
+        const ageremantMessage = agrementEmail(agreement_detail);
         await sendEmail({
           email: clientDetails?.email,
           subject: "Updated agreement",
@@ -444,11 +415,12 @@ class AgreementService {
 
   // GET Client Agreement agencyWise
   getAllClientAgreement = async (searchObj, client_id) => {
-    // const { agency_id } = searchObj;
+    const { agency_id } = searchObj;
     try {
       const queryObj = {
         is_deleted: false,
-        client_id: client_id,
+        receiver: client_id,
+        agency_id: agency_id,
       };
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
