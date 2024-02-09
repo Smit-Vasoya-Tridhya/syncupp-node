@@ -104,6 +104,8 @@ class PaymentService {
         amount: plan?.amount,
         currency: plan?.currency,
         agency_id: user?.reference_id,
+        email: user?.email,
+        contact_number: user?.contact_number,
       };
     } catch (error) {
       console.log(error);
@@ -238,6 +240,8 @@ class PaymentService {
         currency: plan?.currency,
         user_id: payload?.user_id,
         agency_id: user?.reference_id,
+        email: user?.email,
+        contact_number: user?.contact_number,
       };
     } catch (error) {
       console.log(error);
@@ -379,14 +383,27 @@ class PaymentService {
         );
         return true;
       } else if (payload?.agency_id && payload?.user_id) {
-        const agency_details = await Authentication.findOne({
-          reference_id: agency_id,
-        }).lean();
-        const user_details = await Authentication.findOne({
-          reference_id: payload?.user_id,
-        })
-          .populate("role", "name")
-          .lean();
+        const [agency_details, user_details, sheets] = await Promise.all([
+          Authentication.findOne({
+            reference_id: agency_id,
+          }).lean(),
+          Authentication.findOne({
+            reference_id: payload?.user_id,
+          })
+            .populate("role", "name")
+            .lean(),
+          SheetManagement.findOne({ agency_id }).lean(),
+        ]);
+        // const agency_details = await Authentication.findOne({
+        //   reference_id: agency_id,
+        // }).lean();
+        // const user_details = await Authentication.findOne({
+        //   reference_id: payload?.user_id,
+        // })
+        //   .populate("role", "name")
+        //   .lean();
+        // const sheets = await SheetManagement.findOne({ agency_id }).lean();
+        if (!sheets) return false;
 
         if (user_details?.role?.name === "client") {
           let link = `${
@@ -469,8 +486,6 @@ class PaymentService {
           role: user_details?.role?.name,
         });
 
-        const sheets = await SheetManagement.findOne({ agency_id }).lean();
-        if (!sheets) return false;
         const occupied_sheets = [
           ...sheets.occupied_sheets,
           {
