@@ -91,7 +91,7 @@
     "roleRequired": "Role is required.",
     "userNotFound": "User not found.",
     "verified": "Verified successfully.",
-    "alreadyVerified": "You have already verified for this client.",
+    "alreadyVerified": "You have already verified for this agency.",
     "teamMemberNotFound": "Team member not found.",
     "teamMemberRejected": "Team member rejected successfully."
   },

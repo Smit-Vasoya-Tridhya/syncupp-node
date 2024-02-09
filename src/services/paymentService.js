@@ -381,7 +381,10 @@ class PaymentService {
           },
           { upsert: true }
         );
-        return true;
+        return {
+          success: true,
+          message: returnMessage("payment", "paymentCompleted"),
+        };
       } else if (payload?.agency_id && payload?.user_id) {
         const [agency_details, user_details, sheets] = await Promise.all([
           Authentication.findOne({
@@ -403,7 +406,7 @@ class PaymentService {
         //   .populate("role", "name")
         //   .lean();
         // const sheets = await SheetManagement.findOne({ agency_id }).lean();
-        if (!sheets) return false;
+        if (!sheets) return { success: false };
 
         if (user_details?.role?.name === "client") {
           let link = `${
@@ -457,11 +460,15 @@ class PaymentService {
             message: invitation_template,
           });
         } else if (user_details?.role?.name === "team_client") {
+          const team_client_detail = await Team_Client.findById(
+            user_details.reference_id
+          ).lean();
+
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
             agency_details?.first_name + " " + agency_details?.last_name
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
-          )}`;
+          )}&clientId=${team_client_detail.client_id}`;
           const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
           const invitation_template = invitationEmail(
@@ -475,6 +482,12 @@ class PaymentService {
             subject: returnMessage("emailTemplate", "invitation"),
             message: invitation_template,
           });
+
+          await Team_Client.updateOne(
+            { _id: user_id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "pending" } },
+            { new: true }
+          );
         }
 
         await PaymentHistory.create({
