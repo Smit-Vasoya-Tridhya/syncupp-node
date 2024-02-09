@@ -31,6 +31,19 @@ class TeamMemberService {
         return await this.addAgencyTeam(payload, user);
       } else if (user?.role?.name == "client") {
         return await this.addClientTeam(payload, user);
+      } else if (user?.role?.name == "team_client") {
+        const team_client_detail = await Team_Client.findById(
+          user?.reference_id
+        ).lean();
+        const client_detail = await Authentication.findOne({
+          reference_id: team_client_detail.client_id,
+        })
+          .populate("role", "name")
+          .lean();
+        return await this.addClientTeam(payload, {
+          ...client_detail,
+          created_by: user?.reference_id,
+        });
       }
     } catch (error) {
       logger.error(`Error While adding the Team member: ${error}`);
@@ -135,7 +148,9 @@ class TeamMemberService {
       if (!team_client_exist) {
         const new_team_client = await Team_Client.create({
           client_id: user?.reference_id,
-          agency_ids: [{ agency_id, status: "requested" }],
+          agency_ids: [
+            { agency_id, status: "requested", created_by: user?.created_by },
+          ],
           role: team_role?._id,
         });
 
@@ -167,7 +182,7 @@ class TeamMemberService {
 
         const agency_ids = [
           ...team_member.agency_ids,
-          { agency_id, status: "requested" },
+          { agency_id, status: "requested", created_by: user?.created_by },
         ];
 
         await Team_Client.findByIdAndUpdate(
@@ -550,7 +565,10 @@ class TeamMemberService {
         memberOf = "agency_id";
         teamMemberSchemaName = "team_agencies";
       }
-      if (teamMemberInfo.role.name === "client") {
+      if (
+        teamMemberInfo.role.name === "client" ||
+        teamMemberInfo.role.name === "team_client" // this will use for the team cleint to provide the same access as a client
+      ) {
         memberOf = "client_id";
         teamMemberSchemaName = "team_clients";
       }
@@ -1001,7 +1019,21 @@ class TeamMemberService {
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
           referral_points: 0, // this wil be change in future when the referral point will be integrate
         };
-      } else if (user?.role?.name === "client") {
+      } else if (
+        user?.role?.name === "client" ||
+        user?.role?.name === "team_client"
+      ) {
+        // this condition will used to give access to team-client as a client
+        if (user?.role?.name === "team_client") {
+          const team_client_detail = await Team_Client.findById(
+            user?.reference_id
+          ).lean();
+          user = await Authentication.findOne({
+            reference_id: team_client_detail.client_id,
+          })
+            .populate("role", "name")
+            .lean();
+        }
         const team_client_ids = await Team_Client.distinct("_id", {
           client_id: user?.reference_id,
           "agency_ids.agency_id": payload?.agency_id,

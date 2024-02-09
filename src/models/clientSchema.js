@@ -19,6 +19,7 @@ const clientSchema = new mongoose.Schema(
           enum: ["active", "inactive", "pending", "deleted", "payment_pending"],
         },
         createdAt: { type: Date, default: new Date() },
+        created_by: { type: mongoose.Schema.Types.ObjectId },
       },
     ],
   },

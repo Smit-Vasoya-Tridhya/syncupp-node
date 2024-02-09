@@ -18,11 +18,25 @@ const AuthService = require("../services/authService");
 const authService = new AuthService();
 const statusCode = require("../messages/statusCodes.json");
 const Team_Agency = require("../models/teamAgencySchema");
+const Team_Client = require("../models/teamClientSchema");
 
 class ClientService {
   // create client for the agency
   createClient = async (payload, agency) => {
     try {
+      if (agency?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          agency?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+        if (team_agency_detail?.role?.name === "admin") {
+          agency = await Authentication.findById(team_agency_detail?.agency_id)
+            .populate("role", "role")
+            .lean();
+          agency.created_by = team_agency_detail?._id;
+        }
+      }
       const { name, email, company_name } = payload;
       validateRequestFields(payload, ["name", "email", "company_name"]);
 
@@ -60,7 +74,11 @@ class ClientService {
           pincode: payload?.pincode,
           title: payload?.title,
           agency_ids: [
-            { agency_id: agency?.reference_id, status: "payment_pending" },
+            {
+              agency_id: agency?.reference_id,
+              status: "payment_pending",
+              created_by: agency?.created_by,
+            },
           ],
         };
         const new_client = await Client.create(client_obj);
@@ -104,6 +122,7 @@ class ClientService {
           {
             agency_id: agency?.reference_id,
             status: "payment_pending",
+            created_by: agency?.created_by,
           },
         ];
 
@@ -271,6 +290,18 @@ class ClientService {
   // delete the client from the particuar agency
   deleteClient = async (client_ids, agency) => {
     try {
+      if (agency?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          agency?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+        if (team_agency_detail?.role?.name === "admin") {
+          agency = await Authentication.findById(team_agency_detail?.agency_id)
+            .populate("role", "role")
+            .lean();
+        }
+      }
       const clientIds = await Authentication.distinct("reference_id", {
         _id: { $in: client_ids },
       });
@@ -293,6 +324,19 @@ class ClientService {
   // Get the client ist for the Agency
   clientList = async (payload, agency) => {
     try {
+      if (agency?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          agency?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+        if (team_agency_detail?.role?.name === "admin") {
+          agency = await Authentication.findById(team_agency_detail?.agency_id)
+            .populate("role", "role")
+            .lean();
+        }
+      }
+
       if (!payload?.pagination)
         return await this.clientListWithoutPagination(agency);
 
@@ -530,10 +574,20 @@ class ClientService {
 
   getAgencies = async (client) => {
     try {
-      const client_data = await Client.findById(client?.reference_id).lean();
+      let client_data, status;
+      // if the user role is type of hte team client then we need to provide the access same as a client
+      if (client?.role?.name === "team_client") {
+        client_data = await Team_Client.findById(client?.reference_id).lean();
+        status = "confirmed";
+      } else {
+        client_data = await Client.findById(client?.reference_id).lean();
+        status = "active";
+      }
+
       const agency_array = client_data?.agency_ids?.map((agency) =>
-        agency?.status === "active" ? agency?.agency_id : undefined
+        agency?.status === status ? agency?.agency_id : undefined
       );
+
       return await Authentication.find({
         reference_id: { $in: agency_array },
         is_deleted: false,

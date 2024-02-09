@@ -19,6 +19,7 @@ const teamClientSchema = new mongoose.Schema(
           enum: ["confirmed", "requested", "inactive", "rejected", "deleted"],
         },
         date: { type: Date, default: new Date() },
+        created_by: { type: mongoose.Schema.Types.ObjectId },
       },
     ],
     role: {
