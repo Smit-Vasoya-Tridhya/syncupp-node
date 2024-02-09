@@ -65,15 +65,9 @@ const {
 //coupon code end
 
 // this route is used for the ADMIN panel Login
-adminRoute.post("/login", login);
 adminRoute.post("/login", loginAdminValidator, validatorFunc, login);
 
-adminRoute.post(
-  "/forgotPassword",
-  forgotPasswordValidator,
-  validatorFunc,
-  forgotPassword
-);
+adminRoute.post("/forgotPassword", forgotPassword);
 adminRoute.post(
   "/resetPassword",
   resetPasswordValidator,
@@ -107,15 +101,11 @@ adminRoute.get("/get-client-review/:id", getClientReviewByID);
 adminRoute.post("/get-client-review", getAllClientReview);
 adminRoute.post(
   "/add-client-review",
-  // addClientReviewValidator,
-  // validatorFunc,
   upload.single("client_review_image"),
   addClientReview
 );
 adminRoute.put(
   "/update-client-review/:id",
-  // updateClientReviewValidator,
-  // validatorFunc,
   upload.single("client_review_image"),
   updateClientReview
 );
@@ -129,21 +119,9 @@ adminRoute.delete(
 adminRoute.post("/agencies", agencyController.getAllAgency);
 adminRoute.patch("/update-agency", agencyController.updateAgency);
 
-adminRoute.post(
-  "/add-coupon",
-  // addCouponValidator,
-  // validatorFunc,
-  upload.single("brandLogo"),
-  addCoupon
-);
+adminRoute.post("/add-coupon", upload.single("brandLogo"), addCoupon);
 adminRoute.get("/get-coupon/:id", getCoupon);
-adminRoute.put(
-  "/update-coupon/:id",
-  // updateCouponValidator,
-  // validatorFunc,
-  upload.single("brandLogo"),
-  updateCoupon
-);
+adminRoute.put("/update-coupon/:id", upload.single("brandLogo"), updateCoupon);
 adminRoute.delete(
   "/delete-coupon",
   deleteCouponValidator,

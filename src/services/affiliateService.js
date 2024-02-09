@@ -37,17 +37,17 @@ class AffiliateService {
     try {
       const { email, password, name, company_name } = payload;
 
-      const user = await Affiliate.findOne({ email: email });
-      if (user) {
-        return throwError(returnMessage("affiliate", "emailExist"));
-      }
-
       if (!validateEmail(email)) {
         return throwError(returnMessage("auth", "invalidEmail"));
       }
 
       if (!passwordValidation(password)) {
-        return throwError(returnMessage("auth", "invalidEmail"));
+        return throwError(returnMessage("auth", "invalidPassword"));
+      }
+
+      const user = await Affiliate.findOne({ email: email });
+      if (user) {
+        return throwError(returnMessage("affiliate", "emailExist"));
       }
 
       const hash_password = await bcrypt.hash(password, 14);
@@ -81,6 +81,14 @@ class AffiliateService {
         return throwError(returnMessage("auth", "emailPassNotFound"));
       }
 
+      if (!validateEmail(email)) {
+        return throwError(returnMessage("auth", "invalidEmail"));
+      }
+
+      if (!passwordValidation(password)) {
+        return throwError(returnMessage("auth", "invalidPassword"));
+      }
+
       const user = await Affiliate.findOne(
         { email, is_deleted: false },
         { is_deleted: 0 }
@@ -108,9 +116,19 @@ class AffiliateService {
   changePassword = async (payload, user_id) => {
     try {
       const { new_password, old_password } = payload;
+
+      if (!old_password) {
+        return throwError(returnMessage("auth", "oldPassRequired"));
+      }
+
       if (new_password === old_password) {
         return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
       }
+
+      if (!passwordValidation(new_password)) {
+        return throwError(returnMessage("auth", "invalidPassword"));
+      }
+
       const user = await Affiliate.findById({ _id: user_id });
       if (!user) {
         return throwError(returnMessage("auth", "invalidEmail"));
@@ -133,13 +151,18 @@ class AffiliateService {
   forgotPassword = async (payload) => {
     try {
       const { email } = payload;
+
+      if (!validateEmail(email)) {
+        return throwError(returnMessage("auth", "invalidEmail"));
+      }
+
       const user = await Affiliate.findOne({ email: email }, { password: 0 });
       if (!user) {
         return throwError(returnMessage("auth", "invalidEmail"));
       }
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
-      const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
+      const link = `${process.env.REACT_APP_URL}/affiliate/reset-password?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(
         link,
         user?.first_name + " " + user?.last_name || user?.name
@@ -169,6 +192,11 @@ class AffiliateService {
   resetPassword = async (payload) => {
     try {
       const { token, email, new_password } = payload;
+
+      if (!passwordValidation(new_password)) {
+        return throwError(returnMessage("auth", "invalidPassword"));
+      }
+
       const hash_token = crypto
         .createHash("sha256")
         .update(token)

@@ -4,7 +4,9 @@
     "passwordRequired": "Password is required",
     "invalidEmail": "Branch email is not valid.",
     "emailRequired": "Email is required",
-    "tokenRequired": "Token is required"
+    "tokenRequired": "Token is required",
+    "companyNameRequired": "Company name is required",
+    "nameRequired": "Name is required"
   },
   "general": {
     "invalidPassword": "Password should be at least 6 characters long and include at least one letter, one number, and one special character.",
@@ -27,7 +29,8 @@
     "clientReviewLength": "Client Review must not exceed 1000 characters",
     "faqIdsReq": "faqIdsToDelete key required",
     "clientReviewIdsReq": "clientReviewIdsToDelete key required",
-    "dateRequired": "Date is required"
+    "dateRequired": "Date is required",
+    "newPassRequired": "New password is required."
   },
   "agreement": {
     "clientIdReuired": "Client ID is required",

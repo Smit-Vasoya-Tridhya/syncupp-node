@@ -1,107 +1,3 @@
-const deleteAffiliate = {
-  tags: ["Affiliate - Auth"],
-  description: "",
-  summary: "Delete affiliate  ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            affiliateIdsToDelete: {
-              type: "array",
-              description: "Enter Affiliate IDS to be delete",
-              items: {
-                type: "string",
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-
-const getAllAffiliate = {
-  tags: ["Affiliate - Auth"],
-  description:
-    "sort_order = (asc ,desc)  ,sort_field = (name , email,message,contact_number, createdAt)  , page  = (number) , items_per_page=(number) . search  = (string))",
-  summary: "Get All affiliate  ",
-  security: [
-    {
-      bearerAuth: [],
-    },
-  ],
-  requestBody: {
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-
-          properties: {
-            sort_field: {
-              type: "string",
-              description: "Enter sortField",
-              example: "createdAt",
-              required: true,
-            },
-            sort_order: {
-              type: "string",
-              description: "Enter sortOrder",
-              example: "desc",
-              required: true,
-            },
-            page: {
-              type: "number",
-              description: "Enter page number",
-              example: 1,
-              required: true,
-            },
-            items_per_page: {
-              type: "number",
-              description: "Enter itemsPerPage",
-              example: 10,
-              required: true,
-            },
-          },
-        },
-      },
-    },
-  },
-
-  responses: {
-    200: {
-      description: "ok",
-      content: {
-        "application/json": {
-          schema: {
-            type: "object",
-          },
-        },
-      },
-    },
-  },
-};
-
 const logIn = {
   tags: ["Affiliate - Auth"],
   description: "",
@@ -344,11 +240,11 @@ const changePassword = {
 };
 
 const affiliateRoutes = {
-  "/api/v1/affiliate/login": {
-    post: logIn,
-  },
   "/api/v1/affiliate/signup": {
     post: signUp,
+  },
+  "/api/v1/affiliate/login": {
+    post: logIn,
   },
   "/api/v1/affiliate/forgot-password": {
     post: forgotPassword,

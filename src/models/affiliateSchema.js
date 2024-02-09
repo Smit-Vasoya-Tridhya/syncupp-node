@@ -12,7 +12,6 @@ const affiliateSchema = new mongoose.Schema(
     reset_password_token: { type: String },
     invitation_token: { type: String },
     is_deleted: { type: Boolean, default: false },
-    remember_me: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

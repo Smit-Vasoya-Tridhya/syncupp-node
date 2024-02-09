@@ -5,6 +5,8 @@ const { throwError } = require("../helpers/errorUtil");
 const {
   returnMessage,
   forgotPasswordEmailTemplate,
+  validateEmail,
+  passwordValidation,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
@@ -34,6 +36,14 @@ class AdminService {
   login = async (payload) => {
     try {
       const { email, password, rememberMe } = payload;
+
+      if (!validateEmail(email)) {
+        return throwError(returnMessage("auth", "invalidEmail"));
+      }
+
+      if (!passwordValidation(password)) {
+        return throwError(returnMessage("auth", "invalidPassword"));
+      }
 
       if (!email || !password)
         return throwError(
@@ -83,13 +93,17 @@ class AdminService {
   forgotPassword = async (payload) => {
     try {
       const { email } = payload;
+
+      if (!validateEmail(email)) {
+        return throwError(returnMessage("auth", "invalidEmail"));
+      }
       const admin = await Admin.findOne({ email: email }, { password: 0 });
       if (!admin) {
         return throwError(returnMessage("admin", "emailNotFound"));
       }
       const reset_password_token = crypto.randomBytes(32).toString("hex");
       const encode = encodeURIComponent(email);
-      const link = `${process.env.ADMIN_RESET_PASSWORD_URL}?token=${reset_password_token}&email=${encode}`;
+      const link = `${process.env.REACT_APP_URL}/admin/reset-password?token=${reset_password_token}&email=${encode}`;
       const forgot_email_template = forgotPasswordEmailTemplate(
         link,
         admin?.first_name + " " + admin?.last_name
@@ -117,6 +131,15 @@ class AdminService {
   resetPassword = async (payload) => {
     try {
       const { token, email, newPassword } = payload;
+
+      if (!validateEmail(email)) {
+        return throwError(returnMessage("auth", "invalidEmail"));
+      }
+
+      if (!passwordValidation(newPassword)) {
+        return throwError(returnMessage("auth", "invalidPassword"));
+      }
+
       const hash_token = crypto
         .createHash("sha256")
         .update(token)
@@ -151,6 +174,10 @@ class AdminService {
       }
       if (newPassword === oldPassword) {
         return throwError(returnMessage("auth", "oldAndNewPasswordSame"));
+      }
+
+      if (!passwordValidation(newPassword)) {
+        return throwError(returnMessage("auth", "invalidPassword"));
       }
 
       const is_match = await bcrypt.compare(oldPassword, admin.password);
