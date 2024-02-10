@@ -82,47 +82,28 @@ class AgreementService {
               $options: "i",
             },
           },
-
-          {
-            agreement_content: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
           {
             status: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
           },
+
           {
-            contact_number: {
+            "agreement_Data.name": {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
           },
-          {
-            email: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
-          // {
-          //   customer: {
-          //     $regex: searchObj.search.toLowerCase(),
-          //     $options: "i",
-          //   },
-          // },
         ];
 
         const keywordType = getKeywordType(searchObj.search);
         if (keywordType === "date") {
           const dateKeyword = new Date(searchObj.search);
           queryObj["$or"].push({ due_date: dateKeyword });
-          queryObj["$or"].push({ updatedAt: dateKeyword });
         }
       }
-
+      const pagination = paginationObject(searchObj);
       const aggregationPipeline = [
         {
           $lookup: {
@@ -153,21 +134,20 @@ class AgreementService {
           },
         },
       ];
-      const pagination = paginationObject(searchObj);
       const agreements = await Agreement.aggregate(aggregationPipeline)
         .sort(pagination.sort)
         .skip(pagination.skip)
         .limit(pagination.result_per_page);
 
-      const totalAgreementsCount = await Agreement.countDocuments(queryObj);
-
-      // Calculating total pages
-      const pages = Math.ceil(
-        totalAgreementsCount / pagination.result_per_page
+      const totalAgreementsCount = await Agreement.aggregate(
+        aggregationPipeline
       );
+
       return {
         agreements,
-        page_count: pages,
+        page_count:
+          Math.ceil(totalAgreementsCount.length / pagination.result_per_page) ||
+          0,
       };
     } catch (error) {
       logger.error(`Error while Admin Agreement Listing, ${error}`);
@@ -330,8 +310,6 @@ class AgreementService {
         message: ageremantMessage,
       });
 
-      console.log(agreement.status);
-
       if (agreement.status === "sent" || agreement.status === "draft") {
         const updatedAgreement = await Agreement.findByIdAndUpdate(
           {
@@ -453,16 +431,9 @@ class AgreementService {
         ];
 
         const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
-
-          queryObj["$or"].push({
-            revenue_made: numericKeyword,
-          });
-        } else if (keywordType === "date") {
+        if (keywordType === "date") {
           const dateKeyword = new Date(searchObj.search);
           queryObj["$or"].push({ due_date: dateKeyword });
-          queryObj["$or"].push({ updatedAt: dateKeyword });
         }
       }
 
@@ -471,7 +442,6 @@ class AgreementService {
         .sort(pagination.sort)
         .skip(pagination.skip)
         .limit(pagination.result_per_page)
-        .sort(pagination.sort)
         .populate({
           path: "agency_id",
           model: "authentication",
