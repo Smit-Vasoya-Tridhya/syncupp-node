@@ -377,7 +377,7 @@ class AgreementService {
         }).lean();
 
         const clientDetails = await Authentication.findOne({
-          _id: agreement.client_id,
+          _id: agreement.receiver,
         });
         const agreement_detail = await this.getAgreement(agreementId);
 
