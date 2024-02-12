@@ -26,10 +26,19 @@ exports.addAgreement = catchAsyncError(async (req, res, next) => {
 // get All Agreement
 
 exports.getAllAgreement = catchAsyncError(async (req, res, next) => {
-  const agreements = await agreementService.getAllAgreement(
-    req.body,
-    req?.user?._id
-  );
+  let agreements;
+  if (req.user.role.name === "agency") {
+    agreements = await agreementService.getAllAgreement(
+      req.body,
+      req?.user?._id
+    );
+  } else if (req.user.role.name === "client") {
+    agreements = await agreementService.getAllClientAgreement(
+      req.body,
+      req?.user?._id
+    );
+  }
+
   sendResponse(
     res,
     true,
@@ -71,6 +80,10 @@ exports.updateAgreement = catchAsyncError(async (req, res, next) => {
 // Get Agreement
 
 exports.getAgreement = catchAsyncError(async (req, res, next) => {
+  if (req.user.role.name === "agency" || req.user.role.name === "client") {
+    const getAgreement = await agreementService.getAgreement(req?.params?.id);
+  }
+
   const getAgreement = await agreementService.getAgreement(req?.params?.id);
   sendResponse(
     res,
@@ -93,30 +106,14 @@ exports.sendAgreement = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
-exports.updateAgreementStatusAgency = catchAsyncError(
-  async (req, res, next) => {
-    const updatedAgreement = await agreementService.updateAgreementStatusAgency(
-      req.body,
-      req?.params?.id
-    );
-    sendResponse(
-      res,
-      true,
-      returnMessage("agreement", "agreementStatusUpdated"),
-      updatedAgreement,
-      statusCode.success
-    );
-  }
-);
-
-// -------------------   Clint API   ------------------------
 
 // Update Agreement status
 
 exports.updateAgreementStatus = catchAsyncError(async (req, res, next) => {
   const updatedAgreement = await agreementService.updateAgreementStatus(
     req.body,
-    req?.params?.id
+    req?.params?.id,
+    req.user
   );
   sendResponse(
     res,
@@ -142,14 +139,15 @@ exports.downloadPdf = catchAsyncError(async (req, res, next) => {
 // get All Agreement
 
 exports.getAllClientAgreement = catchAsyncError(async (req, res, next) => {
-  const { agreements, pagination } =
-    await agreementService.getAllClientAgreement(req.body, req?.user?._id);
+  const agreements = await agreementService.getAllClientAgreement(
+    req.body,
+    req?.user?._id
+  );
   sendResponse(
     res,
     true,
     returnMessage("agreement", "getAllAgreement"),
     agreements,
-    statusCode.success,
-    pagination
+    statusCode.success
   );
 });

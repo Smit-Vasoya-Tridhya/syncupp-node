@@ -28,6 +28,6 @@ router.use("/client", clientRoute);
 // router.use("/agency/invoice", invoiceRoute);
 router.use("/payment", paymentRoute);
 router.use("/inquiry", inquiryRoute);
-router.use("/", agreementRoute);
+router.use("/agreement", agreementRoute);
 
 module.exports = router;

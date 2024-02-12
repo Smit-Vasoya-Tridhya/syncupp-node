@@ -8,56 +8,45 @@ agreementRoute.use(protect);
 
 // Agency Agreement API
 agreementRoute.post(
-  "/agency/agreement/add-agreement",
+  "/add-agreement",
+  authorizeRole("agency"),
   agreementValidator.addAgreementValidator,
   validatorFunc,
   agreementController.addAgreement
 );
+agreementRoute.post("/get-all-agreement", agreementController.getAllAgreement);
+agreementRoute.get("/get-agreement/:id", agreementController.getAgreement);
 agreementRoute.post(
-  "/agency/agreement/get-all-agreement",
-  agreementController.getAllAgreement
-);
-agreementRoute.get(
-  "/agency/agreement/get-agreement/:id",
-  agreementController.getAgreement
-);
-agreementRoute.post(
-  "/agency/agreement/delete-agreement",
+  "/delete-agreement",
+  authorizeRole("agency"),
   agreementController.deleteAgreement
 );
 agreementRoute.put(
-  "/agency/agreement/update-agreement/:id",
+  "/update-agreement/:id",
+  authorizeRole("agency"),
   agreementValidator.updateAgreementValidator,
   validatorFunc,
   agreementController.updateAgreement
 );
 agreementRoute.post(
-  "/agency/agreement/send-agreement",
+  "/send-agreement",
+  authorizeRole("agency"),
   agreementController.sendAgreement
 );
 agreementRoute.get(
-  "/agency/agreement/download-pdf/:id",
+  "/download-pdf/:id",
+  authorizeRole("agency"),
   agreementController.downloadPdf
 );
 
 // Client Agreement API
 
-agreementRoute.post(
-  "/client/agreement/get-all-agreement",
-  agreementController.getAllClientAgreement
-);
-agreementRoute.get(
-  "/client/agreement/get-agreement/:id",
-  agreementController.getAgreement
-);
+agreementRoute.post("/get-all-agreement", agreementController.getAllAgreement);
+agreementRoute.get("/get-agreement/:id", agreementController.getAgreement);
 
 agreementRoute.put(
-  "/client/agreement/update-agreement-status/:id",
+  "/update-agreement-status/:id",
   agreementController.updateAgreementStatus
-);
-agreementRoute.put(
-  "/agency/agreement/update-agreement-status/:id",
-  agreementController.updateAgreementStatusAgency
 );
 
 module.exports = agreementRoute;

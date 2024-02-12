@@ -73,9 +73,6 @@ class AgreementService {
   getAllAgreement = async (searchObj, user_id) => {
     try {
       const queryObj = { is_deleted: false, agency_id: user_id };
-      const pagination = paginationObject(searchObj);
-
-      console.log(queryObj);
 
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
@@ -86,13 +83,14 @@ class AgreementService {
             },
           },
           {
-            receiver: {
+            status: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
           },
+
           {
-            status: {
+            "agreement_Data.name": {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -100,18 +98,12 @@ class AgreementService {
         ];
 
         const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
-
-          queryObj["$or"].push({
-            revenue_made: numericKeyword,
-          });
-        } else if (keywordType === "date") {
+        if (keywordType === "date") {
           const dateKeyword = new Date(searchObj.search);
           queryObj["$or"].push({ due_date: dateKeyword });
-          queryObj["$or"].push({ updatedAt: dateKeyword });
         }
       }
+      const pagination = paginationObject(searchObj);
       const aggregationPipeline = [
         {
           $lookup: {
@@ -147,16 +139,15 @@ class AgreementService {
         .skip(pagination.skip)
         .limit(pagination.result_per_page);
 
-      const totalAgreementsCount = await Agreement.countDocuments(queryObj);
-
-      // Calculating total pages
-      const pages = Math.ceil(
-        totalAgreementsCount / pagination.result_per_page
+      const totalAgreementsCount = await Agreement.aggregate(
+        aggregationPipeline
       );
-      console.log(pages);
+
       return {
         agreements,
-        page_count: pages,
+        page_count:
+          Math.ceil(totalAgreementsCount.length / pagination.result_per_page) ||
+          0,
       };
     } catch (error) {
       logger.error(`Error while Admin Agreement Listing, ${error}`);
@@ -180,6 +171,18 @@ class AgreementService {
 
         {
           $unwind: "$receiver_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "agency_id",
+            foreignField: "_id",
+            as: "sender_Data",
+          },
+        },
+
+        {
+          $unwind: "$sender_Data",
         },
 
         {
@@ -319,8 +322,6 @@ class AgreementService {
         message: ageremantMessage,
       });
 
-      console.log(agreement.status);
-
       if (agreement.status === "sent" || agreement.status === "draft") {
         const updatedAgreement = await Agreement.findByIdAndUpdate(
           {
@@ -340,55 +341,29 @@ class AgreementService {
     }
   };
 
-  updateAgreementStatusAgency = async (payload, agreementId) => {
-    try {
-      const { status } = payload;
-      if (status === "sent") {
-        const agreement = await Agreement.findOne({
-          _id: agreementId,
-          is_deleted: false,
-        }).lean();
-
-        const clientDetails = await Authentication.findOne({
-          _id: agreement.client_id,
-        });
-        const agreement_detail = await this.getAgreement(agreementId);
-
-        const ageremantMessage = agrementEmail(agreement_detail);
-        await sendEmail({
-          email: clientDetails?.email,
-          subject: "Updated agreement",
-          message: ageremantMessage,
-        });
-      }
-      const agreement = await Agreement.findOneAndUpdate(
-        {
-          _id: agreementId,
-        },
-        { status },
-        { new: true, useFindAndModify: false }
-      );
-      return agreement;
-    } catch (error) {
-      logger.error(`Error while updating Agreement, ${error}`);
-      throwError(error?.message, error?.statusCode);
-    }
-  };
   // -------------------   Client API ----------------------
 
   // Update Client Agreement
 
-  updateAgreementStatus = async (payload, agreementId) => {
+  updateAgreementStatus = async (payload, agreementId, user) => {
     try {
       const { status } = payload;
+
+      if (user.role.name === "agency" && status === "agreed") {
+        return throwError(returnMessage("agreement", "canNotUpdate"));
+      }
+
+      if (status === "draft") {
+        return throwError(returnMessage("agreement", "canNotUpdate"));
+      }
+
       if (status === "sent") {
         const agreement = await Agreement.findOne({
           _id: agreementId,
           is_deleted: false,
         }).lean();
-
         const clientDetails = await Authentication.findOne({
-          _id: agreement.client_id,
+          _id: agreement.receiver,
         });
         const agreement_detail = await this.getAgreement(agreementId);
 
@@ -415,12 +390,15 @@ class AgreementService {
 
   // GET Client Agreement agencyWise
   getAllClientAgreement = async (searchObj, client_id) => {
-    const { agency_id } = searchObj;
+    let agency_id = searchObj.agency_id;
+
+    agency_id = await Authentication.findOne({ reference_id: agency_id });
     try {
       const queryObj = {
         is_deleted: false,
         receiver: client_id,
         agency_id: agency_id,
+        status: { $ne: "draft" }, // Exclude drafts
       };
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
@@ -430,12 +408,7 @@ class AgreementService {
               $options: "i",
             },
           },
-          {
-            receiver: {
-              $regex: searchObj.search.toLowerCase(),
-              $options: "i",
-            },
-          },
+
           {
             status: {
               $regex: searchObj.search.toLowerCase(),
@@ -445,16 +418,9 @@ class AgreementService {
         ];
 
         const keywordType = getKeywordType(searchObj.search);
-        if (keywordType === "number") {
-          const numericKeyword = parseInt(searchObj.search);
-
-          queryObj["$or"].push({
-            revenue_made: numericKeyword,
-          });
-        } else if (keywordType === "date") {
+        if (keywordType === "date") {
           const dateKeyword = new Date(searchObj.search);
           queryObj["$or"].push({ due_date: dateKeyword });
-          queryObj["$or"].push({ updatedAt: dateKeyword });
         }
       }
 
@@ -463,7 +429,11 @@ class AgreementService {
         .sort(pagination.sort)
         .skip(pagination.skip)
         .limit(pagination.result_per_page)
-        .sort(pagination.sort);
+        .populate({
+          path: "agency_id",
+          model: "authentication",
+          select: "name",
+        });
 
       const totalAgreementsCount = await Agreement.countDocuments(queryObj);
 

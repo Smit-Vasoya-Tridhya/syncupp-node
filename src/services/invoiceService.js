@@ -109,6 +109,7 @@ class InvoiceService {
         invoice_date,
         invoice_content,
         client_id,
+        sent,
       } = payload;
 
       const invoiceItems = invoice_content;
@@ -124,9 +125,16 @@ class InvoiceService {
       const { total, sub_total } = calculateInvoice(invoiceItems);
 
       // Update Invoice status
-      const getInvoiceStatus = await Invoice_Status_Master.findOne({
-        name: "draft",
-      });
+      let getInvoiceStatus;
+      if (sent === true) {
+        getInvoiceStatus = await Invoice_Status_Master.findOne({
+          name: "unpaid",
+        });
+      } else {
+        getInvoiceStatus = await Invoice_Status_Master.findOne({
+          name: "draft",
+        });
+      }
 
       const invoice = await Invoice.create({
         due_date,
@@ -521,16 +529,22 @@ class InvoiceService {
   // Update Invoice   ------   AGENCY API
   updateInvoice = async (payload, invoiceIdToUpdate) => {
     try {
-      const { due_date, invoice_content, client_id, invoice_date } = payload;
+      const { due_date, invoice_content, client_id, invoice_date, sent } =
+        payload;
       const invoice = await Invoice.findById(invoiceIdToUpdate).populate(
         "status"
       );
 
       if (invoice.status.name === "draft") {
         if (due_date || invoice_content || client_id || invoice_date) {
+          if (sent === true) {
+            var getInvoiceStatus = await Invoice_Status_Master.findOne({
+              name: "unpaid",
+            });
+          }
+
           const invoiceItems = invoice_content;
           calculateAmount(invoiceItems);
-
           const { total, sub_total } = calculateInvoice(invoiceItems);
 
           await Invoice.updateOne(
@@ -543,6 +557,7 @@ class InvoiceService {
                 invoice_content: invoiceItems,
                 client_id,
                 invoice_date,
+                status: getInvoiceStatus,
               },
             }
           );
@@ -591,11 +606,9 @@ class InvoiceService {
       })
         .populate("status", "name")
         .lean();
-      console.log(invoices);
       const deletableInvoices = invoices.filter(
         (invoice) => invoice.status.name === "draft"
       );
-      console.log(deletableInvoices);
       if (deletableInvoices.length === invoiceIdsToDelete.length) {
         await Invoice.updateMany(
           { _id: { $in: invoiceIdsToDelete } },
@@ -751,8 +764,6 @@ class InvoiceService {
         _id: invoiceId,
         is_deleted: false,
       }).lean();
-
-      console.log(invoice);
 
       const doc = new PDFDocument();
       const pdfBuffer = [];
