@@ -171,14 +171,18 @@ class TeamMemberService {
           team_client_exist?.reference_id
         ).lean();
 
-        const agency_id_exist = team_member?.agency_ids.filter(
-          (agency) => agency?.agency_id.toString() === agency_id
-        );
-
-        if (agency_id_exist?.length > 0)
-          return throwError(
-            returnMessage("teamMember", "agencyIdAlreadyExists")
-          );
+        team_member?.agency_ids?.forEach((agency, index) => {
+          if (
+            agency?.agency_id.toString() === agency_id &&
+            (agency?.status === "requested" || agency?.status === "confirmed")
+          ) {
+            return throwError(
+              returnMessage("teamMember", "agencyIdAlreadyExists")
+            );
+          } else {
+            team_member?.agency_ids.splice(index, 1);
+          }
+        });
 
         const agency_ids = [
           ...team_member.agency_ids,
@@ -1060,6 +1064,15 @@ class TeamMemberService {
             ...search_obj,
           }),
         ]);
+
+        teams.forEach((team) => {
+          if (team?.reference_id?.agency_ids) {
+            return team?.reference_id?.agency_ids.forEach((t) => {
+              if (t?.agency_id?.toString() == payload?.agency_id)
+                return (team.status = t?.status);
+            });
+          }
+        });
         return {
           teamMemberList: teams,
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,

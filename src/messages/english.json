@@ -86,7 +86,7 @@
     "TeamMemberFetched": "All team members fetched successfully.",
     "noDataFound": "All team member fetched successfully.",
     "updated": "Team member updated successfully.",
-    "agencyIdAlreadyExists": "Agency already exist for this teamMember.",
+    "agencyIdAlreadyExists": "Agency already exist for this team member.",
     "fillAll": "Please fill all the required fields.",
     "agencyIdRequired": "Agency required.",
     "roleRequired": "Role is required.",
