@@ -3,7 +3,6 @@ const { crm_connection } = require("../config/connection");
 
 const clientSchema = new mongoose.Schema(
   {
-    title: { type: String },
     company_name: { type: String, required: true },
     company_website: { type: String },
     address: { type: String },

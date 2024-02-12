@@ -37,8 +37,13 @@ class ClientService {
           agency.created_by = team_agency_detail?._id;
         }
       }
-      const { name, email, company_name } = payload;
-      validateRequestFields(payload, ["name", "email", "company_name"]);
+      const { first_name, last_name, email, company_name } = payload;
+      validateRequestFields(payload, [
+        "first_name",
+        "last_name",
+        "email",
+        "company_name",
+      ]);
 
       if (!validateEmail(email))
         return throwError(returnMessage("auth", "invalidEmail"));
@@ -72,7 +77,6 @@ class ClientService {
           state: payload?.state,
           country: payload?.country,
           pincode: payload?.pincode,
-          title: payload?.title,
           agency_ids: [
             {
               agency_id: agency?.reference_id,
@@ -83,7 +87,8 @@ class ClientService {
         };
         const new_client = await Client.create(client_obj);
         const client_auth_obj = {
-          name,
+          first_name,
+          last_name,
           email,
           contact_number: payload?.contact_number,
           role: role?._id,
@@ -499,7 +504,7 @@ class ClientService {
             first_name: 1,
             last_name: 1,
             email: 1,
-            name: 1,
+            name: { $concat: ["$first_name", " ", "$last_name"] },
             createdAt: 1,
             reference_id: 1,
           },
@@ -563,7 +568,6 @@ class ClientService {
           .populate("state", "name")
           .lean(),
       ]);
-      client_auth.first_name = client_auth?.name;
       client_auth["client"] = client_data;
       return client_auth;
     } catch (error) {

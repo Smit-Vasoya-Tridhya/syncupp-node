@@ -43,7 +43,53 @@ exports.passwordValidation = (password) => {
 exports.validateRequestFields = (payload, fields) => {
   for (const field of fields) {
     if (!payload[field]) {
-      return throwError(`${field} is required.`);
+      switch (field) {
+        case "title":
+          return throwError(`Title is required.`);
+          break;
+        case "agenda":
+          return throwError(`Agencda is required.`);
+          break;
+        case "due_time":
+          return throwError(`Due time is required.`);
+          break;
+        case "client_id":
+          return throwError(`Client detail is required.`);
+          break;
+        case "due_date":
+          return throwError(`Due date is required.`);
+          break;
+        case "assign_to":
+          return throwError(`Assignee is required.`);
+          break;
+        case "activity_type":
+          return throwError(`Activity type is required.`);
+          break;
+        case "contact_number":
+          return throwError(`Contact number is required.`);
+          break;
+        case "token":
+          return throwError(`Token is required.`);
+          break;
+        case "first_name":
+          return throwError(`First name is required.`);
+          break;
+        case "last_name":
+          return throwError(`Last name is required.`);
+          break;
+        case "company_name":
+          return throwError(`Company name is required.`);
+          break;
+        case "password":
+          return throwError(`Password is required.`);
+          break;
+        case "email":
+          return throwError(`Email is required.`);
+          break;
+        case "agency_id":
+          return throwError(`Agency detail is required.`);
+          break;
+      }
     }
   }
   return;

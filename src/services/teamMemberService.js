@@ -54,7 +54,7 @@ class TeamMemberService {
   // Add the team member by the Agency it self
   addAgencyTeam = async (payload, user) => {
     try {
-      const { email, name, contact_number, role } = payload;
+      const { email, first_name, last_name, contact_number, role } = payload;
       if (!role || role === "")
         return throwError(returnMessage("teamMember", "roleRequired"));
 
@@ -91,7 +91,8 @@ class TeamMemberService {
       //   .digest("hex");
 
       await Authentication.create({
-        name,
+        first_name,
+        last_name,
         status: "payment_pending",
         email,
         reference_id: team_agency?._id,
@@ -120,7 +121,8 @@ class TeamMemberService {
   // Add the team member for the particular agency by client
   addClientTeam = async (payload, user) => {
     try {
-      const { email, name, agency_id, contact_number, role } = payload;
+      const { email, first_name, last_name, agency_id, contact_number, role } =
+        payload;
       if (!agency_id || agency_id === "")
         return throwError(returnMessage("teamMember", "agencyIdRequired"));
 
@@ -155,7 +157,8 @@ class TeamMemberService {
         });
 
         await Authentication.create({
-          name,
+          first_name,
+          last_name,
           email,
           contact_number,
           role: team_auth_role?._id,
@@ -1146,8 +1149,6 @@ class TeamMemberService {
       } else if (team?.role?.name === "team_client") {
         team_reference = await Team_Client.findById(team?.reference_id).lean();
       }
-
-      team_detail.first_name = team_detail?.name;
       team_detail.reference_id = team_reference;
       return team_detail;
     } catch (error) {
