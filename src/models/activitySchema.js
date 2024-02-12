@@ -16,6 +16,7 @@ const activitySchema = new mongoose.Schema(
     internal_info: { type: String },
     assign_to: { type: mongoose.Types.ObjectId },
     assign_by: { type: mongoose.Types.ObjectId },
+    agency_id: { type: mongoose.Types.ObjectId },
     meeting_start_time: { type: Date },
     meeting_end_time: { type: Date },
     reminder_end_date: { type: Date },
