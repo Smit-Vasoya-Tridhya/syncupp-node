@@ -172,6 +172,18 @@ class AgreementService {
         {
           $unwind: "$receiver_Data",
         },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "agency_id",
+            foreignField: "_id",
+            as: "sender_Data",
+          },
+        },
+
+        {
+          $unwind: "$sender_Data",
+        },
 
         {
           $match: {
@@ -329,53 +341,27 @@ class AgreementService {
     }
   };
 
-  updateAgreementStatusAgency = async (payload, agreementId) => {
-    try {
-      const { status } = payload;
-      if (status === "sent") {
-        const agreement = await Agreement.findOne({
-          _id: agreementId,
-          is_deleted: false,
-        }).lean();
-
-        const clientDetails = await Authentication.findOne({
-          _id: agreement.receiver,
-        });
-        const agreement_detail = await this.getAgreement(agreementId);
-
-        const ageremantMessage = agrementEmail(agreement_detail);
-        await sendEmail({
-          email: clientDetails?.email,
-          subject: "Updated agreement",
-          message: ageremantMessage,
-        });
-      }
-      const agreement = await Agreement.findOneAndUpdate(
-        {
-          _id: agreementId,
-        },
-        { status },
-        { new: true, useFindAndModify: false }
-      );
-      return agreement;
-    } catch (error) {
-      logger.error(`Error while updating Agreement, ${error}`);
-      throwError(error?.message, error?.statusCode);
-    }
-  };
   // -------------------   Client API ----------------------
 
   // Update Client Agreement
 
-  updateAgreementStatus = async (payload, agreementId) => {
+  updateAgreementStatus = async (payload, agreementId, user) => {
     try {
       const { status } = payload;
+
+      if (user.role.name === "agency" && status === "agreed") {
+        return throwError(returnMessage("agreement", "canNotUpdate"));
+      }
+
+      if (status === "draft") {
+        return throwError(returnMessage("agreement", "canNotUpdate"));
+      }
+
       if (status === "sent") {
         const agreement = await Agreement.findOne({
           _id: agreementId,
           is_deleted: false,
         }).lean();
-
         const clientDetails = await Authentication.findOne({
           _id: agreement.receiver,
         });

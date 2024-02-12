@@ -120,7 +120,7 @@
     "getAgreement": "Agreement fetched successfully.",
     "getAllAgreement": "Agreements fetched successfully.",
     "canNotDelete": "Agreement can not be delete.",
-    "canNotUpdate": "Agreement can not be updated.",
+    "canNotUpdate": "Agreement can not be update.",
     "agreementStatusUpdated": "Agreement status updated.",
     "agreementSent": "Agreement sent to client successfully.",
     "downloadPDF": "PDF Downloaded successfully.",
