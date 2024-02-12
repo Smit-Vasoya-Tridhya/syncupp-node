@@ -191,6 +191,10 @@
     "emailExist": "Email already registered.",
     "incorrectPassword": "Email or password is incorrect."
   },
+  "crm": {
+    "contactUpdated": "Contact CRM updated successfully.",
+    "contactFetched": "Contact CRM fetched successfully."
+  },
 
   "default": { "default": "Something went wrong." }
 }
