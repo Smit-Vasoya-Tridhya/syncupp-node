@@ -35,7 +35,8 @@ class AffiliateService {
   // Affiliate Sign Up
   signUp = async (payload) => {
     try {
-      const { email, password, name, company_name } = payload;
+      const { email, password, name, company_name, first_name, last_name } =
+        payload;
 
       if (!validateEmail(email)) {
         return throwError(returnMessage("auth", "invalidEmail"));
@@ -57,6 +58,8 @@ class AffiliateService {
         password: hash_password,
         name,
         company_name,
+        first_name,
+        last_name,
       });
       newUser.save();
 
