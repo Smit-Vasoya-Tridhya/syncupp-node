@@ -398,6 +398,7 @@ class AgreementService {
         is_deleted: false,
         receiver: client_id,
         agency_id: agency_id,
+        status: { $ne: "draft" }, // Exclude drafts
       };
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
