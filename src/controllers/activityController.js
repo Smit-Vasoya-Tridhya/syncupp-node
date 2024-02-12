@@ -6,7 +6,7 @@ const { sendResponse } = require("../utils/sendResponse");
 const activityService = new ActivityService();
 
 exports.addTask = catchAsyncError(async (req, res, next) => {
-  const createTask = await activityService.createTask(req.body, req?.user?._id);
+  const createTask = await activityService.createTask(req.body, req?.user);
   sendResponse(
     res,
     true,
