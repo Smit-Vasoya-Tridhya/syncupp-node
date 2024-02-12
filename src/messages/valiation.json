@@ -37,7 +37,7 @@
     "titleRequired": "Agreements title required.",
     "descRequired": "Agreements content required.",
     "statusRequired": "Agreements status required.",
-    "descLength": "Agreement content must not exceed 2000 characters",
+    "descLength": "Agreement content must not exceed 4000 characters",
     "titleLength": "Title must not exceed 100 characters"
   },
   "invoice": {
