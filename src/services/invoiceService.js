@@ -760,35 +760,71 @@ class InvoiceService {
   downloadPdf = async (payload) => {
     try {
       const { invoiceId } = payload;
+      // const invoice = await Invoice.findOne({
+      //   _id: invoiceId,
+      //   is_deleted: false,
+      // }).lean();
+
+      // const doc = new PDFDocument();
+      // const pdfBuffer = [];
+      // return new Promise((resolve, reject) => {
+      //   doc.on("data", (chunk) => {
+      //     pdfBuffer.push(chunk);
+      //   });
+
+      //   doc.on("end", () => {
+      //     const resultBuffer = Buffer.concat(pdfBuffer);
+      //     resolve(resultBuffer);
+      //   });
+
+      //   doc.on("error", (error) => {
+      //     reject(error);
+      //   });
+
+      //   doc
+      //     .fontSize(16)
+      //     .text(`Document Title: ${invoice.invoice_number}`, 50, 50)
+      //     .text(`Receiver: ${invoice.invoice_date}`, 50, 80)
+      //     .text(`Due Date: ${invoice.due_date}`, 50, 110);
+
+      //   doc.end();
+      // });
+
       const invoice = await Invoice.findOne({
         _id: invoiceId,
         is_deleted: false,
       }).lean();
 
-      const doc = new PDFDocument();
-      const pdfBuffer = [];
-      return new Promise((resolve, reject) => {
-        doc.on("data", (chunk) => {
-          pdfBuffer.push(chunk);
+      const htmlTemplate = fs.readFileSync(
+        `${__dirname}/template.html`,
+        "utf-8"
+      );
+
+      // Compile the HTML template with Handlebars
+      const template = Handlebars.compile(htmlTemplate);
+      var data = {
+        title: invoice.title,
+        deuDate: invoice.due_date,
+        content: invoice.agreement_content,
+        receiver: invoice.receiver,
+        Status: invoice.status,
+      };
+      // Render the template with data
+      const renderedHtml = template(data);
+
+      // Convert the PDF to a buffer using html-pdf
+      const pdfBuffer = await new Promise((resolve, reject) => {
+        pdf.create(renderedHtml).toBuffer((err, buffer) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(buffer);
+          }
         });
-
-        doc.on("end", () => {
-          const resultBuffer = Buffer.concat(pdfBuffer);
-          resolve(resultBuffer);
-        });
-
-        doc.on("error", (error) => {
-          reject(error);
-        });
-
-        doc
-          .fontSize(16)
-          .text(`Document Title: ${invoice.invoice_number}`, 50, 50)
-          .text(`Receiver: ${invoice.invoice_date}`, 50, 80)
-          .text(`Due Date: ${invoice.due_date}`, 50, 110);
-
-        doc.end();
       });
+
+      res.set({ "Content-Type": "application/pdf" });
+      res.send(pdfBuffer);
     } catch (error) {
       logger.error(`Error while generating PDF, ${error}`);
       throwError(error?.message, error?.statusCode);

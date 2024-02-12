@@ -48,9 +48,5 @@ agreementRoute.put(
   "/update-agreement-status/:id",
   agreementController.updateAgreementStatus
 );
-agreementRoute.put(
-  "/agency/agreement/update-agreement-status/:id",
-  agreementController.updateAgreementStatusAgency
-);
 
 module.exports = agreementRoute;

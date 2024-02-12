@@ -106,30 +106,14 @@ exports.sendAgreement = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
-exports.updateAgreementStatusAgency = catchAsyncError(
-  async (req, res, next) => {
-    const updatedAgreement = await agreementService.updateAgreementStatusAgency(
-      req.body,
-      req?.params?.id
-    );
-    sendResponse(
-      res,
-      true,
-      returnMessage("agreement", "agreementStatusUpdated"),
-      updatedAgreement,
-      statusCode.success
-    );
-  }
-);
-
-// -------------------   Clint API   ------------------------
 
 // Update Agreement status
 
 exports.updateAgreementStatus = catchAsyncError(async (req, res, next) => {
   const updatedAgreement = await agreementService.updateAgreementStatus(
     req.body,
-    req?.params?.id
+    req?.params?.id,
+    req.user
   );
   sendResponse(
     res,
