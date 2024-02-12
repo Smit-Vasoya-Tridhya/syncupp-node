@@ -250,7 +250,7 @@ class AuthService {
         );
 
       if (!existing_Data?.password)
-        return throwError(returnMessage("auth", "emailPassNotFound"));
+        return throwError(returnMessage("auth", "incorrectPassword"));
 
       if (
         !(await this.passwordVerifier({
