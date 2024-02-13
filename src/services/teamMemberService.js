@@ -25,7 +25,7 @@ class TeamMemberService {
   // Add Team Member by agency or client
   addTeamMember = async (payload, user) => {
     try {
-      validateRequestFields(payload, ["email", "name"]);
+      validateRequestFields(payload, ["email", "first_name", "last_name"]);
 
       if (user?.role?.name == "agency") {
         return await this.addAgencyTeam(payload, user);
