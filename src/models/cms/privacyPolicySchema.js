@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { admin_connection } = require("../../config/connection");
 
-const contactUsSchema = new mongoose.Schema(
+const privacyPolicySchema = new mongoose.Schema(
   {
     description: {
       type: String,
@@ -11,6 +11,9 @@ const contactUsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Contact_Us = admin_connection.model("contact_us_cms", contactUsSchema);
+const Privacy_Policy = admin_connection.model(
+  "privacy_policy_cms",
+  privacyPolicySchema
+);
 
-module.exports = Contact_Us;
+module.exports = Privacy_Policy;

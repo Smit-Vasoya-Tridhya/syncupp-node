@@ -191,9 +191,15 @@
     "emailExist": "Email already registered.",
     "incorrectPassword": "Email or password is incorrect."
   },
-  "crm": {
+  "cms": {
     "contactUpdated": "Contact CRM updated successfully.",
-    "contactFetched": "Contact CRM fetched successfully."
+    "contactFetched": "Contact CRM fetched successfully.",
+    "privacyUpdated": "Privacy policy updated successfully.",
+    "policyFetched": "Privacy Policy fetched successfully.",
+    "planUpdated": "Plan updated successfully.",
+    "planFetched": "Plan fetched successfully.",
+    "technologyUpdated": "Technology stack updated successfully.",
+    "technologyFetched": "Technology stack fetched successfully."
   },
 
   "default": { "default": "Something went wrong." }
