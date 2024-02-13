@@ -900,6 +900,8 @@ class TeamMemberService {
           team_member_id,
           {
             name: payload?.name,
+            first_name: payload?.first_name,
+            last_name: payload?.last_name,
             contact_number: payload?.contact_number,
           },
           { new: true }
@@ -915,6 +917,8 @@ class TeamMemberService {
           team_member_id,
           {
             name: payload?.name,
+            first_name: payload?.first_name,
+            last_name: payload?.last_name,
             contact_number: payload?.contact_number,
           },
           { new: true }
