@@ -620,7 +620,21 @@ class TeamMemberService {
           { status: { $regex: payload.search, $options: "i" } },
         ];
       }
-      if (user?.role?.name === "agency") {
+      if (user?.role?.name === "agency" || user?.role?.name === "team_agency") {
+        if (user?.role?.name === "team_agency") {
+          const team_agency_detail = await Team_Agency.findById(
+            user?.reference_id
+          )
+            .populate("role", "name")
+            .lean();
+          if (team_agency_detail?.role?.name === "admin") {
+            user = await Authentication.findOne({
+              reference_id: team_agency_detail?.agency_id,
+            })
+              .populate("role", "name")
+              .lean();
+          }
+        }
         if (payload?.client_id) {
           const query_obj = {
             "agency_ids.agency_id": user?.reference_id,
