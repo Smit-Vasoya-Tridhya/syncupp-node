@@ -13,7 +13,7 @@ const { default: mongoose } = require("mongoose");
 const { ObjectId } = require("mongodb");
 const Team_Agency = require("../models/teamAgencySchema");
 class ActivityService {
-  createTask = async (payload, id) => {
+  createTask = async (payload, user) => {
     try {
       const {
         title,
@@ -24,7 +24,14 @@ class ActivityService {
         client_id,
         mark_as_done,
       } = payload;
-
+      let agency_id;
+      if (user.role.name === "agency") {
+        agency_id = user.reference_id;
+      } else if (user.role.name === "team_agency") {
+        const agencies = await Team_Agency.findOne({ agency_id: id }).lean();
+        agency_id = agencies.agency_id;
+      }
+      console.log(user);
       const dueDateObject = moment(due_date);
       const duetimeObject = moment(due_date);
 
@@ -50,10 +57,11 @@ class ActivityService {
         due_date: dueDateObject.toDate(),
         due_time: timeOnly,
         assign_to,
-        assign_by: id,
+        assign_by: user._id,
         client_id,
         activity_status: status._id,
         activity_type: type._id,
+        agency_id,
       });
       return newTask.save();
     } catch (error) {
@@ -74,7 +82,7 @@ class ActivityService {
   taskList = async (searchObj, user) => {
     if (!searchObj.pagination) {
       try {
-        const queryObj = { is_deleted: false };
+        const queryObj = { is_deleted: false, agency_id: user.reference_id };
         const pagination = paginationObject(searchObj);
 
         if (searchObj.search && searchObj.search !== "") {
@@ -239,7 +247,7 @@ class ActivityService {
       }
     } else {
       try {
-        const queryObj = { is_deleted: false };
+        const queryObj = { is_deleted: false, agency_id: user.reference_id };
         const pagination = paginationObject(searchObj);
 
         if (searchObj.search && searchObj.search !== "") {
