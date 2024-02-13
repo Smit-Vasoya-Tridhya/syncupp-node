@@ -139,7 +139,8 @@
     "canNotUpdate": "Invoice can not be updated.",
     "agencyIdRequired": "Agency ID required.",
     "invoiceSent": "Invoice sent successfully.",
-    "downloadPDF": "Download PDF successfully."
+    "downloadPDF": "Download PDF successfully.",
+    "invoiceSubject": "invoiceSubject: Your Invoice - "
   },
 
   "inquiry": {

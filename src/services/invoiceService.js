@@ -2,7 +2,7 @@ const Invoice = require("../models/invoiceSchema");
 const Invoice_Status_Master = require("../models/masters/invoiceStatusMaster");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const { returnMessage } = require("../utils/utils");
+const { returnMessage, invoiceTemplate } = require("../utils/utils");
 const Client = require("../models/clientSchema");
 const { ObjectId } = require("mongodb");
 
@@ -733,21 +733,20 @@ class InvoiceService {
         .populate("client_id")
         .populate("agency_id");
 
+      const invoiceData = await this.getInvoice(invoice_id);
+
       const clientDetails = await Authentication.findOne({
         reference_id: invoice.client_id,
       });
 
       // Use a template or format the invoice message accordingly
-      const formattedMessage = `Invoice Details:\n${JSON.stringify(
-        invoice,
-        null,
-        2
-      )}`;
+      const formattedInquiryEmail = invoiceTemplate(invoiceData[0]);
 
       await sendEmail({
         email: clientDetails?.email,
-        subject: "Invoice",
-        message: formattedMessage,
+        subject:
+          returnMessage("invoice", "invoiceSubject") + invoice?.invoice_number,
+        message: formattedInquiryEmail,
       });
 
       return true;
