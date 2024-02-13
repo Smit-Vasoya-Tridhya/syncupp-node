@@ -868,9 +868,19 @@ class AgreementService {
 
       let htmlTemplate = fs.readFileSync(`src/utils/Invoice.html`, "utf-8");
 
-      htmlTemplate = htmlTemplate.replace(
+      htmlTemplate = htmlTemplate.replaceAll(
         "{{content}}",
         agreement[0]?.agreement_content
+      );
+
+      htmlTemplate = htmlTemplate.replaceAll(
+        "{{url}}",
+        `${process.env.SERVER_URL}/template/syncupp-logo.png`
+      );
+
+      htmlTemplate = htmlTemplate.replaceAll(
+        "{{web_url}}",
+        `${process.env.REACT_APP_URL}`
       );
 
       // Compile the HTML template with Handlebars
