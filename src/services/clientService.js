@@ -342,7 +342,7 @@ class ClientService {
           .lean();
         if (team_agency_detail?.role?.name === "admin") {
           agency = await Authentication.findById(team_agency_detail?.agency_id)
-            .populate("role", "role")
+            .populate("role", "name")
             .lean();
         }
       }
@@ -485,7 +485,7 @@ class ClientService {
   clientListWithoutPagination = async (agency) => {
     try {
       let clients;
-      if (agency.role.name === "team_agency") {
+      if (agency?.role?.name === "team_agency") {
         const agency_detail = await Team_Agency.findById(agency.reference_id);
         clients = await Client.distinct("_id", {
           agency_ids: {
