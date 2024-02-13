@@ -7,10 +7,10 @@ const {
   returnMessage,
   paginationObject,
   getKeywordType,
+  validateRequestFields,
 } = require("../utils/utils");
 const moment = require("moment");
 const { default: mongoose } = require("mongoose");
-const { ObjectId } = require("mongodb");
 const Team_Agency = require("../models/teamAgencySchema");
 class ActivityService {
   createTask = async (payload, user) => {
@@ -1753,6 +1753,122 @@ class ActivityService {
     } catch (error) {
       logger.error(`Error while Updating status, ${error}`);
       throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // this function is used to create the call meeting and other call details
+  createCallMeeting = async (payload, user) => {
+    try {
+      validateRequestFields(payload, [
+        "title",
+        "agenda",
+        "client_id",
+        "due_time",
+        "due_date",
+        "assign_to",
+        "activity_type",
+      ]);
+      const {
+        client_id,
+        assign_to,
+        title,
+        agenda,
+        due_date,
+        meeting_start_time,
+        meeting_end_time,
+        activity_type,
+        internal_info,
+      } = payload;
+      const current_date = moment();
+      const start_date = moment(due_date);
+      const start_time = moment(meeting_start_time);
+      const end_time = moment(meeting_end_time);
+      if (!start_date.isSameOrAfter(current_date))
+        return throwError(returnMessage("activity", "dateinvalid"));
+
+      if (!end_time.isAfter(start_time))
+        return throwError(returnMessage("activity", "invalidTime"));
+
+      const activity_type_id = await ActivityType.findOne({
+        name: activity_type,
+      })
+        .select("_id")
+        .lean();
+
+      if (!activity_type_id)
+        return throwError(
+          returnMessage("activity", "activityTypeNotFound"),
+          statusCode.notFound
+        );
+
+      // check for the user role. if the role is team_agency then we need to
+      // find the agency id for that user which he is assigned
+
+      // let team_agency_detail;
+      if (user?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          user?.reference_id
+        ).lean();
+        user.agency_id = team_agency_detail?.agency_id;
+      }
+
+      // this below function is used to check weather client is assign to any type of the call or other
+      // activity or not if yes then throw an error but it should be in the same agency id not in the other
+      let meeting_exist;
+      if (user?.role?.name === "agency") {
+        meeting_exist = await Activity.findOne({
+          client_id,
+          agency_id: user?.reference_id,
+        }).lean();
+      } else if (user?.role?.name === "team_agency") {
+        meeting_exist = await Activity.findOne({
+          client_id,
+          agency_id: user?.agency_id,
+        }).lean();
+      }
+      if (meeting_exist)
+        return throwError(
+          returnMessage("activity", "meetingScheduledForClient")
+        );
+
+      // if the user role is agency then we need to check weather team member is assined to otehr call or not
+
+      if (user?.role?.name === "agency") {
+        const meeting_exist = await Activity.findOne({
+          assign_to,
+          agency_id: user?.reference_id,
+        }).lean();
+
+        if (meeting_exist)
+          return throwError(
+            returnMessage("activity", "meetingScheduledForTeam")
+          );
+      }
+
+      let status;
+      if (mark_as_done === true) {
+        status = await ActivityStatus.findOne({ name: "completed" }).lean();
+      } else {
+        status = await ActivityStatus.findOne({ name: "pending" }).lean();
+      }
+
+      await Activity.create({
+        activity_status: status?._id,
+        activity_type: activity_type_id?._id,
+        agency_id: user?.agency_id || user?.reference_id,
+        assign_by: user?.reference_id,
+        agenda,
+        assign_to,
+        title,
+        client_id,
+        internal_info,
+        meeting_start_time,
+        meeting_end_time,
+        due_date,
+      });
+    } catch (error) {
+      logger.error(`Error while creating call meeting and other: ${error}`);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

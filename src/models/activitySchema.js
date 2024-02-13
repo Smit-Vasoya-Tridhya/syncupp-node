@@ -19,7 +19,7 @@ const activitySchema = new mongoose.Schema(
     agency_id: { type: mongoose.Types.ObjectId },
     meeting_start_time: { type: Date },
     meeting_end_time: { type: Date },
-    reminder_end_date: { type: Date },
+    recurring_end_date: { type: Date },
     activity_status: {
       type: mongoose.Types.ObjectId,
       ref: "activity_status_master",

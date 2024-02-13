@@ -171,7 +171,11 @@
     "taskList": "Task List fetched successfully",
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
-    "deleteTask": "Task deleted successfully."
+    "deleteTask": "Task deleted successfully.",
+    "activityTypeNotFound": "This type of actvityu not found.",
+    "invalidTime": "End time should be greater than start time.",
+    "meetingScheduledForClient": "Meeting is already set for this client.",
+    "meetingScheduledForTeam": "Meeting is already set for this team member."
   },
 
   "payment": {
