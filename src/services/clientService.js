@@ -10,6 +10,7 @@ const {
   validateEmail,
   passwordValidation,
   welcomeMail,
+  capitalizeFirstLetter,
 } = require("../utils/utils");
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
@@ -89,6 +90,10 @@ class ClientService {
         const client_auth_obj = {
           first_name,
           last_name,
+          name:
+            capitalizeFirstLetter(first_name) +
+            " " +
+            capitalizeFirstLetter(last_name),
           email,
           contact_number: payload?.contact_number,
           role: role?._id,
@@ -626,6 +631,10 @@ class ClientService {
         first_name,
         last_name,
         contact_number,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
       };
       const agencyData = {
         company_name,

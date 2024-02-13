@@ -6,6 +6,7 @@ const {
   validateRequestFields,
   paginationObject,
   welcomeMail,
+  capitalizeFirstLetter,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
@@ -93,6 +94,10 @@ class TeamMemberService {
       await Authentication.create({
         first_name,
         last_name,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
         status: "payment_pending",
         email,
         reference_id: team_agency?._id,
@@ -159,6 +164,10 @@ class TeamMemberService {
         await Authentication.create({
           first_name,
           last_name,
+          name:
+            capitalizeFirstLetter(first_name) +
+            " " +
+            capitalizeFirstLetter(last_name),
           email,
           contact_number,
           role: team_auth_role?._id,
@@ -1188,6 +1197,10 @@ class TeamMemberService {
         first_name,
         last_name,
         contact_number,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
       };
       const agencyData = {
         company_name,

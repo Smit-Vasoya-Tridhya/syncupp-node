@@ -40,6 +40,10 @@ exports.passwordValidation = (password) => {
   return passwordRegex.test(password);
 };
 
+exports.capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 exports.validateRequestFields = (payload, fields) => {
   for (const field of fields) {
     if (!payload[field]) {
