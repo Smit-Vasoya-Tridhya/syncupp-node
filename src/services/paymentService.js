@@ -152,7 +152,7 @@ class PaymentService {
   ) => {
     try {
       const start_date = moment.unix(subscription_start_date).startOf("day");
-      const renew_date = moment.unix(renew_subscription_date);
+      const renew_date = moment.unix(renew_subscription_date).endOf("day");
 
       const paymentMoment = moment().startOf("day");
 
@@ -420,7 +420,7 @@ class PaymentService {
           const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_mail = invitationEmail(
             link,
-            user_details?.name,
+            user_details?.first_name + " " + user_details?.last_name,
             invitation_text
           );
 
@@ -444,7 +444,7 @@ class PaymentService {
           const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_template = invitationEmail(
             link,
-            user_details?.name,
+            user_details?.first_name + " " + user_details?.last_name,
             invitation_text
           );
 
@@ -473,7 +473,7 @@ class PaymentService {
 
           const invitation_template = invitationEmail(
             link,
-            user_details?.name,
+            user_details?.first_name + " " + user_details?.last_name,
             invitation_text
           );
 
@@ -517,6 +517,7 @@ class PaymentService {
           { $set: { "agency_ids.$.status": "confirmed" } },
           { new: true }
         );
+        await this.updateSubscription(agency_id, sheet_obj.total_sheets);
 
         let message;
         if (user_details?.role?.name === "client") {
@@ -570,6 +571,26 @@ class PaymentService {
       console.log(error);
       logger.error(`Error while gettign subscription detail: ${error}`);
       return false;
+    }
+  };
+
+  // update subscription whenever new sheet is addded or done the payment
+  updateSubscription = async (agency_id, quantity) => {
+    try {
+      const agency = await Authentication.findOne({
+        reference_id: agency_id,
+      }).lean();
+      if (!agency) return;
+
+      await Promise.resolve(
+        razorpay.subscriptions.update(agency?.subscription_id, {
+          quantity,
+        })
+      );
+      return;
+    } catch (error) {
+      logger.error(`Error while updating the subscription: ${error}`);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

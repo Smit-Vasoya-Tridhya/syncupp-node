@@ -49,11 +49,7 @@ const {
 const { upload } = require("../helpers/multer");
 
 //coupon code start
-const {
-  deleteCouponValidator,
-  updateCouponValidator,
-  addCouponValidator,
-} = require("../validators/coupon.validator");
+const { deleteCouponValidator } = require("../validators/coupon.validator");
 
 const {
   addCoupon,

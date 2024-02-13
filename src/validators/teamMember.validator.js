@@ -2,7 +2,11 @@ const { body } = require("express-validator");
 const validationMessage = require("../messages/valiation.json");
 
 exports.addMemberValidator = [
-  body("name")
+  body("first_name")
+    .not()
+    .isEmpty()
+    .withMessage(validationMessage.general.nameRequired),
+  body("last_name")
     .not()
     .isEmpty()
     .withMessage(validationMessage.general.nameRequired),
