@@ -1,7 +1,7 @@
 const Agency = require("../models/agencySchema");
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const { paginationObject } = require("../utils/utils");
+const { paginationObject, capitalizeFirstLetter } = require("../utils/utils");
 const Role_Master = require("../models/masters/roleMasterSchema");
 const Authentication = require("../models/authenticationSchema");
 const SubscriptionPlan = require("../models/subscriptionplanSchema");
@@ -191,6 +191,10 @@ class AgencyService {
         first_name,
         last_name,
         contact_number,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
       };
       const agencyData = {
         company_name,

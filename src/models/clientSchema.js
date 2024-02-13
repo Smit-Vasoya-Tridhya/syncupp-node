@@ -21,6 +21,8 @@ const clientSchema = new mongoose.Schema(
         created_by: { type: mongoose.Schema.Types.ObjectId },
       },
     ],
+    no_of_people: { type: String },
+    industry: { type: String },
   },
   { timestamps: true }
 );

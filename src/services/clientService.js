@@ -10,6 +10,7 @@ const {
   validateEmail,
   passwordValidation,
   welcomeMail,
+  capitalizeFirstLetter,
 } = require("../utils/utils");
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
@@ -89,6 +90,10 @@ class ClientService {
         const client_auth_obj = {
           first_name,
           last_name,
+          name:
+            capitalizeFirstLetter(first_name) +
+            " " +
+            capitalizeFirstLetter(last_name),
           email,
           contact_number: payload?.contact_number,
           role: role?._id,
@@ -163,8 +168,7 @@ class ClientService {
   // verify client that was invitd by any agency
   verifyClient = async (payload) => {
     try {
-      const { email, password, first_name, last_name, redirect, agency_id } =
-        payload;
+      const { email, password, redirect, agency_id } = payload;
       const role = await Role_Master.findOne({ name: "client" })
         .select("_id")
         .lean();
@@ -267,8 +271,6 @@ class ClientService {
         await Authentication.findByIdAndUpdate(
           client_auth?._id,
           {
-            first_name,
-            last_name,
             status: "confirmed",
             password: hash_password,
           },
@@ -336,8 +338,10 @@ class ClientService {
           .populate("role", "name")
           .lean();
         if (team_agency_detail?.role?.name === "admin") {
-          agency = await Authentication.findById(team_agency_detail?.agency_id)
-            .populate("role", "role")
+          agency = await Authentication.findOne({
+            reference_id: team_agency_detail?.agency_id,
+          })
+            .populate("role", "name")
             .lean();
         }
       }
@@ -480,7 +484,7 @@ class ClientService {
   clientListWithoutPagination = async (agency) => {
     try {
       let clients;
-      if (agency.role.name === "team_agency") {
+      if (agency?.role?.name === "team_agency") {
         const agency_detail = await Team_Agency.findById(agency.reference_id);
         clients = await Client.distinct("_id", {
           agency_ids: {
@@ -626,6 +630,10 @@ class ClientService {
         first_name,
         last_name,
         contact_number,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
       };
       const agencyData = {
         company_name,

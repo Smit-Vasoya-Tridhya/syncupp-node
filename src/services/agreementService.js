@@ -14,6 +14,9 @@ const sendEmail = require("../helpers/sendEmail");
 const Authentication = require("../models/authenticationSchema");
 const Client = require("../models/clientSchema");
 const { default: mongoose } = require("mongoose");
+const Handlebars = require("handlebars");
+const pdf = require("html-pdf");
+const moment = require("moment");
 
 class AgreementService {
   // Add   Agreement
@@ -41,20 +44,8 @@ class AgreementService {
           return throwError(returnMessage("agreement", "clientnotexist"));
         }
       }
-      if (send === true) {
-        const clientDetails = await Authentication.findOne({
-          _id: receiver,
-        });
-        const ageremantMessage = agrementEmail(payload);
-        await sendEmail({
-          email: clientDetails?.email,
-          subject: "New agreement",
-          message: ageremantMessage,
-        });
-        payload.status = "sent";
-      }
 
-      const agreement = await Agreement.create({
+      const agreements = await Agreement.create({
         title,
         agreement_content,
         due_date: dueDate,
@@ -62,7 +53,108 @@ class AgreementService {
         receiver,
         agency_id: user._id,
       });
-      return agreement;
+
+      if (send === true) {
+        const clientDetails = await Authentication.findOne({
+          _id: receiver,
+        });
+        const aggregationPipeline = [
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "receiver",
+              foreignField: "_id",
+              as: "receiver_Data",
+            },
+          },
+
+          {
+            $unwind: "$receiver_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "agency_id",
+              foreignField: "_id",
+              as: "sender_Data",
+            },
+          },
+
+          {
+            $unwind: "$sender_Data",
+          },
+
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(agreements._id),
+              is_deleted: false,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              first_name: "$receiver_Data.first_name",
+              last_name: "$receiver_Data.last_name",
+              email: "$receiver_Data.email",
+              receiver: "$receiver_Data.name",
+              receiver_email: "$receiver_Data.email",
+              receiver_number: "$receiver_Data.contact_number",
+              receiver_id: "$receiver_Data._id",
+              contact_number: 1,
+              sender: "$sender_Data.name",
+              sender_email: "$sender_Data.email",
+              sender_number: "$sender_Data.contact_number",
+              sender_first_name: "$sender_Data.first_name",
+              sender_last_name: "$sender_Data.last_name",
+              sender_id: "$sender_Data._id",
+              sender_fullName: {
+                $concat: [
+                  "$sender_Data.first_name",
+                  " ",
+                  "$sender_Data.last_name",
+                ],
+              },
+              receiver_fullName: {
+                $concat: [
+                  "$receiver_Data.first_name",
+                  " ",
+                  "$receiver_Data.last_name",
+                ],
+              },
+              title: 1,
+              status: 1,
+              agreement_content: 1,
+              due_date: 1,
+            },
+          },
+        ];
+        const agreement = await Agreement.aggregate(aggregationPipeline);
+        var data = {
+          title: agreement[0].title,
+          dueDate: moment(agreement[0].due_date).format("DD/MM/YYYY"),
+          content: agreement[0].agreement_content,
+          receiverName: agreement[0].receiver_fullName,
+          senderName: agreement[0].sender_fullName,
+          Status: agreement[0].status,
+          senderNumber: agreement[0].sender_number,
+          receiverNumber: agreement[0].receiver_number,
+          senderEmail: agreement[0].sender_email,
+          receiverEmail: agreement[0].receiver_email,
+        };
+        const ageremantMessage = agrementEmail(data);
+        await sendEmail({
+          email: clientDetails?.email,
+          subject: "Updated agreement",
+          message: ageremantMessage,
+        });
+        await Agreement.findOneAndUpdate(
+          { _id: agreements._id },
+          { status: "sent" },
+          { new: true }
+        );
+        payload.status = "sent";
+      }
+      return agreements;
     } catch (error) {
       logger.error(`Error while Admin add Agreement, ${error}`);
       throwError(error?.message, error?.statusCode);
@@ -267,8 +359,91 @@ class AgreementService {
         const clientDetails = await Authentication.findOne({
           _id: agreement.receiver,
         });
+        // const agreement_detail = await this.getAgreement(agreementId);
+        const aggregationPipeline = [
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "receiver",
+              foreignField: "_id",
+              as: "receiver_Data",
+            },
+          },
 
-        const ageremantMessage = agrementEmail(agreement);
+          {
+            $unwind: "$receiver_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "agency_id",
+              foreignField: "_id",
+              as: "sender_Data",
+            },
+          },
+
+          {
+            $unwind: "$sender_Data",
+          },
+
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(agreementId),
+              is_deleted: false,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              first_name: "$receiver_Data.first_name",
+              last_name: "$receiver_Data.last_name",
+              email: "$receiver_Data.email",
+              receiver: "$receiver_Data.name",
+              receiver_email: "$receiver_Data.email",
+              receiver_number: "$receiver_Data.contact_number",
+              receiver_id: "$receiver_Data._id",
+              contact_number: 1,
+              sender: "$sender_Data.name",
+              sender_email: "$sender_Data.email",
+              sender_number: "$sender_Data.contact_number",
+              sender_first_name: "$sender_Data.first_name",
+              sender_last_name: "$sender_Data.last_name",
+              sender_id: "$sender_Data._id",
+              sender_fullName: {
+                $concat: [
+                  "$sender_Data.first_name",
+                  " ",
+                  "$sender_Data.last_name",
+                ],
+              },
+              receiver_fullName: {
+                $concat: [
+                  "$receiver_Data.first_name",
+                  " ",
+                  "$receiver_Data.last_name",
+                ],
+              },
+              title: 1,
+              status: 1,
+              agreement_content: 1,
+              due_date: 1,
+            },
+          },
+        ];
+        const agreement = await Agreement.aggregate(aggregationPipeline);
+        var data = {
+          title: agreement[0].title,
+          dueDate: moment(agreement[0].due_date).format("DD/MM/YYYY"),
+          content: agreement[0].agreement_content,
+          receiverName: agreement[0].receiver_fullName,
+          senderName: agreement[0].sender_fullName,
+          Status: agreement[0].status,
+          senderNumber: agreement[0].sender_number,
+          receiverNumber: agreement[0].receiver_number,
+          senderEmail: agreement[0].sender_email,
+          receiverEmail: agreement[0].receiver_email,
+        };
+        const ageremantMessage = agrementEmail(data);
         await sendEmail({
           email: clientDetails?.email,
           subject: "Updated agreement",
@@ -307,22 +482,105 @@ class AgreementService {
     try {
       const { agreementId } = payload;
 
-      const agreement = await Agreement.findOne({
+      const agreements = await Agreement.findOne({
         _id: agreementId,
         is_deleted: false,
       }).lean();
-
       const clientDetails = await Authentication.findOne({
-        _id: agreement.receiver,
+        _id: agreements.receiver,
       });
-      const ageremantMessage = agrementEmail(agreement);
+      // const agreement_detail = await this.getAgreement(agreementId);
+      const aggregationPipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "receiver",
+            foreignField: "_id",
+            as: "receiver_Data",
+          },
+        },
+
+        {
+          $unwind: "$receiver_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "agency_id",
+            foreignField: "_id",
+            as: "sender_Data",
+          },
+        },
+
+        {
+          $unwind: "$sender_Data",
+        },
+
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(agreementId),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            first_name: "$receiver_Data.first_name",
+            last_name: "$receiver_Data.last_name",
+            email: "$receiver_Data.email",
+            receiver: "$receiver_Data.name",
+            receiver_email: "$receiver_Data.email",
+            receiver_number: "$receiver_Data.contact_number",
+            receiver_id: "$receiver_Data._id",
+            contact_number: 1,
+            sender: "$sender_Data.name",
+            sender_email: "$sender_Data.email",
+            sender_number: "$sender_Data.contact_number",
+            sender_first_name: "$sender_Data.first_name",
+            sender_last_name: "$sender_Data.last_name",
+            sender_id: "$sender_Data._id",
+            sender_fullName: {
+              $concat: [
+                "$sender_Data.first_name",
+                " ",
+                "$sender_Data.last_name",
+              ],
+            },
+            receiver_fullName: {
+              $concat: [
+                "$receiver_Data.first_name",
+                " ",
+                "$receiver_Data.last_name",
+              ],
+            },
+            title: 1,
+            status: 1,
+            agreement_content: 1,
+            due_date: 1,
+          },
+        },
+      ];
+      const agreement = await Agreement.aggregate(aggregationPipeline);
+      var data = {
+        title: agreement[0].title,
+        dueDate: moment(agreement[0].due_date).format("DD/MM/YYYY"),
+        content: agreement[0].agreement_content,
+        receiverName: agreement[0].receiver_fullName,
+        senderName: agreement[0].sender_fullName,
+        Status: agreement[0].status,
+        senderNumber: agreement[0].sender_number,
+        receiverNumber: agreement[0].receiver_number,
+        senderEmail: agreement[0].sender_email,
+        receiverEmail: agreement[0].receiver_email,
+      };
+      const ageremantMessage = agrementEmail(data);
       await sendEmail({
         email: clientDetails?.email,
-        subject: "New agreement",
+        subject: "Updated agreement",
         message: ageremantMessage,
       });
 
-      if (agreement.status === "sent" || agreement.status === "draft") {
+      if (agreements.status === "sent" || agreements.status === "draft") {
         const updatedAgreement = await Agreement.findByIdAndUpdate(
           {
             _id: agreementId,
@@ -358,16 +616,98 @@ class AgreementService {
       }
 
       if (status === "sent") {
-        const agreement = await Agreement.findOne({
+        const agreements = await Agreement.findOne({
           _id: agreementId,
           is_deleted: false,
         }).lean();
         const clientDetails = await Authentication.findOne({
-          _id: agreement.receiver,
+          _id: agreements.receiver,
         });
-        const agreement_detail = await this.getAgreement(agreementId);
+        // const agreement_detail = await this.getAgreement(agreementId);
+        const aggregationPipeline = [
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "receiver",
+              foreignField: "_id",
+              as: "receiver_Data",
+            },
+          },
 
-        const ageremantMessage = agrementEmail(agreement_detail);
+          {
+            $unwind: "$receiver_Data",
+          },
+          {
+            $lookup: {
+              from: "authentications",
+              localField: "agency_id",
+              foreignField: "_id",
+              as: "sender_Data",
+            },
+          },
+
+          {
+            $unwind: "$sender_Data",
+          },
+
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(agreementId),
+              is_deleted: false,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              first_name: "$receiver_Data.first_name",
+              last_name: "$receiver_Data.last_name",
+              email: "$receiver_Data.email",
+              receiver: "$receiver_Data.name",
+              receiver_email: "$receiver_Data.email",
+              receiver_number: "$receiver_Data.contact_number",
+              receiver_id: "$receiver_Data._id",
+              contact_number: 1,
+              sender: "$sender_Data.name",
+              sender_email: "$sender_Data.email",
+              sender_number: "$sender_Data.contact_number",
+              sender_first_name: "$sender_Data.first_name",
+              sender_last_name: "$sender_Data.last_name",
+              sender_id: "$sender_Data._id",
+              sender_fullName: {
+                $concat: [
+                  "$sender_Data.first_name",
+                  " ",
+                  "$sender_Data.last_name",
+                ],
+              },
+              receiver_fullName: {
+                $concat: [
+                  "$receiver_Data.first_name",
+                  " ",
+                  "$receiver_Data.last_name",
+                ],
+              },
+              title: 1,
+              status: 1,
+              agreement_content: 1,
+              due_date: 1,
+            },
+          },
+        ];
+        const agreement = await Agreement.aggregate(aggregationPipeline);
+        var data = {
+          title: agreement[0].title,
+          dueDate: moment(agreement[0].due_date).format("DD/MM/YYYY"),
+          content: agreement[0].agreement_content,
+          receiverName: agreement[0].receiver_fullName,
+          senderName: agreement[0].sender_fullName,
+          Status: agreement[0].status,
+          senderNumber: agreement[0].sender_number,
+          receiverNumber: agreement[0].receiver_number,
+          senderEmail: agreement[0].sender_email,
+          receiverEmail: agreement[0].receiver_email,
+        };
+        const ageremantMessage = agrementEmail(data);
         await sendEmail({
           email: clientDetails?.email,
           subject: "Updated agreement",
@@ -452,40 +792,131 @@ class AgreementService {
     }
   };
 
-  downloadPdf = async (id) => {
+  downloadPdf = async (id, res) => {
     try {
-      const agreement = await Agreement.findOne({
-        _id: id,
-        is_deleted: false,
-      }).lean();
+      const aggregationPipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "receiver",
+            foreignField: "_id",
+            as: "receiver_Data",
+          },
+        },
 
-      const doc = new PDFDocument();
-      const pdfBuffer = [];
-      return new Promise((resolve, reject) => {
-        doc.on("data", (chunk) => {
-          pdfBuffer.push(chunk);
+        {
+          $unwind: "$receiver_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "agency_id",
+            foreignField: "_id",
+            as: "sender_Data",
+          },
+        },
+
+        {
+          $unwind: "$sender_Data",
+        },
+
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(id),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            first_name: "$receiver_Data.first_name",
+            last_name: "$receiver_Data.last_name",
+            email: "$receiver_Data.email",
+            receiver: "$receiver_Data.name",
+            receiver_email: "$receiver_Data.email",
+            receiver_number: "$receiver_Data.contact_number",
+            receiver_id: "$receiver_Data._id",
+            contact_number: 1,
+            sender: "$sender_Data.name",
+            sender_email: "$sender_Data.email",
+            sender_number: "$sender_Data.contact_number",
+            sender_first_name: "$sender_Data.first_name",
+            sender_last_name: "$sender_Data.last_name",
+            sender_id: "$sender_Data._id",
+            sender_fullName: {
+              $concat: [
+                "$sender_Data.first_name",
+                " ",
+                "$sender_Data.last_name",
+              ],
+            },
+            receiver_fullName: {
+              $concat: [
+                "$receiver_Data.first_name",
+                " ",
+                "$receiver_Data.last_name",
+              ],
+            },
+            title: 1,
+            status: 1,
+            agreement_content: 1,
+            due_date: 1,
+          },
+        },
+      ];
+      const agreement = await Agreement.aggregate(aggregationPipeline);
+
+      let htmlTemplate = fs.readFileSync(`src/utils/Invoice.html`, "utf-8");
+
+      htmlTemplate = htmlTemplate.replaceAll(
+        "{{content}}",
+        agreement[0]?.agreement_content
+      );
+
+      htmlTemplate = htmlTemplate.replaceAll(
+        "{{url}}",
+        `${process.env.SERVER_URL}/template/syncupp-logo.png`
+      );
+
+      htmlTemplate = htmlTemplate.replaceAll(
+        "{{web_url}}",
+        `${process.env.REACT_APP_URL}`
+      );
+
+      // Compile the HTML template with Handlebars
+      const template = Handlebars.compile(htmlTemplate);
+      var data = {
+        title: agreement[0]?.title,
+        dueDate: moment(agreement[0]?.due_date)?.format("DD/MM/YYYY"),
+        receiverName: agreement[0]?.receiver_fullName,
+        senderName: agreement[0]?.sender_fullName,
+        Status: agreement[0]?.status,
+        senderNumber: agreement[0]?.sender_number,
+        receiverNumber: agreement[0]?.receiver_number,
+        senderEmail: agreement[0]?.sender_email,
+        receiverEmail: agreement[0]?.receiver_email,
+      };
+      // Render the template with data
+      const renderedHtml = template(data);
+
+      // Convert the PDF to a buffer using html-pdf
+      const pdfBuffer = await new Promise((resolve, reject) => {
+        pdf.create(renderedHtml, { format: "A4" }).toBuffer((err, buffer) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(buffer);
+          }
         });
-
-        doc.on("end", () => {
-          const resultBuffer = Buffer.concat(pdfBuffer);
-          resolve(resultBuffer);
-        });
-
-        doc.on("error", (error) => {
-          reject(error);
-        });
-
-        doc
-          .fontSize(16)
-          .text(`Document Title: ${agreement.title}`, 50, 50)
-          .text(`Receiver: ${agreement.receiver}`, 50, 80)
-          .text(`Due Date: ${agreement.due_date}`, 50, 110);
-
-        doc.end();
       });
+      // res.writeHead(200, {
+      //   "Content-Type": "application/pdf",
+      // });
+      return pdfBuffer;
+      // res.send(pdfBuffer);
     } catch (error) {
-      logger.error(`Error while generating PDF, ${error}`);
-      throwError(error?.message, error?.statusCode);
+      console.error("Error while generating PDF:", error);
+      throw error;
     }
   };
 }

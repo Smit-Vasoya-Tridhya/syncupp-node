@@ -101,12 +101,6 @@ class ActivityService {
               },
             },
             {
-              client_name: {
-                $regex: searchObj.search.toLowerCase(),
-                $options: "i",
-              },
-            },
-            {
               "assign_by.first_name": {
                 $regex: searchObj.search.toLowerCase(),
                 $options: "i",
@@ -127,6 +121,24 @@ class ActivityService {
             {
               "assign_by.last_name": {
                 $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.assigned_by_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.assigned_to_name": {
+                $regex: searchObj.search,
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.client_name": {
+                $regex: searchObj.search,
                 $options: "i",
               },
             },
@@ -153,7 +165,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "client_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    client_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -167,7 +188,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "team_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_to_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -181,7 +211,16 @@ class ActivityService {
               foreignField: "_id",
               as: "assign_by",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_by_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -212,14 +251,13 @@ class ActivityService {
               due_date: 1,
               createdAt: 1,
               internal_info: 1,
-              assigned_to_name: "$team_Data.name",
-              assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
-              assigned_by_name: {
-                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
-              },
-              client_name: "$client_Data.name",
+              assigned_to_first_name: "$team_Data.first_name",
+              assigned_to_last_name: "$team_Data.last_name",
+              assigned_to_name: "$team_Data.assigned_to_name",
+              assigned_by_name: "$assign_by.assigned_by_name",
+              client_name: "$client_Data.client_name",
               column_id: "$status.name",
             },
           },
@@ -266,8 +304,8 @@ class ActivityService {
               },
             },
             {
-              client_name: {
-                $regex: searchObj.search.toLowerCase(),
+              "client_Data.client_name": {
+                $regex: searchObj.search,
                 $options: "i",
               },
             },
@@ -295,6 +333,24 @@ class ActivityService {
                 $options: "i",
               },
             },
+            {
+              "assign_by.assigned_by_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.assigned_to_name": {
+                $regex: searchObj.search,
+                $options: "i",
+              },
+            },
+            // {
+            //   assigned_by_name: {
+            //     $regex: searchObj.search,
+            //     $options: "i",
+            //   },
+            // },
           ];
 
           const keywordType = getKeywordType(searchObj.search);
@@ -310,22 +366,7 @@ class ActivityService {
             queryObj["$or"].push({ updatedAt: dateKeyword });
           }
         }
-        // const teamRole = await Team_Agency.findOne({
-        //   _id: user.reference_id,
-        // }).populate("role");
 
-        // let assignedByNameProjection = "$assign_by.name";
-        // if (teamRole?.role?.name === "admin") {
-        //   assignedByNameProjection = {
-        //     $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
-        //   };
-        // } else if (teamRole?.role?.name === "team_member") {
-        //   assignedByNameProjection = "$assign_by.name";
-        // } else {
-        //   assignedByNameProjection = {
-        //     $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
-        //   };
-        // }
         const taskPipeline = [
           {
             $lookup: {
@@ -334,7 +375,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "client_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    client_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -348,7 +398,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "team_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_to_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -362,7 +421,16 @@ class ActivityService {
               foreignField: "_id",
               as: "assign_by",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_by_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -393,14 +461,13 @@ class ActivityService {
               due_date: 1,
               createdAt: 1,
               internal_info: 1,
-              assigned_to_name: "$team_Data.name",
-              assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
-              assigned_by_name: {
-                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
-              },
-              client_name: "$client_Data.name",
+              assigned_to_first_name: "$team_Data.first_name",
+              assigned_to_last_name: "$team_Data.last_name",
+              assigned_to_name: "$team_Data.assigned_to_name",
+              assigned_by_name: "$assign_by.assigned_by_name",
+              client_name: "$client_Data.client_name",
               column_id: "$status.name",
             },
           },
@@ -452,20 +519,8 @@ class ActivityService {
               },
             },
             {
-              "client_Data.name": {
-                $regex: searchObj.search.toLowerCase(),
-                $options: "i",
-              },
-            },
-            {
-              "client_Data.first_name": {
-                $regex: searchObj.search.toLowerCase(),
-                $options: "i",
-              },
-            },
-            {
-              "client_Data.last_name": {
-                $regex: searchObj.search.toLowerCase(),
+              "client_Data.client_name": {
+                $regex: searchObj.search,
                 $options: "i",
               },
             },
@@ -493,6 +548,24 @@ class ActivityService {
                 $options: "i",
               },
             },
+            {
+              "assign_by.assigned_by_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.assigned_to_name": {
+                $regex: searchObj.search,
+                $options: "i",
+              },
+            },
+            // {
+            //   assigned_by_name: {
+            //     $regex: searchObj.search,
+            //     $options: "i",
+            //   },
+            // },
           ];
 
           const keywordType = getKeywordType(searchObj.search);
@@ -519,7 +592,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "client_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    client_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -533,7 +615,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "team_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_to_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -547,7 +638,16 @@ class ActivityService {
               foreignField: "_id",
               as: "assign_by",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_by_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -578,18 +678,13 @@ class ActivityService {
               client_name: "$client_Data.name",
 
               internal_info: 1,
-              assigned_to_name: "$team_Data.name",
-
-              assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
-              assigned_by_name: {
-                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
-              },
-              assign_to_name: {
-                $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
-              },
-              client_name: "$client_Data.name",
+              assigned_to_first_name: "$team_Data.first_name",
+              assigned_to_last_name: "$team_Data.last_name",
+              assigned_to_name: "$team_Data.assigned_to_name",
+              assigned_by_name: "$assign_by.assigned_by_name",
+              client_name: "$client_Data.client_name",
 
               column_id: "$status.name",
             },
@@ -639,12 +734,6 @@ class ActivityService {
               },
             },
             {
-              "client_Data.name": {
-                $regex: searchObj.search.toLowerCase(),
-                $options: "i",
-              },
-            },
-            {
               "client_Data.first_name": {
                 $regex: searchObj.search.toLowerCase(),
                 $options: "i",
@@ -680,6 +769,24 @@ class ActivityService {
                 $options: "i",
               },
             },
+            {
+              "assign_by.assigned_by_name": {
+                $regex: searchObj.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "team_Data.assigned_to_name": {
+                $regex: searchObj.search,
+                $options: "i",
+              },
+            },
+            {
+              "client_Data.client_name": {
+                $regex: searchObj.search,
+                $options: "i",
+              },
+            },
           ];
 
           const keywordType = getKeywordType(searchObj.search);
@@ -706,7 +813,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "client_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    client_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -720,7 +836,16 @@ class ActivityService {
               foreignField: "reference_id",
               as: "team_Data",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_to_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -734,7 +859,16 @@ class ActivityService {
               foreignField: "_id",
               as: "assign_by",
               pipeline: [
-                { $project: { name: 1, first_name: 1, last_name: 1 } },
+                {
+                  $project: {
+                    name: 1,
+                    first_name: 1,
+                    last_name: 1,
+                    assigned_by_name: {
+                      $concat: ["$first_name", " ", "$last_name"],
+                    },
+                  },
+                },
               ],
             },
           },
@@ -762,18 +896,14 @@ class ActivityService {
               due_time: 1,
               due_date: 1,
               createdAt: 1,
-              client_name: "$client_Data.name",
               internal_info: 1,
-              assigned_to_name: "$team_Data.name",
-              assigned_by_name: "$assign_by.name",
               assigned_by_first_name: "$assign_by.first_name",
               assigned_by_last_name: "$assign_by.last_name",
-              assigned_by_name: {
-                $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
-              },
-              assign_to_name: {
-                $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
-              },
+              assigned_to_first_name: "$team_Data.first_name",
+              assigned_to_last_name: "$team_Data.last_name",
+              assigned_to_name: "$team_Data.assigned_to_name",
+              assigned_by_name: "$assign_by.assigned_by_name",
+              client_name: "$client_Data.client_name",
 
               column_id: "$status.name",
             },
@@ -831,12 +961,6 @@ class ActivityService {
                 },
               },
               {
-                "client_Data.name": {
-                  $regex: searchObj.search.toLowerCase(),
-                  $options: "i",
-                },
-              },
-              {
                 "client_Data.first_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
@@ -872,6 +996,24 @@ class ActivityService {
                   $options: "i",
                 },
               },
+              {
+                "assign_by.assigned_by_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.assigned_to_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.client_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
             ];
 
             const keywordType = getKeywordType(searchObj.search);
@@ -898,7 +1040,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "client_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      client_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -912,7 +1063,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "team_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_to_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -926,7 +1086,16 @@ class ActivityService {
                 foreignField: "_id",
                 as: "team_by",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_by_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -958,20 +1127,14 @@ class ActivityService {
                 client_name: "$client_Data.name",
 
                 internal_info: 1,
-                assigned_to_name: "$team_Data.name",
+                assigned_by_first_name: "$assign_by.first_name",
+                assigned_by_last_name: "$assign_by.last_name",
                 assigned_to_first_name: "$team_Data.first_name",
                 assigned_to_last_name: "$team_Data.last_name",
-                assigned_by_name: "$team_by.name",
+                assigned_to_name: "$team_Data.assigned_to_name",
+                assigned_by_name: "$assign_by.assigned_by_name",
+                client_name: "$client_Data.client_name",
                 assign_by: 1,
-                assigned_by_first_name: "$team_by.first_name",
-                assigned_by_last_name: "$team_by.last_name",
-                assigned_by_name: {
-                  $concat: [
-                    "$assign_by.first_name",
-                    " ",
-                    "$assign_by.last_name",
-                  ],
-                },
 
                 column_id: "$status.name",
               },
@@ -1016,12 +1179,6 @@ class ActivityService {
                 },
               },
               {
-                "client_Data.name": {
-                  $regex: searchObj.search.toLowerCase(),
-                  $options: "i",
-                },
-              },
-              {
                 "client_Data.first_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
@@ -1057,6 +1214,24 @@ class ActivityService {
                   $options: "i",
                 },
               },
+              {
+                "assign_by.assigned_by_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.assigned_to_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.client_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
             ];
 
             const keywordType = getKeywordType(searchObj.search);
@@ -1083,7 +1258,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "client_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      client_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1097,7 +1281,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "team_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_to_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1111,7 +1304,16 @@ class ActivityService {
                 foreignField: "_id",
                 as: "team_by",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_to_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1140,20 +1342,17 @@ class ActivityService {
                 due_time: 1,
                 due_date: 1,
                 createdAt: 1,
-                client_name: "$client_Data.name",
+
                 internal_info: 1,
-                assigned_to_name: "$team_Data.name",
-                assigned_by_name: "$team_by.name",
+
                 assign_by: 1,
-                assigned_by_first_name: "$team_by.first_name",
-                assigned_by_last_name: "$team_by.last_name",
-                assigned_by_name: {
-                  $concat: [
-                    "$assign_by.first_name",
-                    " ",
-                    "$assign_by.last_name",
-                  ],
-                },
+                assigned_by_first_name: "$assign_by.first_name",
+                assigned_by_last_name: "$assign_by.last_name",
+                assigned_to_first_name: "$team_Data.first_name",
+                assigned_to_last_name: "$team_Data.last_name",
+                assigned_to_name: "$team_Data.assigned_to_name",
+                assigned_by_name: "$assign_by.assigned_by_name",
+                client_name: "$client_Data.client_name",
 
                 column_id: "$status.name",
               },
@@ -1213,12 +1412,6 @@ class ActivityService {
                 },
               },
               {
-                "client_Data.name": {
-                  $regex: searchObj.search.toLowerCase(),
-                  $options: "i",
-                },
-              },
-              {
                 "client_Data.first_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
@@ -1254,6 +1447,24 @@ class ActivityService {
                   $options: "i",
                 },
               },
+              {
+                "assign_by.assigned_by_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.assigned_to_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.client_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
             ];
 
             const keywordType = getKeywordType(searchObj.search);
@@ -1280,7 +1491,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "client_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      client_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1294,7 +1514,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "team_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_to_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1308,7 +1537,16 @@ class ActivityService {
                 foreignField: "_id",
                 as: "team_by",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_by_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1338,18 +1576,15 @@ class ActivityService {
                 due_date: 1,
                 createdAt: 1,
                 client_name: "$client_Data.name",
-
                 internal_info: 1,
-                assigned_to_name: "$team_Data.name",
-
-                assigned_by_name: "$team_by.name",
+                assigned_by_first_name: "$assign_by.first_name",
+                assigned_by_last_name: "$assign_by.last_name",
+                assigned_to_first_name: "$team_Data.first_name",
+                assigned_to_last_name: "$team_Data.last_name",
+                assigned_to_name: "$team_Data.assigned_to_name",
+                assigned_by_name: "$assign_by.assigned_by_name",
+                client_name: "$client_Data.client_name",
                 assign_by: 1,
-                assigned_by_first_name: "$team_by.first_name",
-                assigned_by_last_name: "$team_by.last_name",
-                assigned_by_name: {
-                  $concat: ["$team_by.first_name", " ", "$team_by.last_name"],
-                },
-
                 column_id: "$status.name",
               },
             },
@@ -1392,12 +1627,6 @@ class ActivityService {
                 },
               },
               {
-                "client_Data.name": {
-                  $regex: searchObj.search.toLowerCase(),
-                  $options: "i",
-                },
-              },
-              {
                 "client_Data.first_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
@@ -1433,6 +1662,24 @@ class ActivityService {
                   $options: "i",
                 },
               },
+              {
+                "assign_by.assigned_by_name": {
+                  $regex: searchObj.search.toLowerCase(),
+                  $options: "i",
+                },
+              },
+              {
+                "team_Data.assigned_to_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
+              {
+                "client_Data.client_name": {
+                  $regex: searchObj.search,
+                  $options: "i",
+                },
+              },
             ];
 
             const keywordType = getKeywordType(searchObj.search);
@@ -1459,7 +1706,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "client_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      client_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1473,7 +1729,16 @@ class ActivityService {
                 foreignField: "reference_id",
                 as: "team_Data",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_to_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1487,7 +1752,16 @@ class ActivityService {
                 foreignField: "_id",
                 as: "team_by",
                 pipeline: [
-                  { $project: { name: 1, first_name: 1, last_name: 1 } },
+                  {
+                    $project: {
+                      name: 1,
+                      first_name: 1,
+                      last_name: 1,
+                      assigned_by_name: {
+                        $concat: ["$first_name", " ", "$last_name"],
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -1516,18 +1790,17 @@ class ActivityService {
                 due_time: 1,
                 due_date: 1,
                 createdAt: 1,
-                client_name: "$client_Data.name",
 
                 internal_info: 1,
-                assigned_to_name: "$team_Data.name",
 
-                assigned_by_name: "$team_by.name",
                 assign_by: 1,
-                assigned_by_first_name: "$team_by.first_name",
-                assigned_by_last_name: "$team_by.last_name",
-                assigned_by_name: {
-                  $concat: ["$team_by.first_name", " ", "$team_by.last_name"],
-                },
+                assigned_by_first_name: "$assign_by.first_name",
+                assigned_by_last_name: "$assign_by.last_name",
+                assigned_to_first_name: "$team_Data.first_name",
+                assigned_to_last_name: "$team_Data.last_name",
+                assigned_to_name: "$team_Data.assigned_to_name",
+                assigned_by_name: "$assign_by.assigned_by_name",
+                client_name: "$client_Data.client_name",
 
                 column_id: "$status.name",
               },
@@ -1737,6 +2010,10 @@ class ActivityService {
       } else if (status === "in_progress") {
         update_status = await ActivityStatus.findOne({
           name: "in_progress",
+        }).lean();
+      } else if (status === "overdue") {
+        update_status = await ActivityStatus.findOne({
+          name: "overdue",
         }).lean();
       }
 

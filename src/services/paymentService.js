@@ -152,7 +152,7 @@ class PaymentService {
   ) => {
     try {
       const start_date = moment.unix(subscription_start_date).startOf("day");
-      const renew_date = moment.unix(renew_subscription_date);
+      const renew_date = moment.unix(renew_subscription_date).endOf("day");
 
       const paymentMoment = moment().startOf("day");
 
