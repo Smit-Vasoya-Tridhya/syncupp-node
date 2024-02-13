@@ -172,10 +172,13 @@
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
     "deleteTask": "Task deleted successfully.",
-    "activityTypeNotFound": "This type of actvityu not found.",
+    "activityTypeNotFound": "This type of actvity not found.",
     "invalidTime": "End time should be greater than start time.",
     "meetingScheduledForClient": "Meeting is already set for this client.",
-    "meetingScheduledForTeam": "Meeting is already set for this team member."
+    "meetingScheduledForTeam": "Meeting is already set for this team member.",
+    "recurringDateRequired": "Recurring date is required for the other type of the activity.",
+    "invalidRecurringDate": "Recurring date should be fututure date.",
+    "activityNotFound": "Activity not found."
   },
 
   "payment": {

@@ -5,7 +5,7 @@ const activityStatusSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      enum: ["pending", "overdue", "in_progress", "completed"],
+      enum: ["pending", "overdue", "in_progress", "completed", "cancel"],
     },
     // label: { type: String, required: true },
   },
