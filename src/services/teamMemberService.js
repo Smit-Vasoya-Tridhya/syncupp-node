@@ -979,6 +979,7 @@ class TeamMemberService {
           ]);
 
           teams.forEach((team) => {
+            team.name = team?.first_name + " " + team?.last_name;
             const agency_exists = team?.reference_id?.agency_ids?.find(
               (ag) => ag?.agency_id?.toString() == user?.reference_id
             );
@@ -1025,6 +1026,10 @@ class TeamMemberService {
             ...search_obj,
           }),
         ]);
+
+        teams.forEach((team) => {
+          team.name = team?.first_name + " " + team?.last_name;
+        });
         return {
           teamMemberList: teams,
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
