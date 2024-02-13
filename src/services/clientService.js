@@ -168,8 +168,7 @@ class ClientService {
   // verify client that was invitd by any agency
   verifyClient = async (payload) => {
     try {
-      const { email, password, first_name, last_name, redirect, agency_id } =
-        payload;
+      const { email, password, redirect, agency_id } = payload;
       const role = await Role_Master.findOne({ name: "client" })
         .select("_id")
         .lean();
@@ -272,8 +271,6 @@ class ClientService {
         await Authentication.findByIdAndUpdate(
           client_auth?._id,
           {
-            first_name,
-            last_name,
             status: "confirmed",
             password: hash_password,
           },
