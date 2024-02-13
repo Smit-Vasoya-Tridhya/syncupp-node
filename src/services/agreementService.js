@@ -866,14 +866,18 @@ class AgreementService {
       ];
       const agreement = await Agreement.aggregate(aggregationPipeline);
 
-      const htmlTemplate = fs.readFileSync(`src/utils/Invoice.html`, "utf-8");
+      let htmlTemplate = fs.readFileSync(`src/utils/Invoice.html`, "utf-8");
+
+      htmlTemplate = htmlTemplate.replace(
+        "{{content}}",
+        agreement[0]?.agreement_content
+      );
 
       // Compile the HTML template with Handlebars
       const template = Handlebars.compile(htmlTemplate);
       var data = {
         title: agreement[0]?.title,
         dueDate: moment(agreement[0]?.due_date)?.format("DD/MM/YYYY"),
-        content: agreement[0]?.agreement_content,
         receiverName: agreement[0]?.receiver_fullName,
         senderName: agreement[0]?.sender_fullName,
         Status: agreement[0]?.status,
