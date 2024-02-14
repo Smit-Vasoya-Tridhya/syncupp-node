@@ -3,7 +3,9 @@ const { returnMessage } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const AdminService = require("../services/adminService");
 const { sendResponse } = require("../utils/sendResponse");
+const AgencyService = require("../services/agencyService");
 const adminService = new AdminService();
+const agencyService = new AgencyService();
 
 exports.login = catchAsyncError(async (req, res, next) => {
   const admin = await adminService.login(req.body);
@@ -80,6 +82,19 @@ exports.updateAdmin = catchAsyncError(async (req, res, next) => {
     res,
     true,
     returnMessage("admin", "updated"),
+    admin,
+    statusCode.success
+  );
+});
+
+//  Get Agency
+
+exports.getAgency = catchAsyncError(async (req, res, next) => {
+  const admin = await agencyService.getAgencyProfile(req?.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "agencyFetched"),
     admin,
     statusCode.success
   );

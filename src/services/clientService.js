@@ -502,6 +502,7 @@ class ClientService {
             name: 1,
             createdAt: 1,
             reference_id: 1,
+            contact_number: 1,
           },
         },
       ];
