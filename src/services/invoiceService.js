@@ -23,7 +23,7 @@ class InvoiceService {
         {
           $match: {
             "agency_ids.agency_id": reference_id,
-            "agency_ids.status": "active",
+            "agency_ids.status": { $ne: "deleted" },
           },
         },
         {
@@ -32,12 +32,22 @@ class InvoiceService {
             localField: "_id",
             foreignField: "reference_id",
             as: "clientInfo",
-            pipeline: [{ $project: { first_name: 1, last_name: 1, name: 1 } }],
+            pipeline: [
+              {
+                $project: {
+                  first_name: 1,
+                  last_name: 1,
+                  name: 1,
+                  client_full_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
           },
         },
-
         {
-          $unwind: "$clientInfo",
+          $unwind: { path: "$clientInfo", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -48,13 +58,16 @@ class InvoiceService {
           },
         },
         {
-          $unwind: "$clientDetails",
+          $unwind: { path: "$clientDetails", preserveNullAndEmptyArrays: true },
         },
         {
           $project: {
             _id: "$clientDetails._id",
             company_name: "$clientDetails.company_name",
             name: "$clientInfo.name",
+            first_name: "$clientInfo.first_name",
+            last_name: "$clientInfo.last_name",
+            client_full_name: "$clientInfo.client_full_name",
           },
         },
       ];
@@ -136,7 +149,7 @@ class InvoiceService {
         });
       }
 
-      const invoice = await Invoice.create({
+      var invoice = await Invoice.create({
         due_date,
         invoice_number,
         invoice_date,
@@ -147,6 +160,12 @@ class InvoiceService {
         agency_id: user_id,
         status: getInvoiceStatus._id,
       });
+
+      if (sent === true) {
+        const payload = { invoice_id: invoice._id };
+        await this.sendInvoice(payload);
+      }
+
       return invoice;
     } catch (error) {
       logger.error(`Error while  create Invoice, ${error}`);
@@ -175,7 +194,19 @@ class InvoiceService {
             },
           },
           {
-            "customerInfo.name": {
+            "customerInfo.first_name": {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            "customerInfo.last_name": {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            "customerInfo.client_fullName": {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -203,8 +234,9 @@ class InvoiceService {
             pipeline: [{ $project: { name: 1 } }],
           },
         },
+
         {
-          $unwind: "$status",
+          $unwind: { path: "$status", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -212,11 +244,22 @@ class InvoiceService {
             localField: "client_id",
             foreignField: "reference_id",
             as: "customerInfo",
-            pipeline: [{ $project: { name: 1 } }],
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  client_fullName: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
           },
         },
         {
-          $unwind: "$customerInfo",
+          $unwind: { path: "$customerInfo", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -224,11 +267,17 @@ class InvoiceService {
             localField: "client_id",
             foreignField: "_id",
             as: "customerData",
-            pipeline: [{ $project: { company_name: 1 } }],
+            pipeline: [
+              {
+                $project: {
+                  company_name: 1,
+                },
+              },
+            ],
           },
         },
         {
-          $unwind: "$customerData",
+          $unwind: { path: "$customerData", preserveNullAndEmptyArrays: true },
         },
         {
           $match: queryObj,
@@ -239,9 +288,11 @@ class InvoiceService {
             invoice_number: 1,
             invoice_date: 1,
             due_date: 1,
-            customer_name: "$customerInfo.name",
+            first_name: "$customerInfo.first_name",
+            last_name: "$customerInfo.last_name",
             company_name: "$customerData.company_name",
             status: "$status.name",
+            client_full_name: "$customerInfo.client_fullName",
             total: 1,
             createdAt: 1,
             updatedAt: 1,
@@ -283,12 +334,25 @@ class InvoiceService {
             localField: "client_id",
             foreignField: "reference_id",
             as: "clientInfo",
-            pipeline: [{ $project: { name: 1, _id: 0, contact_number: 1 } }],
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  _id: 0,
+                  contact_number: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  client_full_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
           },
         },
 
         {
-          $unwind: "$clientInfo",
+          $unwind: { path: "$clientInfo", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -296,12 +360,25 @@ class InvoiceService {
             localField: "agency_id",
             foreignField: "reference_id",
             as: "agencyInfo",
-            pipeline: [{ $project: { name: 1, _id: 0, contact_number: 1 } }],
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  _id: 0,
+                  contact_number: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  agency_full_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
           },
         },
 
         {
-          $unwind: "$agencyInfo",
+          $unwind: { path: "$agencyInfo", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -312,9 +389,8 @@ class InvoiceService {
             pipeline: [{ $project: { name: 1 } }],
           },
         },
-
         {
-          $unwind: "$statusData",
+          $unwind: { path: "$statusData", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -338,7 +414,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$clientData",
+          $unwind: { path: "$clientData", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -357,7 +433,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$clientState",
+          $unwind: { path: "$clientState", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -376,7 +452,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$clientCity",
+          $unwind: { path: "$clientCity", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -395,7 +471,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$clientCountry",
+          $unwind: { path: "$clientCountry", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -420,7 +496,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$agencyData",
+          $unwind: { path: "$agencyData", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -439,7 +515,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$agencyState",
+          $unwind: { path: "$agencyState", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -458,7 +534,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$agencyCity",
+          $unwind: { path: "$agencyCity", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -477,7 +553,7 @@ class InvoiceService {
         },
 
         {
-          $unwind: "$agencyCountry",
+          $unwind: { path: "$agencyCountry", preserveNullAndEmptyArrays: true },
         },
         {
           $project: {
@@ -488,7 +564,9 @@ class InvoiceService {
             status: "$statusData.name",
             from: {
               _id: "$agencyData._id",
-              name: "$agencyInfo.name",
+              first_name: "$agencyInfo.first_name",
+              last_name: "$agencyInfo.last_name",
+              agency_full_name: "$agencyInfo.agency_full_name",
               contact_number: "$agencyInfo.contact_number",
               company_name: "$agencyData.company_name",
               address: "$agencyData.address",
@@ -500,7 +578,9 @@ class InvoiceService {
 
             to: {
               _id: "$clientData._id",
-              name: "$clientInfo.name",
+              first_name: "$clientInfo.first_name",
+              last_name: "$clientInfo.last_name",
+              client_full_name: "$clientInfo.client_full_name",
               contact_number: "$clientInfo.contact_number",
               company_name: "$clientData.company_name",
               address: "$clientData.address",
@@ -542,6 +622,10 @@ class InvoiceService {
               name: "unpaid",
             });
           }
+          if (sent === true) {
+            const payload = { invoice_id: invoice._id };
+            await this.sendInvoice(payload);
+          }
 
           const invoiceItems = invoice_content;
           calculateAmount(invoiceItems);
@@ -576,6 +660,11 @@ class InvoiceService {
   updateStatusInvoice = async (payload, invoiceIdToUpdate) => {
     try {
       const { status } = payload;
+
+      if (status === "unpaid") {
+        const payload = { invoice_id: invoiceIdToUpdate };
+        await this.sendInvoice(payload);
+      }
 
       if (status === "unpaid" || status === "paid" || status === "overdue") {
         // Get Invoice status
@@ -674,7 +763,7 @@ class InvoiceService {
           },
         },
         {
-          $unwind: "$statusArray",
+          $unwind: { path: "$statusArray", preserveNullAndEmptyArrays: true },
         },
         {
           $match: {

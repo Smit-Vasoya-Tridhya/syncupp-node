@@ -3928,7 +3928,7 @@ exports.invoiceTemplate = (invoiceData) => {
                                     <li>${invoiceData.from.country.name}</li>
                                     <li>
                                       <span style="font-weight: bold;">M :</span>
-                                      + 91 8888 - 8888 - 888
+                                      + 91 ${invoiceData.from.contact_number}
                                     </li>
                                   </ul>
                                   <hr />
@@ -3980,8 +3980,10 @@ exports.invoiceTemplate = (invoiceData) => {
                                                                                 font-size: 14px;
                                                                                 text-align: left;
                                                                                 ">
-                                          <li>${invoiceData.to.name},</li>
-                                          <li>${invoiceData.to.name},</li>
+                                          <li>${
+                                            invoiceData.to.client_full_name
+                                          },</li>
+                                         
 
                                           <li>
                                           ${invoiceData.to.address},${
@@ -3996,7 +3998,7 @@ exports.invoiceTemplate = (invoiceData) => {
                                           }</li>
                                           <li>
                                             <span style="font-weight: bold;">M :</span>
-                                            ${invoiceData.to.contact_number}
+                                           + 91 ${invoiceData.to.contact_number}
                                           </li>
                                         </ul>
                                       </td>
@@ -4074,7 +4076,7 @@ exports.invoiceTemplate = (invoiceData) => {
                                         </td>
                                         <td align="left" style=" padding-top: 10px; font-weight: 400; font-size: 12px; text-overflow: ellipsis;  vertical-align: top; border-bottom: 1px solid black; padding-bottom:5px;
     border-collapse: collapse;">
-    ${item.rate} ₹
+    ${item.rate} $
                                         </td>
                                         <td align="left" style=" padding-top: 10px; font-weight: 400; font-size: 12px; text-overflow: ellipsis;  vertical-align: top; border-bottom: 1px solid black; padding-bottom:5px;
     border-collapse: collapse;">
@@ -4082,7 +4084,7 @@ exports.invoiceTemplate = (invoiceData) => {
                                         </td>
                                         <td align="left" style=" padding-top: 10px; font-weight: 400; font-size: 12px; text-overflow: ellipsis;  vertical-align: top; border-bottom: 1px solid black; padding-bottom:5px;
     border-collapse: collapse;">
-    ${item.amount} ₹
+    ${item.amount} $
                                         </td>
                                       </tr>
                                 `
@@ -4107,7 +4109,7 @@ exports.invoiceTemplate = (invoiceData) => {
                                       font-weight: 600;">${
                                         invoiceData.sub_total
                                       }
-                                      ₹</span>
+                                      $</span>
                                     </li>
                                     <li style="border:1px solid #111318; margin-top: 10px;"></li>
                                     <li style="text-align: left;     width: 100%;
@@ -4116,9 +4118,9 @@ exports.invoiceTemplate = (invoiceData) => {
                                                                           font-weight: 500;">Total</span>
                                       <span style="text-align: right; width: 50%; display: inline-table;
                                                                           font-weight: 600;">${
-                                                                            invoiceData.sub_total
+                                                                            invoiceData.total
                                                                           }
-                                        ₹</span>
+                                        $</span>
                                     </li>
                                     <li style="border:1px solid #111318; margin-top: 10px;"></li>
                                     <li style="text-align: left;     width: 100%;
