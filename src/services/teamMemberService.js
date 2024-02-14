@@ -6,6 +6,7 @@ const {
   validateRequestFields,
   paginationObject,
   welcomeMail,
+  capitalizeFirstLetter,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const bcrypt = require("bcrypt");
@@ -25,7 +26,7 @@ class TeamMemberService {
   // Add Team Member by agency or client
   addTeamMember = async (payload, user) => {
     try {
-      validateRequestFields(payload, ["email", "name"]);
+      validateRequestFields(payload, ["email", "first_name", "last_name"]);
 
       if (user?.role?.name == "agency") {
         return await this.addAgencyTeam(payload, user);
@@ -54,7 +55,7 @@ class TeamMemberService {
   // Add the team member by the Agency it self
   addAgencyTeam = async (payload, user) => {
     try {
-      const { email, name, contact_number, role } = payload;
+      const { email, first_name, last_name, contact_number, role } = payload;
       if (!role || role === "")
         return throwError(returnMessage("teamMember", "roleRequired"));
 
@@ -91,7 +92,12 @@ class TeamMemberService {
       //   .digest("hex");
 
       await Authentication.create({
-        name,
+        first_name,
+        last_name,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
         status: "payment_pending",
         email,
         reference_id: team_agency?._id,
@@ -120,7 +126,8 @@ class TeamMemberService {
   // Add the team member for the particular agency by client
   addClientTeam = async (payload, user) => {
     try {
-      const { email, name, agency_id, contact_number, role } = payload;
+      const { email, first_name, last_name, agency_id, contact_number, role } =
+        payload;
       if (!agency_id || agency_id === "")
         return throwError(returnMessage("teamMember", "agencyIdRequired"));
 
@@ -155,7 +162,12 @@ class TeamMemberService {
         });
 
         await Authentication.create({
-          name,
+          first_name,
+          last_name,
+          name:
+            capitalizeFirstLetter(first_name) +
+            " " +
+            capitalizeFirstLetter(last_name),
           email,
           contact_number,
           role: team_auth_role?._id,
@@ -205,171 +217,6 @@ class TeamMemberService {
     }
   };
 
-  // Add Team Member
-  // add = async (payload, user_id) => {
-  //   try {
-  //     const { email, name, contact_number, role, agency_id } = payload;
-  //     const isEmail = await Authentication.findOne({
-  //       email: email,
-  //       is_deleted: false,
-  //     }).populate({
-  //       path: "reference_id",
-  //       model: "team_client",
-  //     });
-
-  //     const teamMember = await Authentication.findOne({
-  //       _id: user_id,
-  //       is_deleted: false,
-  //     })
-  //       .populate({
-  //         path: "role",
-  //         model: "role_master",
-  //       })
-  //       .lean();
-
-  //     let roleKey;
-  //     let TeamModelName;
-  //     let memberOf;
-  //     if (teamMember.role.name === "agency") {
-  //       roleKey = "team_agency";
-  //       TeamModelName = Team_Agency;
-  //       memberOf = "agency_id";
-
-  //       if (isEmail) {
-  //         return throwError(returnMessage("teamMember", "emailExist"));
-  //       }
-
-  //       if (!role) {
-  //         return throwError(returnMessage("teamMember", "roleRequired"));
-  //       }
-
-  //       // Get  Role master data
-  //       const getRoleData = await Role_Master.findOne({
-  //         name: roleKey,
-  //       }).lean();
-
-  //       // Get Team Role master
-  //       const getTeamMemberRoleData = await Team_Role_Master.findOne({
-  //         name: role,
-  //       }).lean();
-
-  //       // Create Team Member schema data
-  //       const teamModel = await TeamModelName.create({
-  //         role: getTeamMemberRoleData._id,
-  //         [memberOf]: teamMember.reference_id,
-  //       });
-
-  //       // Create new Team Member
-  //       const newTeamMember = await Authentication.create({
-  //         email,
-  //         name,
-  //         contact_number,
-  //         role: getRoleData._id,
-  //         reference_id: teamModel._id,
-  //         status: "confirm_pending",
-  //       });
-
-  //       const invitation_token = crypto.randomBytes(32).toString("hex");
-  //       console.log(invitation_token);
-  //       const encode = encodeURIComponent(email);
-
-  //       const link = `${process.env.TEAM_MEMBER_SETPASSWORD_PATH}?name=${name}&email=${encode}&redirect=false&agency=${user_id}`;
-  //       const forgot_email_template = forgotPasswordEmailTemplate(link);
-
-  //       await sendEmail({
-  //         email: email,
-  //         subject: returnMessage("emailTemplate", "forgotPasswordSubject"),
-  //         message: forgot_email_template,
-  //       });
-
-  //       const hash_token = crypto
-  //         .createHash("sha256")
-  //         .update(invitation_token)
-  //         .digest("hex");
-
-  //       newTeamMember.invitation_token = hash_token;
-  //       await newTeamMember.save();
-  //       return true;
-  //     }
-  //     if (teamMember.role.name === "client") {
-  //       roleKey = "team_client";
-  //       TeamModelName = Team_Client;
-  //       memberOf = "client_id";
-
-  //       let link = `${
-  //         process.env.REACT_APP_URL
-  //       }/team/verify?name=${encodeURIComponent(
-  //         teamMember?.name
-  //       )}&email=${encodeURIComponent(email)}&clientId=${encodeURIComponent(
-  //         user_id
-  //       )}&agencyId=${encodeURIComponent(agency_id)}`;
-  //       if (!isEmail) {
-  //         if (!agency_id) {
-  //           return throwError(
-  //             returnMessage("teamMember", "agencyIdRequired"),
-  //             statusCode.badRequest
-  //           );
-  //         }
-
-  //         // Get  Role master data
-  //         const getRoleData = await Role_Master.findOne({
-  //           name: roleKey,
-  //         }).lean();
-
-  //         // Get Team Role master
-  //         const getTeamMemberRoleData = await Team_Role_Master.findOne({
-  //           name: "team_member",
-  //         }).lean();
-
-  //         // Create Team Member schema data
-  //         const teamModel = await TeamModelName.create({
-  //           role: getTeamMemberRoleData._id,
-  //           [memberOf]: teamMember.reference_id._id,
-  //           agency_ids: [],
-  //         });
-
-  //         // Create new Team Member
-  //         await Authentication.create({
-  //           email,
-  //           name,
-  //           contact_number,
-  //           role: getRoleData._id,
-  //           reference_id: teamModel._id,
-  //           status: "confirm_pending",
-  //         });
-
-  //         link = link + "&redirect=false";
-  //         const invitation_mail = invitationEmail(link, teamMember.name);
-
-  //         await sendEmail({
-  //           email: email,
-  //           subject: returnMessage("emailTemplate", "invitation"),
-  //           message: invitation_mail,
-  //         });
-  //         return true;
-  //       } else {
-  //         if (isEmail?.reference_id?.agency_ids.includes(agency_id)) {
-  //           return throwError(
-  //             returnMessage("teamMember", "agencyIdAlreadyExists"),
-  //             statusCode.badRequest
-  //           );
-  //         }
-  //         link = link + "&redirect=true";
-  //         const invitation_mail = invitationEmail(link, teamMember.name);
-  //         await sendEmail({
-  //           email: email,
-  //           subject: returnMessage("emailTemplate", "invitation"),
-  //           message: invitation_mail,
-  //         });
-  //         return true;
-  //       }
-  //     }
-  //   } catch (error) {
-  //     logger.error(`Error while Team Member register, ${error}`);
-  //     throwError(error?.message, error?.statusCode);
-  //   }
-  // };
-
   // Verify Team Member
   verify = async (payload) => {
     try {
@@ -403,8 +250,6 @@ class TeamMemberService {
           password,
         });
 
-        teamMember.first_name = first_name;
-        teamMember.last_name = last_name;
         teamMember.email = email;
         teamMember.invitation_token = undefined;
         teamMember.password = hash_password;
@@ -662,176 +507,6 @@ class TeamMemberService {
     }
   };
 
-  // // Get All team Members
-
-  // getAll = async (payload, searchObj) => {
-  //   try {
-  //     const { agency_id } = searchObj;
-  //     const user_id = payload;
-  //     const teamMember = await Authentication.findOne({
-  //       _id: user_id,
-  //       is_deleted: false,
-  //     })
-  //       .populate("role", "name")
-  //       .lean();
-
-  //     let TeamModelName;
-  //     let memberOf;
-  //     let teamMemberSchemaName;
-  //     if (teamMember.role.name === "agency") {
-  //       TeamModelName = Team_Agency;
-  //       memberOf = "agency_id";
-  //       teamMemberSchemaName = "team_agencies";
-  //     }
-  //     if (teamMember.role.name === "client") {
-  //       TeamModelName = Team_Client;
-  //       memberOf = "client_id";
-  //       teamMemberSchemaName = "team_clients";
-  //     }
-
-  //     const user = await Authentication.findOne({
-  //       _id: user_id,
-  //       is_deleted: false,
-  //     }).lean();
-
-  //     let teamMemberData;
-  //     if (teamMember.role.name === "client") {
-  //       if (!agency_id)
-  //         return throwError(
-  //           returnMessage("teamMember", "agencyIdRequired"),
-  //           statusCode.notFound
-  //         );
-
-  //       teamMemberData = await TeamModelName.distinct("_id", {
-  //         [memberOf]: user.reference_id,
-  //         agency_ids: { $in: [agency_id] },
-  //       }).lean();
-  //     }
-
-  //     if (teamMember.role.name === "agency") {
-  //       teamMemberData = await TeamModelName.distinct("_id", {
-  //         [memberOf]: user.reference_id,
-  //       }).lean();
-  //     }
-
-  //     const queryObj = { status: "confirmed" };
-
-  //     if (searchObj.search && searchObj.search !== "") {
-  //       queryObj["$or"] = [
-  //         {
-  //           name: {
-  //             $regex: searchObj.search.toLowerCase(),
-  //             $options: "i",
-  //           },
-  //         },
-  //         {
-  //           contact_number: {
-  //             $regex: searchObj.search.toLowerCase(),
-  //             $options: "i",
-  //           },
-  //         },
-  //       ];
-
-  //       // const keywordType = getKeywordType(searchObj.search);
-  //       // if (keywordType === "number") {
-  //       //   const numericKeyword = parseInt(searchObj.search);
-  //       //   queryObj["$or"].push({
-  //       //     contact_number: numericKeyword,
-  //       //   });
-  //       // }
-  //     }
-
-  //     const pagination = paginationObject(searchObj);
-
-  //     const pipeLine = [
-  //       {
-  //         $match: {
-  //           reference_id: { $in: teamMemberData },
-  //           is_deleted: false,
-  //           ...queryObj,
-  //         },
-  //       },
-  //       {
-  //         $lookup: {
-  //           from: "role_masters",
-  //           localField: "role",
-  //           foreignField: "_id",
-  //           as: "user_type",
-  //           pipeline: [{ $project: { name: 1 } }],
-  //         },
-  //       },
-
-  //       {
-  //         $unwind: "$user_type",
-  //       },
-  //       {
-  //         $lookup: {
-  //           from: teamMemberSchemaName,
-  //           localField: "reference_id",
-  //           foreignField: "_id",
-  //           as: "member_data",
-  //           pipeline: [{ $project: { role: 1, [memberOf]: 1 } }],
-  //         },
-  //       },
-
-  //       {
-  //         $unwind: "$member_data",
-  //       },
-
-  //       {
-  //         $lookup: {
-  //           from: "team_role_masters",
-  //           localField: "member_data.role",
-  //           foreignField: "_id",
-  //           as: "member_role",
-  //           pipeline: [{ $project: { name: 1 } }],
-  //         },
-  //       },
-  //       {
-  //         $unwind: "$member_role",
-  //       },
-
-  //       {
-  //         $project: {
-  //           _id: 1,
-  //           email: 1,
-  //           user_type: "$user_type.name",
-  //           [memberOf]: "$member_data." + memberOf,
-  //           member_role: "$member_role.name",
-  //           member_role_id: "$member_role._id",
-  //           createdAt: 1,
-  //           updatedAt: 1,
-  //           first_name: 1,
-  //           last_name: 1,
-  //           contact_number: 1,
-  //           image_url: 1,
-  //           status: 1,
-  //           name: 1,
-  //         },
-  //       },
-  //     ];
-
-  //     const [teamMemberList, total_team_members] = await Promise.all([
-  //       Authentication.aggregate(pipeLine)
-  //         .skip(pagination.skip)
-  //         .limit(pagination.resultPerPage)
-  //         .sort(pagination.sort),
-  //       Authentication.aggregate(pipeLine),
-  //     ]);
-
-  //     return {
-  //       teamMemberList,
-  //       page_count:
-  //         Math.ceil(total_team_members.length / pagination.resultPerPage) || 0,
-  //     };
-  //   } catch (error) {
-  //     logger.error(`Error while Team members, Listing ${error}`);
-  //     return throwError(error?.message, error?.statusCode);
-  //   }
-  // };
-
-  // Delete a team member
-
   deleteMember = async (payload) => {
     try {
       const { teamMemberIds } = payload;
@@ -897,6 +572,8 @@ class TeamMemberService {
           team_member_id,
           {
             name: payload?.name,
+            first_name: payload?.first_name,
+            last_name: payload?.last_name,
             contact_number: payload?.contact_number,
           },
           { new: true }
@@ -912,6 +589,8 @@ class TeamMemberService {
           team_member_id,
           {
             name: payload?.name,
+            first_name: payload?.first_name,
+            last_name: payload?.last_name,
             contact_number: payload?.contact_number,
           },
           { new: true }
@@ -941,7 +620,21 @@ class TeamMemberService {
           { status: { $regex: payload.search, $options: "i" } },
         ];
       }
-      if (user?.role?.name === "agency") {
+      if (user?.role?.name === "agency" || user?.role?.name === "team_agency") {
+        if (user?.role?.name === "team_agency") {
+          const team_agency_detail = await Team_Agency.findById(
+            user?.reference_id
+          )
+            .populate("role", "name")
+            .lean();
+          if (team_agency_detail?.role?.name === "admin") {
+            user = await Authentication.findOne({
+              reference_id: team_agency_detail?.agency_id,
+            })
+              .populate("role", "name")
+              .lean();
+          }
+        }
         if (payload?.client_id) {
           const query_obj = {
             "agency_ids.agency_id": user?.reference_id,
@@ -972,6 +665,7 @@ class TeamMemberService {
           ]);
 
           teams.forEach((team) => {
+            team.name = team?.first_name + " " + team?.last_name;
             const agency_exists = team?.reference_id?.agency_ids?.find(
               (ag) => ag?.agency_id?.toString() == user?.reference_id
             );
@@ -1018,6 +712,10 @@ class TeamMemberService {
             ...search_obj,
           }),
         ]);
+
+        teams.forEach((team) => {
+          team.name = team?.first_name + " " + team?.last_name;
+        });
         return {
           teamMemberList: teams,
           page_count: Math.ceil(total_teams / pagination.result_per_page) || 0,
@@ -1146,8 +844,6 @@ class TeamMemberService {
       } else if (team?.role?.name === "team_client") {
         team_reference = await Team_Client.findById(team?.reference_id).lean();
       }
-
-      team_detail.first_name = team_detail?.name;
       team_detail.reference_id = team_reference;
       return team_detail;
     } catch (error) {
@@ -1178,6 +874,10 @@ class TeamMemberService {
         first_name,
         last_name,
         contact_number,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
       };
       const agencyData = {
         company_name,

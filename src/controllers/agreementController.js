@@ -126,7 +126,6 @@ exports.updateAgreementStatus = catchAsyncError(async (req, res, next) => {
 
 exports.downloadPdf = catchAsyncError(async (req, res, next) => {
   const downloadPdf = await agreementService.downloadPdf(req?.params?.id, res);
-
   sendResponse(
     res,
     true,

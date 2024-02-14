@@ -10,6 +10,7 @@ const {
   validateEmail,
   passwordValidation,
   welcomeMail,
+  capitalizeFirstLetter,
 } = require("../utils/utils");
 const Authentication = require("../models/authenticationSchema");
 const sendEmail = require("../helpers/sendEmail");
@@ -37,8 +38,13 @@ class ClientService {
           agency.created_by = team_agency_detail?._id;
         }
       }
-      const { name, email, company_name } = payload;
-      validateRequestFields(payload, ["name", "email", "company_name"]);
+      const { first_name, last_name, email, company_name } = payload;
+      validateRequestFields(payload, [
+        "first_name",
+        "last_name",
+        "email",
+        "company_name",
+      ]);
 
       if (!validateEmail(email))
         return throwError(returnMessage("auth", "invalidEmail"));
@@ -72,7 +78,6 @@ class ClientService {
           state: payload?.state,
           country: payload?.country,
           pincode: payload?.pincode,
-          title: payload?.title,
           agency_ids: [
             {
               agency_id: agency?.reference_id,
@@ -83,7 +88,12 @@ class ClientService {
         };
         const new_client = await Client.create(client_obj);
         const client_auth_obj = {
-          name,
+          first_name,
+          last_name,
+          name:
+            capitalizeFirstLetter(first_name) +
+            " " +
+            capitalizeFirstLetter(last_name),
           email,
           contact_number: payload?.contact_number,
           role: role?._id,
@@ -158,8 +168,7 @@ class ClientService {
   // verify client that was invitd by any agency
   verifyClient = async (payload) => {
     try {
-      const { email, password, first_name, last_name, redirect, agency_id } =
-        payload;
+      const { email, password, redirect, agency_id } = payload;
       const role = await Role_Master.findOne({ name: "client" })
         .select("_id")
         .lean();
@@ -262,8 +271,6 @@ class ClientService {
         await Authentication.findByIdAndUpdate(
           client_auth?._id,
           {
-            first_name,
-            last_name,
             status: "confirmed",
             password: hash_password,
           },
@@ -331,8 +338,10 @@ class ClientService {
           .populate("role", "name")
           .lean();
         if (team_agency_detail?.role?.name === "admin") {
-          agency = await Authentication.findById(team_agency_detail?.agency_id)
-            .populate("role", "role")
+          agency = await Authentication.findOne({
+            reference_id: team_agency_detail?.agency_id,
+          })
+            .populate("role", "name")
             .lean();
         }
       }
@@ -475,7 +484,7 @@ class ClientService {
   clientListWithoutPagination = async (agency) => {
     try {
       let clients;
-      if (agency.role.name === "team_agency") {
+      if (agency?.role?.name === "team_agency") {
         const agency_detail = await Team_Agency.findById(agency.reference_id);
         clients = await Client.distinct("_id", {
           agency_ids: {
@@ -499,7 +508,7 @@ class ClientService {
             first_name: 1,
             last_name: 1,
             email: 1,
-            name: 1,
+            name: { $concat: ["$first_name", " ", "$last_name"] },
             createdAt: 1,
             reference_id: 1,
             contact_number: 1,
@@ -564,7 +573,6 @@ class ClientService {
           .populate("state", "name")
           .lean(),
       ]);
-      client_auth.first_name = client_auth?.name;
       client_auth["client"] = client_data;
       return client_auth;
     } catch (error) {
@@ -623,6 +631,10 @@ class ClientService {
         first_name,
         last_name,
         contact_number,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
       };
       const agencyData = {
         company_name,

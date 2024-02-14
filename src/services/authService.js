@@ -6,6 +6,7 @@ const {
   validateEmail,
   passwordValidation,
   forgotPasswordEmailTemplate,
+  capitalizeFirstLetter,
 } = require("../utils/utils");
 const bcrypt = require("bcrypt");
 const { throwError } = require("../helpers/errorUtil");
@@ -110,6 +111,10 @@ class AuthService {
       let agency_enroll = await Authentication.create({
         first_name,
         last_name,
+        name:
+          capitalizeFirstLetter(first_name) +
+          " " +
+          capitalizeFirstLetter(last_name),
         email,
         password: encrypted_password,
         contact_number,
@@ -157,6 +162,10 @@ class AuthService {
         let agency_enroll = await Authentication.create({
           first_name: decoded?.given_name,
           last_name: decoded?.family_name,
+          name:
+            capitalizeFirstLetter(decoded?.given_name) +
+            " " +
+            capitalizeFirstLetter(decoded?.family_name),
           email: decoded?.email,
           reference_id: agency?._id,
           role: role?._id,
@@ -209,6 +218,10 @@ class AuthService {
         let agency_enroll = await Authentication.create({
           first_name: data?.first_name,
           last_name: data?.last_name,
+          name:
+            capitalizeFirstLetter(data?.first_name) +
+            " " +
+            capitalizeFirstLetter(data?.last_name),
           email: data?.email,
           reference_id: agency?._id,
           role: role?._id,

@@ -35,7 +35,7 @@ agreementRoute.post(
 );
 agreementRoute.get(
   "/download-pdf/:id",
-  authorizeRole("agency"),
+  // authorizeRole("agency"),
   agreementController.downloadPdf
 );
 
