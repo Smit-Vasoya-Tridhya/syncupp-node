@@ -139,7 +139,8 @@
     "canNotUpdate": "Invoice can not be updated.",
     "agencyIdRequired": "Agency ID required.",
     "invoiceSent": "Invoice sent successfully.",
-    "downloadPDF": "Download PDF successfully."
+    "downloadPDF": "Download PDF successfully.",
+    "invoiceSubject": "invoiceSubject: Your Invoice - "
   },
 
   "inquiry": {
@@ -190,6 +191,16 @@
     "registered": "User registered successfully.",
     "emailExist": "Email already registered.",
     "incorrectPassword": "Email or password is incorrect."
+  },
+  "cms": {
+    "contactUpdated": "Contact CRM updated successfully.",
+    "contactFetched": "Contact CRM fetched successfully.",
+    "privacyUpdated": "Privacy policy updated successfully.",
+    "policyFetched": "Privacy Policy fetched successfully.",
+    "planUpdated": "Plan updated successfully.",
+    "planFetched": "Plan fetched successfully.",
+    "technologyUpdated": "Technology stack updated successfully.",
+    "technologyFetched": "Technology stack fetched successfully."
   },
 
   "default": { "default": "Something went wrong." }

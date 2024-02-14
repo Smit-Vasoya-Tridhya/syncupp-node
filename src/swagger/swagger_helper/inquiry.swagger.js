@@ -118,9 +118,14 @@ const createInquiry = {
         schema: {
           type: "object",
           properties: {
-            name: {
+            first_name: {
               type: "string",
-              description: "Enter name",
+              description: "Enter first_name",
+              required: true,
+            },
+            last_name: {
+              type: "string",
+              description: "Enter last_name",
               required: true,
             },
             contact_number: {
@@ -131,11 +136,18 @@ const createInquiry = {
             email: {
               type: "string",
               description: "Enter email",
-              required: true,
             },
-            message: {
+            no_of_people: {
               type: "string",
-              description: "Enter message",
+              description: "Enter no of People",
+            },
+            country: {
+              type: "string",
+              description: "Enter country",
+            },
+            thoughts: {
+              type: "string",
+              description: "Enter thoughts",
               required: true,
             },
           },
