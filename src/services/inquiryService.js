@@ -5,6 +5,7 @@ const {
   paginationObject,
   inquiryEmail,
   returnMessage,
+  inquiryTemplate,
 } = require("../utils/utils");
 const sendEmail = require("../helpers/sendEmail");
 const Admin = require("../models/adminSchema");
@@ -13,18 +14,28 @@ class inquiryService {
   // Add   Inquiry
   addInquiry = async (payload) => {
     try {
-      const { name, contact_number, email, message } = payload;
-      const inquiry = await Inquiry.create({
-        name,
+      const {
+        first_name,
         contact_number,
         email,
-        message,
+        last_name,
+        country,
+        no_of_people,
+        thoughts,
+      } = payload;
+      const inquiry = await Inquiry.create({
+        first_name,
+        contact_number,
+        email,
+        last_name,
+        country,
+        no_of_people,
+        thoughts,
       });
-
       const admin = await Admin.findOne({});
 
       // Use a template or format the invoice message accordingly
-      const formattedInquiryEmail = inquiryEmail(inquiry);
+      const formattedInquiryEmail = inquiryTemplate(inquiry);
 
       await sendEmail({
         email: admin?.email,
@@ -47,7 +58,13 @@ class inquiryService {
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
           {
-            name: {
+            first_name: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            last_name: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
@@ -59,15 +76,30 @@ class inquiryService {
             },
           },
           {
-            message: {
+            contact_number: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
             },
           },
           {
-            contact_number: {
+            thoughts: {
               $regex: searchObj.search.toLowerCase(),
               $options: "i",
+            },
+          },
+          {
+            no_of_people: {
+              $regex: searchObj.search.toLowerCase(),
+              $options: "i",
+            },
+          },
+          {
+            $expr: {
+              $regexMatch: {
+                input: { $concat: ["$first_name", " ", "$last_name"] },
+                regex: searchObj.search.toLowerCase(),
+                options: "i",
+              },
             },
           },
         ];
@@ -75,20 +107,38 @@ class inquiryService {
 
       const pagination = paginationObject(searchObj);
 
+      const pipeLine = [
+        {
+          $match: queryObj,
+        },
+        {
+          $project: {
+            _id: 1,
+            first_name: 1,
+            last_name: 1,
+            email: 1,
+            contact_number: 1,
+            country: 1,
+            no_of_people: 1,
+            thoughts: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ];
+
       const [inquiries, totalInquiryCount] = await Promise.all([
-        Inquiry.find(queryObj)
-          .select("-is_deleted -__v ")
+        Inquiry.aggregate(pipeLine)
           .sort(pagination.sort)
           .skip(pagination.skip)
-          .limit(pagination.result_per_page)
-          .lean(),
-        Inquiry.countDocuments(queryObj),
+          .limit(pagination.result_per_page),
+        Inquiry.aggregate(pipeLine),
       ]);
 
       return {
         inquiries,
         page_count:
-          Math.ceil(totalInquiryCount / pagination.result_per_page) || 0,
+          Math.ceil(totalInquiryCount.length / pagination.result_per_page) || 0,
       };
     } catch (error) {
       logger.error(`Error while Inquiry Listing, ${error}`);
@@ -101,11 +151,9 @@ class inquiryService {
   deleteInquiry = async (payload) => {
     try {
       const { inquiryIdsToDelete } = payload;
-
       await Inquiry.updateMany(
         { _id: { $in: inquiryIdsToDelete } },
-        { $set: { is_deleted: true } },
-        { new: true }
+        { $set: { is_deleted: true } }
       );
       return true;
     } catch (error) {

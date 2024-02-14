@@ -72,11 +72,16 @@
     "totalNumeric": "Total must be numeric"
   },
   "inquiry": {
+    "firstRequired": "First name is required",
+    "lastRequired": "Last name is required",
     "nameRequired": "Name is required",
-    "messageRequired": "Message is required",
+    "thoughtRequired": "Thought is required",
     "contactNumberRequired": "Contact number is required",
     "emailRequired": "Email is required",
-    "emailInvalid": "Invalid email format"
+    "emailInvalid": "Invalid email format",
+    "numberOfPeople": "Number of people is required",
+    "countryRequired": "Country is required",
+    "descLength": "Agreement content must not exceed 400 characters"
   },
   "coupon": {
     "brandRequired": "Brand name is required",

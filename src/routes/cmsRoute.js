@@ -19,7 +19,7 @@ adminRoute.get("/privacy-policy", cmsController.getPrivacyPolicy);
 adminRoute.put("/price-plan", cmsController.updatePricePlan);
 adminRoute.get("/price-plan", cmsController.getPricePlan);
 
-// Price Plan
+// technology Plan
 adminRoute.put("/technology-stack", cmsController.updateTechnologyStack);
 adminRoute.get("/technology-stack", cmsController.getTechnologyStack);
 
