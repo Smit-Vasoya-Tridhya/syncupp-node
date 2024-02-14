@@ -8,7 +8,11 @@ const Team_Agency = require("../models/teamAgencySchema");
 const Team_Client = require("../models/teamClientSchema");
 const PaymentHistory = require("../models/paymentHistorySchema");
 const SheetManagement = require("../models/sheetManagementSchema");
-const { returnMessage, invitationEmail } = require("../utils/utils");
+const {
+  returnMessage,
+  invitationEmail,
+  paginationObject,
+} = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
 const moment = require("moment");
@@ -590,6 +594,173 @@ class PaymentService {
       return;
     } catch (error) {
       logger.error(`Error while updating the subscription: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // fetch the payment history for the agency only
+  paymentHistory = async (payload, user) => {
+    try {
+      if (user?.role?.name !== "agency" || user?.role?.name !== "team_agency")
+        return throwError(
+          returnMessage("auth", "unAuthorized"),
+          statusCode.forbidden
+        );
+
+      const pagination = paginationObject(payload);
+      if (user?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          user?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+        if (team_agency_detail?.role?.name === "admin")
+          user = await Authentication.findOne({
+            reference_id: team_agency_detail?.agency_id,
+          })
+            .populate("role", "name")
+            .lean();
+      }
+
+      const [payment_history, total_history] = await Promise.all([
+        PaymentHistory.find({ agency_id: user?.reference_id })
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
+          .lean(),
+        PaymentHistory.countDocuments({ agency_id: user?.reference_id }),
+      ]);
+
+      return {
+        payment_history,
+        page_count: Math.ceil(total_history / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while getting the payment history: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // fetch the sheets lists and who is assined to the particular sheet
+  sheetsListing = async (payload, user) => {
+    try {
+      if (user?.role?.name !== "agency" || user?.role?.name !== "team_agency")
+        return throwError(
+          returnMessage("auth", "unAuthorized"),
+          statusCode.forbidden
+        );
+
+      const pagination = paginationObject(payload);
+      if (user?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          user?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+        if (team_agency_detail?.role?.name === "admin")
+          user = await Authentication.findOne({
+            reference_id: team_agency_detail?.agency_id,
+          })
+            .populate("role", "name")
+            .lean();
+      }
+      const aggregate = [
+        { $match: { agency_id: user?.reference_id } },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "occupied_sheets.user_id",
+            foreignField: "_id",
+            as: "user_id",
+            pipeline: [
+              {
+                $project: {
+                  first_name: 1,
+                  last_name: 1,
+                  name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$user_id" },
+      ];
+
+      const sheets = await SheetManagement.aggregate(aggregate);
+      const occupied_sheets = sheets[0]?.occupied_sheets;
+      return {
+        sheets: occupied_sheets,
+        page_count:
+          Math.ceil(occupied_sheets.length / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while fetching the sheets listing: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  removeUser = async (user_id, user) => {
+    try {
+      const sheets = await SheetManagement.findOne({
+        agency_id: user?.reference_id,
+      }).lean();
+
+      if (!sheets)
+        return throwError(
+          returnMessage("payment", "sheetsNotAvailable"),
+          statusCode.notFound
+        );
+
+      const user_exist = sheets?.occupied_sheets?.filter(
+        (sheet) => sheet?.user_id?.toString() === user_id
+      );
+
+      if (user_exist.length === 0)
+        return throwError(
+          returnMessage("auth", "userNotFound"),
+          statusCode.notFound
+        );
+
+      const updated_users = sheets?.occupied_sheets?.filter(
+        (sheet) => sheet?.user_id?.toString() !== user_id
+      );
+
+      const remove_user = user_exist[0];
+
+      if (remove_user.role === "client") {
+      } else if (remove_user.role === "team_agency") {
+      } else if (remove_user.role === "team_client") {
+      }
+    } catch (error) {
+      logger.error(`Error while removing the user from the sheet: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  cancelSubscription = async (user) => {
+    try {
+      const sheets = await SheetManagement.findOne({
+        agency_id: user?.reference_id,
+      }).lean();
+
+      if (sheets.total_sheets === 1)
+        return throwError(returnMessage("payment", "canNotCancelSubscription"));
+
+      const updated_sheet = await SheetManagement.findByIdAndUpdate(
+        sheets?._id,
+        { total_sheets: sheets?.total_sheets - 1 },
+        { new: true }
+      ).lean();
+
+      await Promise.resolve(
+        razorpay.subscriptions.update(user?.subscription_id, {
+          quantity: updated_sheet?.total_sheets,
+        })
+      );
+      return;
+    } catch (error) {
+      logger.error(`Error while canceling the subscription: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };

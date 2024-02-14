@@ -2518,6 +2518,116 @@ class ActivityService {
       return throwError(error?.message, error?.statusCode);
     }
   };
+
+  // this function is used for to get the activity with date and user based filter
+  getActivities = async (payload, user) => {
+    try {
+      const match_obj = {};
+      const pagination = paginationObject(payload);
+      if (user?.role?.name === "agency") {
+        match_obj["$match"] = {
+          agency_id: user?.reference_id,
+          client_id: payload?.client_id,
+        };
+      } else if (user?.role?.name === "team_agency") {
+        match_obj["$match"] = {
+          assign_to: user?.reference_id,
+        };
+      } else if (user?.role?.name === "client") {
+        match_obj["$match"] = {
+          client_id: user?.reference_id,
+          agency_id: payload?.agency_id,
+        };
+      }
+
+      let aggragate = [
+        match_obj,
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "assign_to",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$assign_to" },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_by",
+            foreignField: "reference_id",
+            as: "assign_by",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$assign_by" },
+        {
+          $lookup: {
+            from: "activity_status_masters",
+            localField: "activity_status",
+            foreignField: "_id",
+            as: "activity_status",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$activity_status",
+        },
+        {
+          $lookup: {
+            from: "activity_type_masters",
+            localField: "activity_type",
+            foreignField: "_id",
+            as: "activity_type",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$activity_type",
+        },
+      ];
+
+      const [activity, total_activity] = await Promise.all([
+        Activity.aggregate(aggragate)
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page),
+        Activity.aggregate(aggragate),
+      ]);
+
+      return {
+        activity,
+        page_count:
+          Math.ceil(total_activity.length / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while fetching the activity: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
 }
 
 module.exports = ActivityService;
