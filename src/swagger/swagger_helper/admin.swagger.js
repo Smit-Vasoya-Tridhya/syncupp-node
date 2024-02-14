@@ -483,6 +483,48 @@ const updateAgencyStatus = {
     },
   },
 };
+
+const getAgencyProfile = {
+  tags: ["Admin Panel"],
+  description: "",
+  summary: "Get Agency Profile",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            _id: {
+              type: "string",
+              description: "Enter _id.",
+            },
+            reference_id: {
+              type: "string",
+              description: "Enter reference_id.",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
 const addFaqAdmin = {
   tags: ["Admin Panel"],
   description: "",
@@ -619,6 +661,9 @@ const adminRoutes = {
   },
   "/api/v1/admin/agencies": {
     post: agencyList,
+  },
+  "/api/v1/admin/agency": {
+    get: getAgencyProfile,
   },
   "/api/v1/admin/update-agency": {
     patch: updateAgencyStatus,

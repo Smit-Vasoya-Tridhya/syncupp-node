@@ -6,6 +6,7 @@ const {
   changePassword,
   getAdmin,
   updateAdmin,
+  getAgency,
 } = require("../controllers/adminController");
 const validatorFunc = require("../utils/validatorFunction.helper");
 const agencyController = require("../controllers/agencyController");
@@ -71,8 +72,15 @@ adminRoute.post(
   resetPassword
 );
 
+adminRoute.post("/add-faq", addFaqValidator, validatorFunc, addFaq);
+adminRoute.post("/get-all-faq", getAllFaq);
+adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
+adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
+adminRoute.get("/get-faq/:id", getFaq);
+
 adminRoute.use(protect);
 
+adminRoute.get("/agency", getAgency);
 adminRoute.put(
   "/updatePassword",
   updatePasswordValidator,
@@ -81,11 +89,7 @@ adminRoute.put(
 );
 adminRoute.get("/getProfile", getAdmin);
 adminRoute.put("/updateProfile", updateAdmin);
-adminRoute.post("/add-faq", addFaqValidator, validatorFunc, addFaq);
-adminRoute.post("/get-all-faq", getAllFaq);
-adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
-adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
-adminRoute.get("/get-faq/:id", getFaq);
+
 adminRoute.post(
   "/add-term-and-condition",
   addTermAndConditionValidator,

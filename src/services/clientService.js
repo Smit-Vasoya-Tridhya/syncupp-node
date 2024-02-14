@@ -511,6 +511,7 @@ class ClientService {
             name: { $concat: ["$first_name", " ", "$last_name"] },
             createdAt: 1,
             reference_id: 1,
+            contact_number: 1,
           },
         },
       ];

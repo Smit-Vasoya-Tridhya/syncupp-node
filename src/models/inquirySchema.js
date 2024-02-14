@@ -3,19 +3,26 @@ const { admin_connection } = require("../config/connection");
 
 const inquirySchema = new mongoose.Schema(
   {
-    name: {
+    first_name: {
       type: String,
       required: true,
     },
-    contact_number: {
+    last_name: {
       type: String,
       required: true,
     },
     email: {
       type: String,
+    },
+    contact_number: {
+      type: String,
       required: true,
     },
-    message: {
+    country: { type: String },
+    no_of_people: {
+      type: String,
+    },
+    thoughts: {
       type: String,
       required: true,
     },
