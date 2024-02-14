@@ -8,10 +8,13 @@ const Team_Agency = require("../models/teamAgencySchema");
 const Team_Client = require("../models/teamClientSchema");
 const PaymentHistory = require("../models/paymentHistorySchema");
 const SheetManagement = require("../models/sheetManagementSchema");
+const Activity = require("../models/activitySchema");
+const Activity_Status = require("../models/masters/activityStatusMasterSchema");
 const {
   returnMessage,
   invitationEmail,
   paginationObject,
+  capitalizeFirstLetter,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
@@ -601,7 +604,7 @@ class PaymentService {
   // fetch the payment history for the agency only
   paymentHistory = async (payload, user) => {
     try {
-      if (user?.role?.name !== "agency" || user?.role?.name !== "team_agency")
+      if (user?.role?.name !== "agency" && user?.role?.name !== "team_agency")
         return throwError(
           returnMessage("auth", "unAuthorized"),
           statusCode.forbidden
@@ -643,7 +646,7 @@ class PaymentService {
   // fetch the sheets lists and who is assined to the particular sheet
   sheetsListing = async (payload, user) => {
     try {
-      if (user?.role?.name !== "agency" || user?.role?.name !== "team_agency")
+      if (user?.role?.name !== "agency" && user?.role?.name !== "team_agency")
         return throwError(
           returnMessage("auth", "unAuthorized"),
           statusCode.forbidden
@@ -663,36 +666,101 @@ class PaymentService {
             .populate("role", "name")
             .lean();
       }
+
+      // aggragate reference from the https://mongoplayground.net/p/TqFafFxrncM
+
       const aggregate = [
         { $match: { agency_id: user?.reference_id } },
         {
+          $unwind: "$occupied_sheets",
+        },
+        {
           $lookup: {
             from: "authentications",
-            localField: "occupied_sheets.user_id",
-            foreignField: "_id",
-            as: "user_id",
+            let: {
+              itemId: {
+                $toObjectId: "$occupied_sheets.user_id",
+              },
+              items: "$occupied_sheets",
+            },
             pipeline: [
               {
+                $match: {
+                  $expr: {
+                    $eq: ["$reference_id", "$$itemId"],
+                  },
+                },
+              },
+              {
                 $project: {
+                  name: { $concat: ["$first_name", " ", "$last_name"] },
                   first_name: 1,
                   last_name: 1,
-                  name: {
-                    $concat: ["$first_name", " ", "$last_name"],
+                },
+              },
+              {
+                $replaceRoot: {
+                  newRoot: {
+                    $mergeObjects: ["$$items", "$$ROOT"],
                   },
                 },
               },
             ],
+            as: "occupied_sheets",
           },
         },
-        { $unwind: "$user_id" },
+        {
+          $group: {
+            _id: "$_id",
+            total_sheets: {
+              $first: "$total_sheets",
+            },
+            items: {
+              $push: {
+                $first: "$occupied_sheets",
+              },
+            },
+          },
+        },
       ];
 
       const sheets = await SheetManagement.aggregate(aggregate);
-      const occupied_sheets = sheets[0]?.occupied_sheets;
+      const occupied_sheets = sheets[0];
+
+      // this will get the length of the occupied sheets length
+      const items_length = occupied_sheets?.items?.length || 0;
+      occupied_sheets?.items?.unshift({
+        name:
+          capitalizeFirstLetter(user?.first_name) +
+          " " +
+          capitalizeFirstLetter(user?.last_name),
+        first_name: user?.first_name,
+        last_name: user?.last_name,
+        role: user?.role?.name,
+      });
+      occupied_sheets?.items?.forEach((sheet, index) => {
+        sheet["seat_no"] = index + 1;
+        sheet["status"] = "Allocated";
+      });
+      // this loop is used for the add blank object if the sheets are available
+      // this is required because front need to do change for that
+      for (let i = items_length; i < occupied_sheets?.total_sheets - 1; i++) {
+        occupied_sheets.items.push({ seat_no: i + 1 });
+      }
+
+      const page = pagination.page;
+      const pageSize = pagination?.result_per_page;
+
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+
       return {
-        sheets: occupied_sheets,
+        sheets: occupied_sheets?.items?.slice(startIndex, endIndex),
+        total_sheets: occupied_sheets?.total_sheets,
         page_count:
-          Math.ceil(occupied_sheets.length / pagination.result_per_page) || 0,
+          Math.ceil(
+            occupied_sheets?.items?.length / pagination.result_per_page
+          ) || 0,
       };
     } catch (error) {
       logger.error(`Error while fetching the sheets listing: ${error}`);
@@ -705,6 +773,10 @@ class PaymentService {
       const sheets = await SheetManagement.findOne({
         agency_id: user?.reference_id,
       }).lean();
+
+      const activity_status = await Activity_Status.findOne({ name: "pending" })
+        .select("_id")
+        .lean();
 
       if (!sheets)
         return throwError(
@@ -728,10 +800,29 @@ class PaymentService {
 
       const remove_user = user_exist[0];
 
+      // this will used to check weather this user id has assined any task and it is in the pending state
+      let activity_assigned;
       if (remove_user.role === "client") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          client_id: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
       } else if (remove_user.role === "team_agency") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          assign_to: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
       } else if (remove_user.role === "team_client") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          client_id: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
       }
+
+      if (activity_assigned) return { force_fully_remove: true };
     } catch (error) {
       logger.error(`Error while removing the user from the sheet: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -745,6 +836,9 @@ class PaymentService {
       }).lean();
 
       if (sheets.total_sheets === 1)
+        return throwError(returnMessage("payment", "canNotCancelSubscription"));
+
+      if (sheets.total_sheets - 1 < sheets.occupied_sheets.length)
         return throwError(returnMessage("payment", "canNotCancelSubscription"));
 
       const updated_sheet = await SheetManagement.findByIdAndUpdate(
@@ -761,6 +855,57 @@ class PaymentService {
       return;
     } catch (error) {
       logger.error(`Error while canceling the subscription: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  getSubscription = async (agency) => {
+    try {
+      const subscription = await this.subscripionDetail(
+        agency?.subscription_id
+      );
+
+      const [plan_details, sheets_detail] = await Promise.all([
+        this.planDetails(subscription.plan_id),
+        SheetManagement.findOne({ agency_id: agency?.reference_id }).lean(),
+      ]);
+
+      return {
+        next_billing_date: subscription?.current_end,
+        next_billing_price:
+          subscription?.quantity * (plan_details?.item.amount / 100),
+        total_sheets: sheets_detail.total_sheets,
+        available_sheets: sheets_detail.occupied_sheets.length,
+        subscription,
+        referral_points: {
+          erned_points: 200, //this static data as of now
+          available_points: 100, // this is static data as of now
+        },
+      };
+    } catch (error) {
+      logger.error(`Error while getting the referral: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  planDetails = async (plan_id) => {
+    try {
+      return Promise.resolve(razorpay.plans.fetch(plan_id));
+    } catch (error) {
+      logger.error(
+        `Error while getting the plan details from the razorpay: ${error}`
+      );
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  paymentDetails = async (payment_id) => {
+    try {
+      return Promise.resolve(razorpay.payments.fetch(payment_id));
+    } catch (error) {
+      logger.error(
+        `Error while getting the plan details from the razorpay: ${error}`
+      );
       return throwError(error?.message, error?.statusCode);
     }
   };
