@@ -9,6 +9,7 @@ const agreementRoutes = require("./swagger_helper/agreement.swagger");
 const invoiceRoutes = require("./swagger_helper/invoice.swagger");
 const inquiryRoutes = require("./swagger_helper/inquiry.swagger");
 const affiliateRoutes = require("./swagger_helper/affiliate.swagger");
+const activityRoute = require("./swagger_helper/activity.swagger");
 
 const swaggerDoc = {
   openapi: "3.0.0",
@@ -67,6 +68,7 @@ const swaggerDoc = {
     ...invoiceRoutes,
     ...inquiryRoutes,
     ...affiliateRoutes,
+    ...activityRoute,
   },
 };
 module.exports = swaggerDoc;

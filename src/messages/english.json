@@ -178,7 +178,10 @@
     "meetingScheduledForTeam": "Meeting is already set for this team member.",
     "recurringDateRequired": "Recurring date is required for the other type of the activity.",
     "invalidRecurringDate": "Recurring date should be fututure date.",
-    "activityNotFound": "Activity not found."
+    "activityNotFound": "Activity not found.",
+    "callScheduled": "Call meeting is scheduled successfully.",
+    "activityCreated": "Activity created successfully.",
+    "activityUpdated": "Activity updated successfully."
   },
 
   "payment": {

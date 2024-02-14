@@ -10,4 +10,11 @@ activityRoute.delete("/delete-task", activityController.deleteTask);
 activityRoute.put("/update-task/:id", activityController.updateTask);
 activityRoute.put("/update-status/:id", activityController.updateStatus);
 
+activityRoute.post("/call-meeting", activityController.createCallActivity);
+activityRoute.patch(
+  "/update/call-meeting/:activityId",
+  activityController.updateCallActivity
+);
+activityRoute.get("/call-meeting/:activityId", activityController.getActivity);
+
 module.exports = activityRoute;
