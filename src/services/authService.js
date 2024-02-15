@@ -1,3 +1,4 @@
+require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const logger = require("../logger");
 const {
@@ -7,6 +8,7 @@ const {
   passwordValidation,
   forgotPasswordEmailTemplate,
   capitalizeFirstLetter,
+  invitationEmailTemplate,
 } = require("../utils/utils");
 const bcrypt = require("bcrypt");
 const { throwError } = require("../helpers/errorUtil");
@@ -18,11 +20,12 @@ const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
 const sendEmail = require("../helpers/sendEmail");
 const axios = require("axios");
-require("dotenv").config();
 const Country_Master = require("../models/masters/countryMasterSchema");
 const City_Master = require("../models/masters/cityMasterSchema");
 const State_Master = require("../models/masters/stateMasterSchema");
 const Team_Agency = require("../models/teamAgencySchema");
+const ReferralHistory = require("../models/referralHistorySchema");
+const Configuration = require("../models/configurationSchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
@@ -37,6 +40,7 @@ class AuthService {
           expiresIn,
         }
       );
+
       return { token, user: payload };
     } catch (error) {
       logger.error(`Error while token generate: ${error}`);
@@ -64,8 +68,15 @@ class AuthService {
 
   agencySignUp = async (payload, files) => {
     try {
-      const { first_name, last_name, email, password, contact_number } =
-        payload;
+      const {
+        first_name,
+        last_name,
+        email,
+        password,
+        contact_number,
+        referral_code,
+      } = payload;
+
       validateRequestFields(payload, [
         "first_name",
         "last_name",
@@ -92,9 +103,11 @@ class AuthService {
         return throwError(returnMessage("agency", "agencyExist"));
 
       let image_url;
+
       if (files && files.fieldname === "client_image") {
         image_url = "uploads/" + files?.filename;
       }
+
       const agency_object = {
         company_name: payload?.company_name,
         company_website: payload?.company_website,
@@ -108,31 +121,118 @@ class AuthService {
         Role_Master.findOne({ name: "agency" }).select("name").lean(),
       ]);
 
-      let agency_enroll = await Authentication.create({
-        first_name,
-        last_name,
-        name:
-          capitalizeFirstLetter(first_name) +
-          " " +
-          capitalizeFirstLetter(last_name),
-        email,
-        password: encrypted_password,
-        contact_number,
-        image_url,
-        reference_id: agency?._id,
-        remember_me: payload?.remember_me,
-        role: role?._id,
-        status: "payment_pending",
-      });
-      agency_enroll = agency_enroll.toObject();
-      agency_enroll.role = role;
-      delete agency_enroll?.password;
-      delete agency_enroll?.is_facebook_signup;
-      delete agency_enroll?.is_google_signup;
-      return this.tokenGenerator({
-        ...agency_enroll,
-        rememberMe: payload?.rememberMe,
-      });
+      if (!payload?.referral_code) {
+        payload.referral_code = await this.referralCodeGenerator();
+
+        if (!payload.referral_code)
+          return throwError(returnMessage("referral", "codeGenerationFailed"));
+
+        let agency_enroll = await Authentication.create({
+          first_name,
+          last_name,
+          email,
+          password: encrypted_password,
+          contact_number,
+          image_url,
+          reference_id: agency?._id,
+          remember_me: payload?.remember_me,
+          role: role?._id,
+          status: "payment_pending",
+          referral_code: payload.referral_code,
+        });
+        agency_enroll = agency_enroll.toObject();
+        agency_enroll.role = role;
+
+        delete agency_enroll?.password;
+        delete agency_enroll?.is_facebook_signup;
+        delete agency_enroll?.is_google_signup;
+
+        return this.tokenGenerator({
+          ...agency_enroll,
+          rememberMe: payload?.rememberMe,
+        });
+      } else if (payload?.referral_code) {
+        let new_referral_code = await this.referralCodeGenerator();
+
+        if (!new_referral_code)
+          return throwError(returnMessage("referral", "codeGenerationFailed"));
+
+        let agency_enroll = await Authentication.create({
+          first_name,
+          last_name,
+          email,
+          password: encrypted_password,
+          contact_number,
+          image_url,
+          reference_id: agency?._id,
+          remember_me: payload?.remember_me,
+          role: role?._id,
+          status: "payment_pending",
+          referral_code: new_referral_code,
+        });
+
+        agency_enroll = agency_enroll.toObject();
+        agency_enroll.role = role;
+
+        if (payload?.referral_code) {
+          const referral_registered = await this.referralSignUp({
+            referral_code: referral_code,
+            referred_to: agency_enroll,
+          });
+
+          if (typeof referral_registered === "string") {
+            await Authentication.findByIdAndDelete(agency_enroll._id);
+            return referral_registered;
+          }
+        }
+
+        delete agency_enroll?.password;
+        delete agency_enroll?.is_facebook_signup;
+        delete agency_enroll?.is_google_signup;
+
+        return this.tokenGenerator({
+          ...agency_enroll,
+          rememberMe: payload?.rememberMe,
+        });
+      }
+
+      // let agency_enroll = await Authentication.create({
+      //   first_name,
+      //   last_name,
+      //   email,
+      //   password: encrypted_password,
+      //   contact_number,
+      //   image_url,
+      //   reference_id: agency?._id,
+      //   remember_me: payload?.remember_me,
+      //   role: role?._id,
+      //   status: "payment_pending",
+      //   referral_code: payload.referral_code,
+      // });
+
+      // agency_enroll = agency_enroll.toObject();
+      // agency_enroll.role = role;
+
+      // if (payload?.referral_code) {
+      //   const referral_registered = await this.referralSignUp({
+      //     referral_code: payload?.referral_code,
+      //     referred_to: agency_enroll,
+      //   });
+
+      //   if (typeof referral_registered === "string") {
+      //     await Authentication.findByIdAndDelete(agency_enroll._id);
+      //     return referral_registered;
+      //   }
+      // }
+
+      // delete agency_enroll?.password;
+      // delete agency_enroll?.is_facebook_signup;
+      // delete agency_enroll?.is_google_signup;
+
+      // return this.tokenGenerator({
+      //   ...agency_enroll,
+      //   rememberMe: payload?.rememberMe,
+      // });
     } catch (error) {
       logger.error(`Error while agency signup: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -142,8 +242,10 @@ class AuthService {
   googleSign = async (payload) => {
     try {
       const { signupId } = payload;
+
       if (!signupId)
         return throwError(returnMessage("auth", "googleAuthTokenNotFound"));
+
       const decoded = jwt.decode(signupId);
 
       let existing_agency = await Authentication.findOne({
@@ -159,6 +261,9 @@ class AuthService {
           Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
 
+        const referral_code = await this.referralCodeGenerator();
+        if (!referral_code) return returnMessage("default");
+
         let agency_enroll = await Authentication.create({
           first_name: decoded?.given_name,
           last_name: decoded?.family_name,
@@ -171,9 +276,24 @@ class AuthService {
           role: role?._id,
           status: "payment_pending",
           is_google_signup: true,
+          referral_code,
         });
+
         agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
+
+        if (payload?.referral_code) {
+          const referral_registered = await this.referralSignUp({
+            referral_code: payload?.referral_code,
+            referred_to: createUser,
+          });
+
+          if (typeof referral_registered === "string") {
+            await User.findByIdAndDelete(createUser._id);
+            return referral_registered;
+          }
+        }
+
         return this.tokenGenerator({
           ...agency_enroll,
         });
@@ -191,6 +311,7 @@ class AuthService {
   facebookSignIn = async (payload) => {
     try {
       const { access_token } = payload;
+
       if (!access_token || access_token === "")
         return throwError(returnMessage("auth", "facebookAuthTokenNotFound"));
 
@@ -215,6 +336,9 @@ class AuthService {
           Role_Master.findOne({ name: "agency" }).select("name").lean(),
         ]);
 
+        const referral_code = await this.referralCodeGenerator();
+        if (!referral_code) return returnMessage("default");
+
         let agency_enroll = await Authentication.create({
           first_name: data?.first_name,
           last_name: data?.last_name,
@@ -227,9 +351,24 @@ class AuthService {
           role: role?._id,
           status: "payment_pending",
           is_facebook_signup: true,
+          referral_code,
         });
+
         agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
+
+        if (payload?.referral_code) {
+          const referral_registered = await this.referralSignUp({
+            referral_code: payload?.referral_code,
+            referred_to: createUser,
+          });
+
+          if (typeof referral_registered === "string") {
+            await User.findByIdAndDelete(createUser._id);
+            return referral_registered;
+          }
+        }
+
         return this.tokenGenerator({
           ...agency_enroll,
         });
@@ -497,6 +636,104 @@ class AuthService {
       return { password_required: true };
     } catch (error) {
       logger.error(`Error while getting password required: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  referralCodeGenerator = async () => {
+    try {
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      let referral_code = "";
+
+      // Generate the initial code
+      for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        referral_code += characters.charAt(randomIndex);
+      }
+
+      const referral_code_exist = await Authentication.findOne({
+        referral_code,
+      })
+        .select("referral_code")
+        .lean();
+      if (referral_code_exist) return this.referralCodeGenerator();
+
+      return referral_code;
+    } catch (error) {
+      logger.error("Error while generating the referral code", error);
+      return false;
+    }
+  };
+
+  referralSignUp = async ({ referral_code, referred_to }) => {
+    try {
+      const referral_code_exist = await Authentication.findOne({
+        referral_code,
+      })
+        .select("referral_code")
+        .lean();
+
+      if (!referral_code_exist)
+        return throwError(returnMessage("auth", "referralCodeNotFound"));
+
+      await ReferralHistory.deleteMany({
+        referral_code,
+        registered: false,
+        referred_by: referral_code_exist._id,
+        email: referred_to?.email,
+      });
+
+      await ReferralHistory.create({
+        referral_code,
+        referred_by: referral_code_exist._id,
+        referred_to: referred_to._id,
+        email: referred_to?.email,
+        registered: true,
+      });
+
+      const referral_data = Configuration.find({});
+      await Authentication.findByOneAndUpdate(
+        { referral_code: referral_code },
+        { $inc: { total_referral_point: referral_data.referral_point } },
+        { new: true }
+      );
+      return;
+    } catch (error) {
+      logger.error("Error while referral SignUp", error);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  sendReferaal = async (user, payload) => {
+    try {
+      const { email } = payload;
+      if (!validateEmail(email)) return returnMessage("invalidEmail");
+      const email_exist = await Authentication.findOne({ email }).lean();
+      if (email_exist) return returnMessage("emailExist");
+      const link = `${process.env.REACT_APP_URL}/signup?referral=${user?.referral_code}`;
+
+      const refferralEmail = invitationEmailTemplate({
+        link: link,
+        user: `${user?.first_name}+ " "+ ${user?.last_name} `,
+      });
+
+      await sendEmail({
+        email: email,
+        subject: returnMessage("auth", "invitationEmailSubject"),
+        message: refferralEmail,
+      });
+
+      await ReferralHistory.create({
+        referral_code: user?.referral_code,
+        referred_by: user?._id,
+        email,
+        registered: false,
+      });
+
+      return;
+    } catch (error) {
+      logger.error(`Error while sending email: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };

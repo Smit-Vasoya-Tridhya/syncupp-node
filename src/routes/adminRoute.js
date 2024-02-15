@@ -29,12 +29,6 @@ const {
   addFaqValidator,
 } = require("../validators/faq.validator");
 const {
-  addTermAndCondition,
-} = require("../controllers/termAndConditionController");
-const {
-  addTermAndConditionValidator,
-} = require("../validators/termAndCondition.validator");
-const {
   addClientReview,
   getAllClientReview,
   deleteClientReview,
@@ -86,12 +80,7 @@ adminRoute.post("/get-all-faq", getAllFaq);
 adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
 adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
 adminRoute.get("/get-faq/:id", getFaq);
-adminRoute.post(
-  "/add-term-and-condition",
-  addTermAndConditionValidator,
-  validatorFunc,
-  addTermAndCondition
-);
+
 // Client Review APIs
 adminRoute.get("/get-client-review/:id", getClientReviewByID);
 adminRoute.post("/get-client-review", getAllClientReview);

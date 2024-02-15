@@ -30,7 +30,9 @@
     "passwordNotMatch": "Old password does not match.",
     "resetPassword": "Password reset successfully.",
     "emailExist": "Email already exist. please choose another email.",
-    "oldPassRequired": "Old password is required."
+    "oldPassRequired": "Old password is required.",
+    "sendRefferalEmail": "Referral email send successfully.",
+    "invitationEmailSubject": "Inviation to the Tacky."
   },
 
   "admin": {
@@ -200,7 +202,12 @@
     "planUpdated": "Plan updated successfully.",
     "planFetched": "Plan fetched successfully.",
     "technologyUpdated": "Technology stack updated successfully.",
-    "technologyFetched": "Technology stack fetched successfully."
+    "technologyFetched": "Technology stack fetched successfully.",
+    "getTermandCondition": "Term and Condition fetched successfully.",
+    "TermAndConditionAdded": "Term and Condition added successfully.",
+    "updateTermAndCondition": "Term and Condition updated successfully.",
+    "AboutUsUpdated": "About us updated successfully.",
+    "AboutUsFetched": "About us fetched successfully."
   },
 
   "default": { "default": "Something went wrong." }

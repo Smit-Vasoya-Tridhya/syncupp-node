@@ -116,3 +116,27 @@ exports.getTechnologyStack = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.updateAboutUs = catchAsyncError(async (req, res, next) => {
+  const data = await cmsService.updateAboutUs(req?.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("cms", "AboutUsUpdated"),
+    data,
+    statusCode.success
+  );
+});
+
+// GET   technology Stack CMS
+
+exports.getAboutUS = catchAsyncError(async (req, res, next) => {
+  const data = await cmsService.getAboutUs();
+  sendResponse(
+    res,
+    true,
+    returnMessage("cms", "AboutUsFetched"),
+    data,
+    statusCode.success
+  );
+});
