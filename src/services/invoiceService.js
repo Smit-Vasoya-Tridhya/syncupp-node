@@ -174,7 +174,12 @@ class InvoiceService {
   // GET All Invoice    ------   AGENCY API
   getAllInvoice = async (searchObj, user_id) => {
     try {
-      const queryObj = { is_deleted: false, agency_id: user_id };
+      const { client_id } = searchObj;
+      const queryObj = {
+        is_deleted: false,
+        agency_id: user_id,
+        ...(client_id && { client_id: new ObjectId(client_id) }),
+      };
 
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [
