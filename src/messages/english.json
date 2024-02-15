@@ -193,7 +193,10 @@
   "affiliate": {
     "registered": "User registered successfully.",
     "emailExist": "Email already registered.",
-    "incorrectPassword": "Email or password is incorrect."
+    "incorrectPassword": "Email or password is incorrect.",
+    "dashboardDataFetched": "Dashboard data fetched successfully.",
+    "affiliateNotFound": "Account not found.",
+    "countAdded": "Count added."
   },
   "cms": {
     "contactUpdated": "Contact CRM updated successfully.",
