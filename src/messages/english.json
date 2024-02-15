@@ -184,7 +184,8 @@
     "activityNotFound": "Activity not found.",
     "callScheduled": "Call meeting is scheduled successfully.",
     "activityCreated": "Activity created successfully.",
-    "activityUpdated": "Activity updated successfully."
+    "activityUpdated": "Activity updated successfully.",
+    "activityListFetched": "Activities list fetch successfully."
   },
 
   "payment": {

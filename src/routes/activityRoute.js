@@ -16,5 +16,6 @@ activityRoute.patch(
   activityController.updateCallActivity
 );
 activityRoute.get("/call-meeting/:activityId", activityController.getActivity);
+activityRoute.post("/list", activityController.getActivities);
 
 module.exports = activityRoute;

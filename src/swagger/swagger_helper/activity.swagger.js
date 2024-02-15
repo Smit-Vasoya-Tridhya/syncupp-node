@@ -181,6 +181,71 @@ const getActivity = {
   },
 };
 
+const activityList = {
+  tags: ["Activity - CRM Panel"],
+  description: "",
+  summary: "Fetch activity list with date filters",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            page: {
+              type: "number",
+              description: "Enter page number.",
+              default: 1,
+            },
+            items_per_page: {
+              type: "number",
+              description: "Enter item per page.",
+              default: 5,
+            },
+            sort_order: {
+              type: "string",
+              description: "Enter order of sort asc or desc.",
+              default: "desc",
+            },
+            sort_field: {
+              type: "string",
+              description: "Enter field to sort.",
+              default: "createdAt",
+            },
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+            client_id: {
+              type: "string",
+            },
+            agency_id: {
+              type: "string",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const activityRoute = {
   "/api/v1/activity/call-meeting": {
     post: createActivity,
@@ -190,6 +255,9 @@ const activityRoute = {
   },
   "/api/v1/activity/call-meeting/{activityId}": {
     get: getActivity,
+  },
+  "/api/v1/activity/list": {
+    post: activityList,
   },
 };
 

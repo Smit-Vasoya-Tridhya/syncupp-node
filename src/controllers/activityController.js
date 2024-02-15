@@ -130,3 +130,14 @@ exports.getActivity = catchAsyncError(async (req, res, next) => {
     200
   );
 });
+
+exports.getActivities = catchAsyncError(async (req, res, next) => {
+  const activities = await activityService.getActivities(req.body, req.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "activityListFetched"),
+    activities,
+    200
+  );
+});
