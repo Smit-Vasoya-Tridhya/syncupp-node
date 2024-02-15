@@ -72,15 +72,17 @@ adminRoute.post(
   resetPassword
 );
 
+adminRoute.use(protect);
+
+// FAQ
+
 adminRoute.post("/add-faq", addFaqValidator, validatorFunc, addFaq);
 adminRoute.post("/get-all-faq", getAllFaq);
 adminRoute.delete("/delete-faq", deleteFaqValidator, validatorFunc, deleteFaq);
 adminRoute.put("/update-faq/:id", updateFaqValidator, validatorFunc, updateFaq);
 adminRoute.get("/get-faq/:id", getFaq);
 
-adminRoute.use(protect);
-
-adminRoute.get("/agency", getAgency);
+adminRoute.post("/agency/get", getAgency);
 adminRoute.put(
   "/updatePassword",
   updatePasswordValidator,

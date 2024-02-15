@@ -10,6 +10,7 @@ const Price_Plan = require("../models/cms/priceSchema");
 const Privacy_Policy = require("../models/cms/privacyPolicySchema");
 const Contact_Us = require("../models/cms/contactUsSchema");
 const Technology_Stack = require("../models/cms/technologyStackSchema");
+const AdminFqa = require("../models/adminFaqSchema");
 
 class cmsService {
   updateContactUs = async (payload) => {
@@ -142,6 +143,17 @@ class cmsService {
     } catch (error) {
       logger.error(`Error while get technologyStack CRM : ${error}`);
       return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // GET All FQA CMS
+  getAllFaqCms = async () => {
+    try {
+      const faqs = await AdminFqa.find({ is_deleted: false });
+      return faqs;
+    } catch (error) {
+      logger.error(`Error while Admin FQA  CMS Listing, ${error}`);
+      throwError(error?.message, error?.statusCode);
     }
   };
 }

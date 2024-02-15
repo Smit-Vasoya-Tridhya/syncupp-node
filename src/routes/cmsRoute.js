@@ -23,4 +23,7 @@ adminRoute.get("/price-plan", cmsController.getPricePlan);
 adminRoute.put("/technology-stack", cmsController.updateTechnologyStack);
 adminRoute.get("/technology-stack", cmsController.getTechnologyStack);
 
+// FAQ
+adminRoute.get("/faq", cmsController.getAllFaqCms);
+
 module.exports = adminRoute;

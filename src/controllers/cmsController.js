@@ -116,3 +116,16 @@ exports.getTechnologyStack = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+// get All FQA
+
+exports.getAllFaqCms = catchAsyncError(async (req, res, next) => {
+  const faqs = await cmsService.getAllFaqCms();
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "getAllFaq"),
+    faqs,
+    statusCode.success
+  );
+});
