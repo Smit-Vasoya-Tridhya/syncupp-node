@@ -768,7 +768,7 @@ class PaymentService {
     }
   };
 
-  removeUser = async (user_id, user) => {
+  removeUser = async (user_id, payload, user) => {
     try {
       const sheets = await SheetManagement.findOne({
         agency_id: user?.reference_id,
@@ -800,29 +800,67 @@ class PaymentService {
 
       const remove_user = user_exist[0];
 
-      // this will used to check weather this user id has assined any task and it is in the pending state
-      let activity_assigned;
-      if (remove_user.role === "client") {
-        activity_assigned = await Activity.findOne({
-          agency_id: user?.reference_id,
-          client_id: user_id,
-          activity_status: activity_status?._id,
-        }).lean();
-      } else if (remove_user.role === "team_agency") {
-        activity_assigned = await Activity.findOne({
-          agency_id: user?.reference_id,
-          assign_to: user_id,
-          activity_status: activity_status?._id,
-        }).lean();
-      } else if (remove_user.role === "team_client") {
-        activity_assigned = await Activity.findOne({
-          agency_id: user?.reference_id,
-          client_id: user_id,
-          activity_status: activity_status?._id,
-        }).lean();
+      if (!payload?.force_fully_remove) {
+        // this will used to check weather this user id has assined any task and it is in the pending state
+        let activity_assigned;
+        if (remove_user.role === "client") {
+          activity_assigned = await Activity.findOne({
+            agency_id: user?.reference_id,
+            client_id: user_id,
+            activity_status: activity_status?._id,
+          }).lean();
+        } else if (remove_user.role === "team_agency") {
+          activity_assigned = await Activity.findOne({
+            agency_id: user?.reference_id,
+            assign_to: user_id,
+            activity_status: activity_status?._id,
+          }).lean();
+        } else if (remove_user.role === "team_client") {
+          activity_assigned = await Activity.findOne({
+            agency_id: user?.reference_id,
+            client_id: user_id,
+            activity_status: activity_status?._id,
+          }).lean();
+        }
+
+        if (activity_assigned) return { force_fully_remove: true };
       }
 
-      if (activity_assigned) return { force_fully_remove: true };
+      if (payload?.force_fully_remove) {
+        if (remove_user.role === "client") {
+          await Client.updateOne(
+            {
+              _id: remove_user?._id,
+              "agency_ids.agency_id": user?.reference_id,
+            },
+            { $set: { "agency_ids.$.status": "deleted" } },
+            { new: true }
+          );
+        } else if (remove_user.role === "team_agency") {
+          await Authentication.findOneAndUpdate(
+            { reference_id: remove_user?._id },
+            { status: "team_agency_inactive", is_deleted: true },
+            { new: true }
+          );
+        } else if (remove_user.role === "team_client") {
+          await Team_Client.updateOne(
+            {
+              _id: remove_user?._id,
+              "agency_ids.agency_id": user?.reference_id,
+            },
+            { $set: { "agency_ids.$.status": "deleted" } },
+            { new: true }
+          );
+        }
+
+        await SheetManagement.findByIdAndUpdate(
+          sheets._id,
+          {
+            occupied_sheets: updated_users,
+          },
+          { new: true }
+        );
+      }
     } catch (error) {
       logger.error(`Error while removing the user from the sheet: ${error}`);
       return throwError(error?.message, error?.statusCode);

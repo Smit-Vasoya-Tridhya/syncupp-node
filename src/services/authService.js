@@ -280,6 +280,9 @@ class AuthService {
         return throwError(returnMessage("agency", "agencyInactive"));
 
       if (existing_Data?.role?.name === "team_agency") {
+        // if (existing_Data?.status == "team_agency_inactive")
+        //   return throwError(returnMessage("auth", "teamAgencyIsInactive"));
+
         existing_Data.team_agency_detail = await Team_Agency.findById(
           existing_Data?.reference_id
         )

@@ -30,7 +30,8 @@
     "passwordNotMatch": "Old password does not match.",
     "resetPassword": "Password reset successfully.",
     "emailExist": "Email already exist. please choose another email.",
-    "oldPassRequired": "Old password is required."
+    "oldPassRequired": "Old password is required.",
+    "teamAgencyIsInactive": "Your account has been deactivate by agency.."
   },
 
   "admin": {

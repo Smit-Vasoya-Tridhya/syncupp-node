@@ -61,8 +61,18 @@ exports.sheetsListing = catchAsyncError(async (req, res, next) => {
 });
 
 exports.removeUser = catchAsyncError(async (req, res, next) => {
-  await paymentService.removeUser(req.params.userId, req.user);
-  sendResponse(res, true, returnMessage("payment", "userRemoved"), {}, 200);
+  const remove_user = await paymentService.removeUser(
+    req.params.userId,
+    req.body,
+    req.user
+  );
+  sendResponse(
+    res,
+    true,
+    returnMessage("payment", "userRemoved"),
+    remove_user,
+    200
+  );
 });
 
 exports.cancelSubscription = catchAsyncError(async (req, res, next) => {

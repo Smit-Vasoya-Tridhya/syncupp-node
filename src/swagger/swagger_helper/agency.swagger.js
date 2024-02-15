@@ -90,6 +90,10 @@ const deleteClient = {
               description: "Enter ids of client",
               default: [],
             },
+            force_fully_remove: {
+              type: "boolean",
+              default: false,
+            },
           },
         },
       },
