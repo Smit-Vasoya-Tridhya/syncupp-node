@@ -32,7 +32,5 @@ affiliateRoute.post(
 
 affiliateRoute.use(protect);
 affiliateRoute.post("/change-password", affiliateController.changePassword);
-affiliateRoute.get("/dashboard", affiliateController.getDashboardData);
-affiliateRoute.post("/click-count", affiliateController.clickCount);
 
 module.exports = affiliateRoute;

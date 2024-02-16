@@ -126,14 +126,14 @@ class InvoiceService {
 
       const invoiceItems = invoice_content;
       calculateAmount(invoiceItems);
+
       const isInvoice = await Invoice.findOne({
         invoice_number: invoice_number,
-        agency_id: user_id,
       });
-
       if (isInvoice) {
         return throwError(returnMessage("invoice", "invoiceNumberExists"));
       }
+
       const { total, sub_total } = calculateInvoice(invoiceItems);
 
       // Update Invoice status
@@ -147,6 +147,7 @@ class InvoiceService {
           name: "draft",
         });
       }
+
       var invoice = await Invoice.create({
         due_date,
         invoice_number,
@@ -174,12 +175,7 @@ class InvoiceService {
   // GET All Invoice    ------   AGENCY API
   getAllInvoice = async (searchObj, user_id) => {
     try {
-      const { client_id } = searchObj;
-      const queryObj = {
-        is_deleted: false,
-        agency_id: user_id,
-        ...(client_id && { client_id: new ObjectId(client_id) }),
-      };
+      const queryObj = { is_deleted: false, agency_id: user_id };
 
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [

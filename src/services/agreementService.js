@@ -17,7 +17,6 @@ const { default: mongoose } = require("mongoose");
 const Handlebars = require("handlebars");
 const pdf = require("html-pdf");
 const moment = require("moment");
-const { ObjectId } = require("mongodb");
 
 class AgreementService {
   // Add   Agreement
@@ -165,12 +164,7 @@ class AgreementService {
   // GET All Agreement
   getAllAgreement = async (searchObj, user_id) => {
     try {
-      const { client_id } = searchObj;
-      const queryObj = {
-        is_deleted: false,
-        agency_id: user_id,
-        ...(client_id && { receiver: new ObjectId(client_id) }),
-      };
+      const queryObj = { is_deleted: false, agency_id: user_id };
 
       if (searchObj.search && searchObj.search !== "") {
         queryObj["$or"] = [

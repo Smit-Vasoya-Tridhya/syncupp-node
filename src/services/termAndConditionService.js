@@ -1,6 +1,6 @@
 const logger = require("../logger");
 const { throwError } = require("../helpers/errorUtil");
-const AdminTermAndCondition = require("../models/cms/admintermAndConditionSchema");
+const AdminTermAndCondition = require("../models/admintermAndConditionSchema");
 
 class TermAdnConditionService {
   // Add   TermAndCondition
@@ -11,39 +11,6 @@ class TermAdnConditionService {
     } catch (error) {
       logger.error(`Error while add Term And Condition, ${error}`);
       throwError(error?.message, error?.statusCode);
-    }
-  };
-
-  getTermAndCondition = async () => {
-    try {
-      const termDetail = await AdminTermAndCondition.findOne({});
-      return termDetail;
-    } catch (error) {
-      console.log(error);
-      logger.error(`Error while get term and condition CRM : ${error}`);
-      return throwError(error?.message, error?.statusCode);
-    }
-  };
-
-  updateTermAndCondition = async (payload) => {
-    try {
-      const { description } = payload;
-
-      const TermAndCondition = await AdminTermAndCondition.findOne({});
-
-      console.log(TermAndCondition);
-
-      await AdminTermAndCondition.findOneAndUpdate(
-        {
-          _id: TermAndCondition._id,
-        },
-        { description },
-        { new: true, useFindAndModify: false }
-      );
-      return true;
-    } catch (error) {
-      logger.error(`Error while add Term and Condition CRM : ${error}`);
-      return throwError(error?.message, error?.statusCode);
     }
   };
 }

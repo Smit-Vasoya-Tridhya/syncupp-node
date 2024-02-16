@@ -64,27 +64,3 @@ exports.resetPassword = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
-
-// Affiliate Dashboard Data
-exports.getDashboardData = catchAsyncError(async (req, res, next) => {
-  const dashboardData = await affiliateService.getDashboardData(req?.user);
-  sendResponse(
-    res,
-    true,
-    returnMessage("affiliate", "dashboardDataFetched"),
-    dashboardData,
-    statusCode.success
-  );
-});
-
-// Affiliate Click Count
-exports.clickCount = catchAsyncError(async (req, res, next) => {
-  const dashboardData = await affiliateService.clickCount(req?.body);
-  sendResponse(
-    res,
-    true,
-    returnMessage("affiliate", "countAdded"),
-    dashboardData,
-    statusCode.success
-  );
-});

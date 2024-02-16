@@ -13,7 +13,9 @@ exports.validateCreateInquiry = [
     .withMessage(validationMessage.inquiry.thoughtRequired)
     .isLength({ max: 400 }) // specify the maximum length for the agreement_content
     .withMessage(validationMessage.inquiry.descLength),
-
+  body("country")
+    .notEmpty()
+    .withMessage(validationMessage.inquiry.countryRequired),
   body("contact_number")
     .notEmpty()
     .withMessage(validationMessage.inquiry.contactNumberRequired),

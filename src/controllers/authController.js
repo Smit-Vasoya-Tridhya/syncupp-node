@@ -171,13 +171,3 @@ exports.passwordSetRequired = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
-exports.refferalEmail = catchAsyncError(async (req, res, next) => {
-  const refferal_email = await authService.sendReferaal(req.user, req.body);
-  sendResponse(
-    res,
-    true,
-    returnMessage("auth", "sendRefferalEmail"),
-    refferal_email,
-    statusCode.success
-  );
-});
