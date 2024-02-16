@@ -31,7 +31,9 @@
     "resetPassword": "Password reset successfully.",
     "emailExist": "Email already exist. please choose another email.",
     "oldPassRequired": "Old password is required.",
-    "teamAgencyIsInactive": "Your account has been deactivate by agency.."
+    "teamAgencyIsInactive": "Your account has been deactivate by agency.",
+    "sendRefferalEmail": "Referral email send successfully.",
+    "invitationEmailSubject": "Inviation to the Tacky."
   },
 
   "admin": {
@@ -211,7 +213,10 @@
   "affiliate": {
     "registered": "User registered successfully.",
     "emailExist": "Email already registered.",
-    "incorrectPassword": "Email or password is incorrect."
+    "incorrectPassword": "Email or password is incorrect.",
+    "dashboardDataFetched": "Dashboard data fetched successfully.",
+    "affiliateNotFound": "Account not found.",
+    "countAdded": "Count added."
   },
   "cms": {
     "contactUpdated": "Contact CRM updated successfully.",
@@ -221,7 +226,12 @@
     "planUpdated": "Plan updated successfully.",
     "planFetched": "Plan fetched successfully.",
     "technologyUpdated": "Technology stack updated successfully.",
-    "technologyFetched": "Technology stack fetched successfully."
+    "technologyFetched": "Technology stack fetched successfully.",
+    "getTermandCondition": "Term and Condition fetched successfully.",
+    "TermAndConditionAdded": "Term and Condition added successfully.",
+    "updateTermAndCondition": "Term and Condition updated successfully.",
+    "AboutUsUpdated": "About us updated successfully.",
+    "AboutUsFetched": "About us fetched successfully."
   },
 
   "default": { "default": "Something went wrong." }

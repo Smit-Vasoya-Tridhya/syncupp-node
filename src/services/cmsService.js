@@ -10,6 +10,8 @@ const Price_Plan = require("../models/cms/priceSchema");
 const Privacy_Policy = require("../models/cms/privacyPolicySchema");
 const Contact_Us = require("../models/cms/contactUsSchema");
 const Technology_Stack = require("../models/cms/technologyStackSchema");
+const AdminFqa = require("../models/adminFaqSchema");
+const About_Us = require("../models/cms/aboutUsSchema");
 
 class cmsService {
   updateContactUs = async (payload) => {
@@ -141,6 +143,49 @@ class cmsService {
       return technologyStack;
     } catch (error) {
       logger.error(`Error while get technologyStack CRM : ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // GET All FQA CMS
+  getAllFaqCms = async () => {
+    try {
+      const faqs = await AdminFqa.find({ is_deleted: false });
+      return faqs;
+    } catch (error) {
+      logger.error(`Error while Admin FQA  CMS Listing, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
+  //About Us
+  updateAboutUs = async (payload) => {
+    try {
+      const { description } = payload;
+      const aboutDetailCrm = await About_Us.findOne({});
+
+      await About_Us.findOneAndUpdate(
+        {
+          _id: aboutDetailCrm._id,
+        },
+        { description },
+        { new: true, useFindAndModify: false }
+      );
+
+      return true;
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while update About Us CRM : ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  getAboutUs = async () => {
+    try {
+      const aboutUsDetail = await About_Us.findOne({});
+      return aboutUsDetail;
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while get About Us CRM : ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };
