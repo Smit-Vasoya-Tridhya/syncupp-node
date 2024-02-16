@@ -671,8 +671,12 @@ class PaymentService {
 
       const aggregate = [
         { $match: { agency_id: user?.reference_id } },
+
         {
-          $unwind: "$occupied_sheets",
+          $unwind: {
+            path: "$occupied_sheets",
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
           $lookup: {
@@ -727,8 +731,6 @@ class PaymentService {
       const sheets = await SheetManagement.aggregate(aggregate);
       const occupied_sheets = sheets[0];
 
-      // this will get the length of the occupied sheets length
-      const items_length = occupied_sheets?.items?.length || 0;
       occupied_sheets?.items?.unshift({
         name:
           capitalizeFirstLetter(user?.first_name) +
@@ -738,14 +740,20 @@ class PaymentService {
         last_name: user?.last_name,
         role: user?.role?.name,
       });
-      occupied_sheets?.items?.forEach((sheet, index) => {
-        sheet["seat_no"] = index + 1;
-        sheet["status"] = "Allocated";
-      });
-      // this loop is used for the add blank object if the sheets are available
-      // this is required because front need to do change for that
-      for (let i = items_length; i < occupied_sheets?.total_sheets - 1; i++) {
-        occupied_sheets.items.push({ seat_no: i + 1 });
+
+      for (let i = 0; i < occupied_sheets.total_sheets; i++) {
+        if (occupied_sheets?.items[i] != undefined) {
+          occupied_sheets.items[i] = {
+            ...occupied_sheets?.items[i],
+            seat_no: i + 1,
+            status: "Allocated",
+          };
+        } else {
+          occupied_sheets.items[i] = {
+            seat_no: i + 1,
+            status: "Available",
+          };
+        }
       }
 
       const page = pagination.page;
@@ -768,8 +776,9 @@ class PaymentService {
     }
   };
 
-  removeUser = async (user_id, payload, user) => {
+  removeUser = async (payload, user) => {
     try {
+      const { user_id } = payload;
       const sheets = await SheetManagement.findOne({
         agency_id: user?.reference_id,
       }).lean();
@@ -800,37 +809,39 @@ class PaymentService {
 
       const remove_user = user_exist[0];
 
-      if (!payload?.force_fully_remove) {
-        // this will used to check weather this user id has assined any task and it is in the pending state
-        let activity_assigned;
-        if (remove_user.role === "client") {
-          activity_assigned = await Activity.findOne({
-            agency_id: user?.reference_id,
-            client_id: user_id,
-            activity_status: activity_status?._id,
-          }).lean();
-        } else if (remove_user.role === "team_agency") {
-          activity_assigned = await Activity.findOne({
-            agency_id: user?.reference_id,
-            assign_to: user_id,
-            activity_status: activity_status?._id,
-          }).lean();
-        } else if (remove_user.role === "team_client") {
-          activity_assigned = await Activity.findOne({
-            agency_id: user?.reference_id,
-            client_id: user_id,
-            activity_status: activity_status?._id,
-          }).lean();
-        }
-
-        if (activity_assigned) return { force_fully_remove: true };
+      // this will used to check weather this user id has assined any task and it is in the pending state
+      let activity_assigned;
+      if (remove_user.role === "client") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          client_id: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
+      } else if (remove_user.role === "team_agency") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          assign_to: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
+      } else if (remove_user.role === "team_client") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          client_id: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
       }
 
-      if (payload?.force_fully_remove) {
+      if (activity_assigned && !payload?.force_fully_remove)
+        return { force_fully_remove: true };
+
+      if (
+        (activity_assigned && payload?.force_fully_remove) ||
+        !activity_assigned
+      ) {
         if (remove_user.role === "client") {
           await Client.updateOne(
             {
-              _id: remove_user?._id,
+              _id: remove_user?.user_id,
               "agency_ids.agency_id": user?.reference_id,
             },
             { $set: { "agency_ids.$.status": "deleted" } },
@@ -838,14 +849,14 @@ class PaymentService {
           );
         } else if (remove_user.role === "team_agency") {
           await Authentication.findOneAndUpdate(
-            { reference_id: remove_user?._id },
+            { reference_id: remove_user?.user_id },
             { status: "team_agency_inactive", is_deleted: true },
             { new: true }
           );
         } else if (remove_user.role === "team_client") {
           await Team_Client.updateOne(
             {
-              _id: remove_user?._id,
+              _id: remove_user?.user_id,
               "agency_ids.agency_id": user?.reference_id,
             },
             { $set: { "agency_ids.$.status": "deleted" } },
@@ -853,14 +864,11 @@ class PaymentService {
           );
         }
 
-        await SheetManagement.findByIdAndUpdate(
-          sheets._id,
-          {
-            occupied_sheets: updated_users,
-          },
-          { new: true }
-        );
+        await SheetManagement.findByIdAndUpdate(sheets._id, {
+          occupied_sheets: updated_users,
+        });
       }
+      return;
     } catch (error) {
       logger.error(`Error while removing the user from the sheet: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -876,8 +884,8 @@ class PaymentService {
       if (sheets.total_sheets === 1)
         return throwError(returnMessage("payment", "canNotCancelSubscription"));
 
-      if (sheets.total_sheets - 1 < sheets.occupied_sheets.length)
-        return throwError(returnMessage("payment", "canNotCancelSubscription"));
+      if (!(sheets.occupied_sheets.length > 0))
+        return throwError(returnMessage("payment", "canNotCancel"));
 
       const updated_sheet = await SheetManagement.findByIdAndUpdate(
         sheets?._id,

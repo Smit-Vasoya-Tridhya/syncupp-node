@@ -2068,24 +2068,33 @@ class ActivityService {
         meeting_end_time,
         activity_type,
         internal_info,
+        mark_as_done,
       } = payload;
 
       let recurring_date;
       const current_date = moment.utc().startOf("day");
-      const start_date = moment.utc(due_date).startOf("day");
-      const start_time = moment(meeting_start_time, "HH:mm a");
-      const end_time = moment(meeting_end_time, "HH:mm a");
+      const start_date = moment.utc(due_date, "DD-MM-YYYY").startOf("day");
+      const start_time = moment.utc(
+        `${due_date}-${meeting_start_time}`,
+        "DD-MM-YYYY-HH:mm"
+      );
+      const end_time = moment.utc(
+        `${due_date}-${meeting_end_time}`,
+        "DD-MM-YYYY-HH:mm"
+      );
       if (!start_date.isSameOrAfter(current_date))
         return throwError(returnMessage("activity", "dateinvalid"));
 
       if (!end_time.isAfter(start_time))
         return throwError(returnMessage("activity", "invalidTime"));
 
-      if (activity_type === "others" && !payload?.recurring_end_date)
-        return throwError(returnMessage("activity", "recurringDateRequired"));
+      // if (activity_type === "others" && !payload?.recurring_end_date)
+      //   return throwError(returnMessage("activity", "recurringDateRequired"));
 
       if (activity_type === "others" && payload?.recurring_end_date) {
-        recurring_date = moment.utc(payload?.recurring_end_date).endOf("day");
+        recurring_date = moment
+          .utc(payload?.recurring_end_date, "DD-MM-YYYY")
+          .endOf("day");
         if (!recurring_date.isSameOrAfter(start_date))
           return throwError(returnMessage("activity", "invalidRecurringDate"));
       }
@@ -2105,6 +2114,38 @@ class ActivityService {
           statusCode.notFound
         );
 
+      // this condition is used for the check if client or team member is assined to any same time activity or not
+      const or_condition = [
+        {
+          $and: [
+            { meeting_start_time: { $gte: start_time } },
+            { meeting_end_time: { $lte: end_time } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $lte: start_time } },
+            { meeting_end_time: { $gte: end_time } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $gte: start_time } },
+            { meeting_end_time: { $lte: end_time } },
+            { due_date: { $gte: start_date } },
+            { recurring_end_date: { $lte: recurring_date } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $lte: start_time } },
+            { meeting_end_time: { $gte: end_time } },
+            { due_date: { $gte: start_date } },
+            { recurring_end_date: { $lte: recurring_date } },
+          ],
+        },
+      ];
+
       // check for the user role. if the role is team_agency then we need to
       // find the agency id for that user which he is assigned
 
@@ -2123,44 +2164,16 @@ class ActivityService {
         meeting_exist = await Activity.findOne({
           client_id,
           agency_id: user?.reference_id,
-          due_date: start_date,
-          activity_status: { $ne: activity_status_type?._id },
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
           activity_type: activity_type_id?._id,
+          $or: or_condition,
         }).lean();
       } else if (user?.role?.name === "team_agency" && !mark_as_done) {
         meeting_exist = await Activity.findOne({
           client_id,
           agency_id: user?.agency_id,
-          activity_status: { $ne: activity_status_type?._id },
-          due_date: start_date,
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
           activity_type: activity_type_id?._id,
         }).lean();
       }
@@ -2175,22 +2188,8 @@ class ActivityService {
         const meeting_exist = await Activity.findOne({
           assign_to,
           agency_id: user?.reference_id,
-          due_date: start_date,
-          activity_status: { $ne: activity_status_type?._id },
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
           activity_type: activity_type_id?._id,
         }).lean();
 
@@ -2202,22 +2201,8 @@ class ActivityService {
         const meeting_exist = await Activity.findOne({
           assign_to,
           agency_id: user?.agency_id,
-          due_date: start_date,
-          activity_status: { $ne: activity_status_type?._id },
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
           activity_type: activity_type_id?._id,
         }).lean();
 
@@ -2228,7 +2213,7 @@ class ActivityService {
       }
 
       let status;
-      if (mark_as_done === true) {
+      if (mark_as_done && mark_as_done === true) {
         status = await ActivityStatus.findOne({ name: "completed" }).lean();
       } else {
         status = await ActivityStatus.findOne({ name: "pending" }).lean();
@@ -2244,14 +2229,10 @@ class ActivityService {
         title,
         client_id,
         internal_info,
-        meeting_start_time: moment(meeting_start_time, "HH:mm a").format(
-          "HH:mm a"
-        ),
-        meeting_end_time: moment(meeting_end_time, "HH:mm a").format("HH:mm a"),
+        meeting_start_time: start_time,
+        meeting_end_time: end_time,
         due_date: start_date,
-        recurring_end_date: moment
-          .utc(payload?.recurring_end_date)
-          .endOf("day"),
+        recurring_end_date: recurring_date,
       });
       return;
     } catch (error) {
@@ -2495,7 +2476,6 @@ class ActivityService {
 
       await Activity.findByIdAndUpdate(activity_id, {
         activity_status: status?._id,
-        activity_type: activity_type_id?._id,
         agency_id: user?.agency_id || user?.reference_id,
         assign_by: user?.reference_id,
         agenda,

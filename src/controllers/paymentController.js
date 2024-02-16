@@ -61,15 +61,14 @@ exports.sheetsListing = catchAsyncError(async (req, res, next) => {
 });
 
 exports.removeUser = catchAsyncError(async (req, res, next) => {
-  const remove_user = await paymentService.removeUser(
-    req.params.userId,
-    req.body,
-    req.user
-  );
+  const remove_user = await paymentService.removeUser(req.body, req.user);
+
   sendResponse(
     res,
     true,
-    returnMessage("payment", "userRemoved"),
+    !remove_user?.force_fully_remove
+      ? returnMessage("payment", "userRemoved")
+      : undefined,
     remove_user,
     200
   );

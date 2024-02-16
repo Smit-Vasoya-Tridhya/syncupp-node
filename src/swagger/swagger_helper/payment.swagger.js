@@ -125,13 +125,26 @@ const removeUser = {
       bearerAuth: [],
     },
   ],
-  parameters: [
-    {
-      name: "userId",
-      in: "path",
-      required: true,
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            user_id: {
+              type: "string",
+            },
+            force_fully_remove: {
+              type: "boolean",
+              default: false,
+            },
+          },
+        },
+      },
     },
-  ],
+  },
+
   responses: {
     200: {
       description: "ok",

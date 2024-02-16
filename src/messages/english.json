@@ -205,7 +205,8 @@
     "sheetsFetched": "Sheets list fetch successfully.",
     "userRemoved": "User removed successfully.",
     "subscriptionCancelled": "Subscription cancelled successfully.",
-    "subscriptionFetched": "Subscription details fetched successfully."
+    "subscriptionFetched": "Subscription details fetched successfully.",
+    "canNotCancel": "Sunscription can not be cancelled."
   },
   "affiliate": {
     "registered": "User registered successfully.",

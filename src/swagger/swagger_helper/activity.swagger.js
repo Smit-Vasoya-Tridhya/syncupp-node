@@ -52,6 +52,10 @@ const createActivity = {
             recurring_end_date: {
               type: "string",
             },
+            mark_as_done: {
+              type: "boolean",
+              default: false,
+            },
           },
         },
       },
@@ -131,6 +135,10 @@ const updateActivity = {
             },
             recurring_end_date: {
               type: "string",
+            },
+            mark_as_done: {
+              type: "boolean",
+              default: false,
             },
           },
         },
