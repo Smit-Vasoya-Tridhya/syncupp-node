@@ -60,7 +60,7 @@ class PaymentService {
 
       return;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
       logger.error(`Error while creating the plan: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -115,7 +115,8 @@ class PaymentService {
         contact_number: user?.contact_number,
       };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while creating subscription: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -144,6 +145,8 @@ class PaymentService {
 
       return;
     } catch (error) {
+      console.log(JSON.stringify(error));
+
       console.log(`Error with webhook handler`, error);
       return throwError(
         error?.message || error?.error?.description,
@@ -176,7 +179,8 @@ class PaymentService {
 
       return proratedAmount.toFixed(2);
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while calculating the custom payment: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -251,7 +255,8 @@ class PaymentService {
         contact_number: user?.contact_number,
       };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while doing the one time payment: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -286,7 +291,8 @@ class PaymentService {
       // await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while verifying signature: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -347,7 +353,8 @@ class PaymentService {
       }
       return false;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while checking agency exist: ${error}`);
       return false;
     }
@@ -539,7 +546,7 @@ class PaymentService {
       }
       return { success: false };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
 
       logger.error(`Error while changing status after the payment: ${error}`);
       return false;
@@ -561,7 +568,7 @@ class PaymentService {
       }
       return;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
 
       logger.error(`Error while deleting the User: ${error}`);
       return false;
@@ -575,7 +582,8 @@ class PaymentService {
         razorpay.subscriptions.fetch(subscription_id)
       );
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while gettign subscription detail: ${error}`);
       return false;
     }
