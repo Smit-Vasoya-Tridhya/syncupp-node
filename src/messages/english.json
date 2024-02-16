@@ -208,7 +208,7 @@
     "userRemoved": "User removed successfully.",
     "subscriptionCancelled": "Subscription cancelled successfully.",
     "subscriptionFetched": "Subscription details fetched successfully.",
-    "canNotCancel": "Sunscription can not be cancelled."
+    "canNotCancel": "Subscription can not be cancelled."
   },
   "affiliate": {
     "registered": "User registered successfully.",
