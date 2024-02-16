@@ -26,6 +26,8 @@ const State_Master = require("../models/masters/stateMasterSchema");
 const Team_Agency = require("../models/teamAgencySchema");
 const ReferralHistory = require("../models/referralHistorySchema");
 const Configuration = require("../models/configurationSchema");
+const Affiliate = require("../models/affiliateSchema");
+const Affiliate_Referral = require("../models/affiliateReferralSchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
@@ -75,6 +77,13 @@ class AuthService {
         password,
         contact_number,
         referral_code,
+      } = payload;
+
+      const {
+        affiliate_referral_code,
+        affiliate_email,
+        affiliate_first_name,
+        affiliate_last_name,
       } = payload;
 
       validateRequestFields(payload, [
@@ -142,6 +151,22 @@ class AuthService {
         });
         agency_enroll = agency_enroll.toObject();
         agency_enroll.role = role;
+
+        if (
+          affiliate_referral_code &&
+          affiliate_email &&
+          affiliate_first_name &&
+          affiliate_last_name
+        ) {
+          const decodedEmail = decodeURIComponent(affiliate_email);
+          await this.affiliateReferralSignUp({
+            referral_code: affiliate_referral_code,
+            referred_to: agency_enroll._id,
+            email: decodedEmail,
+            first_name: affiliate_first_name,
+            last_name: affiliate_last_name,
+          });
+        }
 
         delete agency_enroll?.password;
         delete agency_enroll?.is_facebook_signup;
@@ -419,6 +444,9 @@ class AuthService {
         return throwError(returnMessage("agency", "agencyInactive"));
 
       if (existing_Data?.role?.name === "team_agency") {
+        // if (existing_Data?.status == "team_agency_inactive")
+        //   return throwError(returnMessage("auth", "teamAgencyIsInactive"));
+
         existing_Data.team_agency_detail = await Team_Agency.findById(
           existing_Data?.reference_id
         )
@@ -704,6 +732,35 @@ class AuthService {
         },
         { new: true }
       );
+      return;
+    } catch (error) {
+      logger.error("Error while referral SignUp", error);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  affiliateReferralSignUp = async ({
+    referral_code,
+    referred_to,
+    email,
+    first_name,
+    last_name,
+  }) => {
+    try {
+      const referral_code_exist = await Affiliate.findOne({
+        referral_code,
+        email,
+      }).lean();
+
+      if (!referral_code_exist)
+        return throwError(returnMessage("auth", "referralCodeNotFound"));
+
+      await Affiliate_Referral.create({
+        referral_code,
+        referred_by: referral_code_exist._id,
+        referred_to: referred_to,
+      });
+
       return;
     } catch (error) {
       logger.error("Error while referral SignUp", error);

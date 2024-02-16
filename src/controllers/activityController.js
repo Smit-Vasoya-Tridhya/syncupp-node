@@ -94,3 +94,52 @@ exports.updateStatus = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+exports.createCallActivity = catchAsyncError(async (req, res, next) => {
+  await activityService.createCallMeeting(req.body, req.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "activityCreated"),
+    {},
+    200
+  );
+});
+
+// this will help to update the details of the activity not the status
+exports.updateCallActivity = catchAsyncError(async (req, res, next) => {
+  await activityService.updateActivity(
+    req.params.activityId,
+    req.body,
+    req.user
+  );
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "activityUpdated"),
+    {},
+    200
+  );
+});
+
+exports.getActivity = catchAsyncError(async (req, res, next) => {
+  const activity = await activityService.getActivity(req.params.activityId);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "activityUpdated"),
+    activity,
+    200
+  );
+});
+
+exports.getActivities = catchAsyncError(async (req, res, next) => {
+  const activities = await activityService.getActivities(req.body, req.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("activity", "activityListFetched"),
+    activities,
+    200
+  );
+});

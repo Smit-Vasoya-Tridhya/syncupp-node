@@ -33,6 +33,7 @@ const authenticationSchema = new mongoose.Schema(
         "confirmed",
         "confirm_pending",
         "agency_inactive",
+        "team_agency_inactive",
       ],
     },
     subscription_id: { type: String },

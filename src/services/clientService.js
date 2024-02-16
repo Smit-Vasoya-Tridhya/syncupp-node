@@ -20,6 +20,9 @@ const authService = new AuthService();
 const statusCode = require("../messages/statusCodes.json");
 const Team_Agency = require("../models/teamAgencySchema");
 const Team_Client = require("../models/teamClientSchema");
+const Activity = require("../models/activitySchema");
+const SheetManagement = require("../models/sheetManagementSchema");
+const Activity_Status = require("../models/masters/activityStatusMasterSchema");
 
 class ClientService {
   // create client for the agency
@@ -295,8 +298,9 @@ class ClientService {
   };
 
   // delete the client from the particuar agency
-  deleteClient = async (client_ids, agency) => {
+  deleteClient = async (payload, agency) => {
     try {
+      let { client_ids, force_fully_remove } = payload;
       if (agency?.role?.name === "team_agency") {
         const team_agency_detail = await Team_Agency.findById(
           agency?.reference_id
@@ -313,14 +317,49 @@ class ClientService {
         _id: { $in: client_ids },
       });
 
-      await Client.updateMany(
-        {
-          _id: { $in: clientIds },
-          "agency_ids.agency_id": agency?.reference_id,
-        },
-        { $set: { "agency_ids.$.status": "deleted" } },
-        { new: true }
-      );
+      // check for the clients are assined to any activity that are in pending state
+      if (!force_fully_remove) {
+        const activity_status = await Activity_Status.findOne({
+          name: "pending",
+        })
+          .select("_id")
+          .lean();
+
+        const activity_assigned = await Activity.find({
+          agency_id: agency?.reference_id,
+          client_id: { $in: clientIds },
+          activity_status: activity_status?._id,
+        }).lean();
+
+        if (activity_assigned.length > 0) return { force_fully_remove: true };
+      }
+
+      if (force_fully_remove) {
+        await Client.updateMany(
+          {
+            _id: { $in: clientIds },
+            "agency_ids.agency_id": agency?.reference_id,
+          },
+          { $set: { "agency_ids.$.status": "deleted" } },
+          { new: true }
+        );
+
+        const sheets = await SheetManagement.findOne({
+          agency_id: agency?.reference_id,
+        }).lean();
+
+        let client_ids = [];
+
+        clientIds.forEach((id) => client_ids.push(id.toString()));
+
+        const available_sheets = sheets?.occupied_sheets?.map(
+          (sheet) => !client_ids.includes(sheet?.user_id.toString())
+        );
+
+        SheetManagement.findByIdAndUpdate(sheets._id, {
+          occupied_sheets: available_sheets,
+        });
+      }
       return true;
     } catch (error) {
       logger.error(`Error while deleting the client for agency: ${error}`);
@@ -511,6 +550,7 @@ class ClientService {
             name: { $concat: ["$first_name", " ", "$last_name"] },
             createdAt: 1,
             reference_id: 1,
+            contact_number: 1,
           },
         },
       ];

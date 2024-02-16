@@ -1,7 +1,7 @@
 const sendResponse = (
   response,
   success = true,
-  message = "Fetched Successfully!",
+  message,
   data,
   statusCode = 200,
   pagination = undefined

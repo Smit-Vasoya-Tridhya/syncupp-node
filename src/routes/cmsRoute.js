@@ -27,6 +27,9 @@ adminRoute.get("/price-plan", cmsController.getPricePlan);
 adminRoute.put("/technology-stack", cmsController.updateTechnologyStack);
 adminRoute.get("/technology-stack", cmsController.getTechnologyStack);
 
+// FAQ
+adminRoute.get("/faq", cmsController.getAllFaqCms);
+
 //term and condition
 // adminRoute.post("/term-and-condition", addTermAndCondition);
 adminRoute.get("/term-and-condition", getTermAndCondition);
@@ -34,6 +37,6 @@ adminRoute.put("/term-and-condition", updateTermAndCondition);
 
 //About us
 adminRoute.put("/about-us", cmsController.updateAboutUs);
-adminRoute.get("/about-us", cmsController.getAboutUS);
+adminRoute.get("/about-us", cmsController.getAboutUs);
 
 module.exports = adminRoute;

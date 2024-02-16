@@ -507,6 +507,7 @@ class TeamMemberService {
     }
   };
 
+  // this function will used for the delete team member only for the agency
   deleteMember = async (payload) => {
     try {
       const { teamMemberIds } = payload;
@@ -941,6 +942,44 @@ class TeamMemberService {
       return;
     } catch (error) {
       logger.error(`Error while rejecting the team member by agency: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // this function will used for the delete team member only for the client team
+  deleteClientMember = async (payload) => {
+    try {
+      const { teamMemberIds } = payload;
+
+      const teamMember = await Authentication.find({
+        _id: { $in: teamMemberIds },
+        is_deleted: false,
+      })
+        .populate({
+          path: "role",
+          model: "role_master",
+        })
+        .populate({
+          path: "reference_id",
+          model: "team_agency",
+          populate: {
+            path: "role",
+            model: "team_role_master",
+          },
+        })
+        .lean();
+
+      // Delete from Authentication collection
+      await Authentication.updateMany(
+        { _id: { $in: teamMemberIds } },
+        { $set: { is_deleted: true } }
+      );
+      if (!teamMember) {
+        return throwError(returnMessage("teamMember", "invalidId"));
+      }
+      return;
+    } catch (error) {
+      logger.error(`Error while Team member  delete, ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };

@@ -9,8 +9,12 @@ exports.validateAffiliateRegistration = [
   body("company_name")
     .notEmpty()
     .withMessage(validationMessage.admin.companyNameRequired),
-
-  body("name").notEmpty().withMessage(validationMessage.admin.nameRequired),
+  body("first_name")
+    .notEmpty()
+    .withMessage(validationMessage.admin.firstRequired),
+  body("last_name")
+    .notEmpty()
+    .withMessage(validationMessage.admin.lastRequired),
 ];
 
 exports.validateAffiliateLogin = [

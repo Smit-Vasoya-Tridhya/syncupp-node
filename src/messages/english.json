@@ -31,6 +31,7 @@
     "resetPassword": "Password reset successfully.",
     "emailExist": "Email already exist. please choose another email.",
     "oldPassRequired": "Old password is required.",
+    "teamAgencyIsInactive": "Your account has been deactivate by agency.",
     "sendRefferalEmail": "Referral email send successfully.",
     "invitationEmailSubject": "Inviation to the Tacky."
   },
@@ -60,7 +61,8 @@
     "getAllClientReview": "Fetch client successfully.",
     "deleteClientReview": "Client deleted successfully.",
     "clientReviewUpdated": "Client updated successfully.",
-    "getClientReviewByID": "Fetch client successfully."
+    "getClientReviewByID": "Fetch client successfully.",
+    "agencyFetched": "Agency fetched successfully."
   },
 
   "teamMember": {
@@ -175,7 +177,18 @@
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
     "deleteTask": "Task deleted successfully.",
-    "CannotUpdate": "Task can not be updated."
+    "CannotUpdate": "Task can not be updated.",
+    "activityTypeNotFound": "This type of actvity not found.",
+    "invalidTime": "End time should be greater than start time.",
+    "meetingScheduledForClient": "Meeting is already set for this client.",
+    "meetingScheduledForTeam": "Meeting is already set for this team member.",
+    "recurringDateRequired": "Recurring date is required for the other type of the activity.",
+    "invalidRecurringDate": "Recurring date should be fututure date.",
+    "activityNotFound": "Activity not found.",
+    "callScheduled": "Call meeting is scheduled successfully.",
+    "activityCreated": "Activity created successfully.",
+    "activityUpdated": "Activity updated successfully.",
+    "activityListFetched": "Activities list fetch successfully."
   },
 
   "payment": {
@@ -188,12 +201,23 @@
     "alreadyPaid": "You have already paid.",
     "paymentCompleted": "Payment completed successfully.",
     "paymentFailed": "Payment failed.",
-    "orderCreated": "Order created successfully."
+    "orderCreated": "Order created successfully.",
+    "sheetsNotAvailable": "Sheets are not available for this agency.",
+    "canNotCancelSubscription": "You can not cancel the subscription for the agency.",
+    "paymentHistoryFetched": "Payment history fetched successfully.",
+    "sheetsFetched": "Sheets list fetch successfully.",
+    "userRemoved": "User removed successfully.",
+    "subscriptionCancelled": "Subscription cancelled successfully.",
+    "subscriptionFetched": "Subscription details fetched successfully.",
+    "canNotCancel": "Sunscription can not be cancelled."
   },
   "affiliate": {
     "registered": "User registered successfully.",
     "emailExist": "Email already registered.",
-    "incorrectPassword": "Email or password is incorrect."
+    "incorrectPassword": "Email or password is incorrect.",
+    "dashboardDataFetched": "Dashboard data fetched successfully.",
+    "affiliateNotFound": "Account not found.",
+    "countAdded": "Count added."
   },
   "cms": {
     "contactUpdated": "Contact CRM updated successfully.",

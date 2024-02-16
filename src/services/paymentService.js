@@ -8,7 +8,14 @@ const Team_Agency = require("../models/teamAgencySchema");
 const Team_Client = require("../models/teamClientSchema");
 const PaymentHistory = require("../models/paymentHistorySchema");
 const SheetManagement = require("../models/sheetManagementSchema");
-const { returnMessage, invitationEmail } = require("../utils/utils");
+const Activity = require("../models/activitySchema");
+const Activity_Status = require("../models/masters/activityStatusMasterSchema");
+const {
+  returnMessage,
+  invitationEmail,
+  paginationObject,
+  capitalizeFirstLetter,
+} = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
 const moment = require("moment");
@@ -53,7 +60,7 @@ class PaymentService {
 
       return;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
       logger.error(`Error while creating the plan: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -108,7 +115,8 @@ class PaymentService {
         contact_number: user?.contact_number,
       };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while creating subscription: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -137,6 +145,8 @@ class PaymentService {
 
       return;
     } catch (error) {
+      console.log(JSON.stringify(error));
+
       console.log(`Error with webhook handler`, error);
       return throwError(
         error?.message || error?.error?.description,
@@ -169,7 +179,8 @@ class PaymentService {
 
       return proratedAmount.toFixed(2);
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while calculating the custom payment: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -244,7 +255,8 @@ class PaymentService {
         contact_number: user?.contact_number,
       };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while doing the one time payment: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -279,7 +291,8 @@ class PaymentService {
       // await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while verifying signature: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -340,7 +353,8 @@ class PaymentService {
       }
       return false;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while checking agency exist: ${error}`);
       return false;
     }
@@ -532,7 +546,7 @@ class PaymentService {
       }
       return { success: false };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
 
       logger.error(`Error while changing status after the payment: ${error}`);
       return false;
@@ -554,7 +568,7 @@ class PaymentService {
       }
       return;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
 
       logger.error(`Error while deleting the User: ${error}`);
       return false;
@@ -568,7 +582,8 @@ class PaymentService {
         razorpay.subscriptions.fetch(subscription_id)
       );
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while gettign subscription detail: ${error}`);
       return false;
     }
@@ -590,6 +605,361 @@ class PaymentService {
       return;
     } catch (error) {
       logger.error(`Error while updating the subscription: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // fetch the payment history for the agency only
+  paymentHistory = async (payload, user) => {
+    try {
+      if (user?.role?.name !== "agency" && user?.role?.name !== "team_agency")
+        return throwError(
+          returnMessage("auth", "unAuthorized"),
+          statusCode.forbidden
+        );
+
+      const pagination = paginationObject(payload);
+      if (user?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          user?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+        if (team_agency_detail?.role?.name === "admin")
+          user = await Authentication.findOne({
+            reference_id: team_agency_detail?.agency_id,
+          })
+            .populate("role", "name")
+            .lean();
+      }
+
+      const [payment_history, total_history] = await Promise.all([
+        PaymentHistory.find({ agency_id: user?.reference_id })
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page)
+          .lean(),
+        PaymentHistory.countDocuments({ agency_id: user?.reference_id }),
+      ]);
+
+      return {
+        payment_history,
+        page_count: Math.ceil(total_history / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while getting the payment history: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // fetch the sheets lists and who is assined to the particular sheet
+  sheetsListing = async (payload, user) => {
+    try {
+      if (user?.role?.name !== "agency" && user?.role?.name !== "team_agency")
+        return throwError(
+          returnMessage("auth", "unAuthorized"),
+          statusCode.forbidden
+        );
+
+      const pagination = paginationObject(payload);
+      if (user?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          user?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+        if (team_agency_detail?.role?.name === "admin")
+          user = await Authentication.findOne({
+            reference_id: team_agency_detail?.agency_id,
+          })
+            .populate("role", "name")
+            .lean();
+      }
+
+      // aggragate reference from the https://mongoplayground.net/p/TqFafFxrncM
+
+      const aggregate = [
+        { $match: { agency_id: user?.reference_id } },
+
+        {
+          $unwind: {
+            path: "$occupied_sheets",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            let: {
+              itemId: {
+                $toObjectId: "$occupied_sheets.user_id",
+              },
+              items: "$occupied_sheets",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$reference_id", "$$itemId"],
+                  },
+                },
+              },
+              {
+                $project: {
+                  name: { $concat: ["$first_name", " ", "$last_name"] },
+                  first_name: 1,
+                  last_name: 1,
+                },
+              },
+              {
+                $replaceRoot: {
+                  newRoot: {
+                    $mergeObjects: ["$$items", "$$ROOT"],
+                  },
+                },
+              },
+            ],
+            as: "occupied_sheets",
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            total_sheets: {
+              $first: "$total_sheets",
+            },
+            items: {
+              $push: {
+                $first: "$occupied_sheets",
+              },
+            },
+          },
+        },
+      ];
+
+      const sheets = await SheetManagement.aggregate(aggregate);
+      const occupied_sheets = sheets[0];
+
+      occupied_sheets?.items?.unshift({
+        name:
+          capitalizeFirstLetter(user?.first_name) +
+          " " +
+          capitalizeFirstLetter(user?.last_name),
+        first_name: user?.first_name,
+        last_name: user?.last_name,
+        role: user?.role?.name,
+      });
+
+      for (let i = 0; i < occupied_sheets.total_sheets; i++) {
+        if (occupied_sheets?.items[i] != undefined) {
+          occupied_sheets.items[i] = {
+            ...occupied_sheets?.items[i],
+            seat_no: i + 1,
+            status: "Allocated",
+          };
+        } else {
+          occupied_sheets.items[i] = {
+            seat_no: i + 1,
+            status: "Available",
+          };
+        }
+      }
+
+      const page = pagination.page;
+      const pageSize = pagination?.result_per_page;
+
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+
+      return {
+        sheets: occupied_sheets?.items?.slice(startIndex, endIndex),
+        total_sheets: occupied_sheets?.total_sheets,
+        page_count:
+          Math.ceil(
+            occupied_sheets?.items?.length / pagination.result_per_page
+          ) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while fetching the sheets listing: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  removeUser = async (payload, user) => {
+    try {
+      const { user_id } = payload;
+      const sheets = await SheetManagement.findOne({
+        agency_id: user?.reference_id,
+      }).lean();
+
+      const activity_status = await Activity_Status.findOne({ name: "pending" })
+        .select("_id")
+        .lean();
+
+      if (!sheets)
+        return throwError(
+          returnMessage("payment", "sheetsNotAvailable"),
+          statusCode.notFound
+        );
+
+      const user_exist = sheets?.occupied_sheets?.filter(
+        (sheet) => sheet?.user_id?.toString() === user_id
+      );
+
+      if (user_exist.length === 0)
+        return throwError(
+          returnMessage("auth", "userNotFound"),
+          statusCode.notFound
+        );
+
+      const updated_users = sheets?.occupied_sheets?.filter(
+        (sheet) => sheet?.user_id?.toString() !== user_id
+      );
+
+      const remove_user = user_exist[0];
+
+      // this will used to check weather this user id has assined any task and it is in the pending state
+      let activity_assigned;
+      if (remove_user.role === "client") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          client_id: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
+      } else if (remove_user.role === "team_agency") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          assign_to: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
+      } else if (remove_user.role === "team_client") {
+        activity_assigned = await Activity.findOne({
+          agency_id: user?.reference_id,
+          client_id: user_id,
+          activity_status: activity_status?._id,
+        }).lean();
+      }
+
+      if (activity_assigned && !payload?.force_fully_remove)
+        return { force_fully_remove: true };
+
+      if (
+        (activity_assigned && payload?.force_fully_remove) ||
+        !activity_assigned
+      ) {
+        if (remove_user.role === "client") {
+          await Client.updateOne(
+            {
+              _id: remove_user?.user_id,
+              "agency_ids.agency_id": user?.reference_id,
+            },
+            { $set: { "agency_ids.$.status": "deleted" } },
+            { new: true }
+          );
+        } else if (remove_user.role === "team_agency") {
+          await Authentication.findOneAndUpdate(
+            { reference_id: remove_user?.user_id },
+            { status: "team_agency_inactive", is_deleted: true },
+            { new: true }
+          );
+        } else if (remove_user.role === "team_client") {
+          await Team_Client.updateOne(
+            {
+              _id: remove_user?.user_id,
+              "agency_ids.agency_id": user?.reference_id,
+            },
+            { $set: { "agency_ids.$.status": "deleted" } },
+            { new: true }
+          );
+        }
+
+        await SheetManagement.findByIdAndUpdate(sheets._id, {
+          occupied_sheets: updated_users,
+        });
+      }
+      return;
+    } catch (error) {
+      logger.error(`Error while removing the user from the sheet: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  cancelSubscription = async (user) => {
+    try {
+      const sheets = await SheetManagement.findOne({
+        agency_id: user?.reference_id,
+      }).lean();
+
+      if (sheets.total_sheets === 1)
+        return throwError(returnMessage("payment", "canNotCancelSubscription"));
+
+      if (!(sheets.occupied_sheets.length > 0))
+        return throwError(returnMessage("payment", "canNotCancel"));
+
+      const updated_sheet = await SheetManagement.findByIdAndUpdate(
+        sheets?._id,
+        { total_sheets: sheets?.total_sheets - 1 },
+        { new: true }
+      ).lean();
+
+      await Promise.resolve(
+        razorpay.subscriptions.update(user?.subscription_id, {
+          quantity: updated_sheet?.total_sheets,
+        })
+      );
+      return;
+    } catch (error) {
+      logger.error(`Error while canceling the subscription: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  getSubscription = async (agency) => {
+    try {
+      const subscription = await this.subscripionDetail(
+        agency?.subscription_id
+      );
+
+      const [plan_details, sheets_detail] = await Promise.all([
+        this.planDetails(subscription.plan_id),
+        SheetManagement.findOne({ agency_id: agency?.reference_id }).lean(),
+      ]);
+
+      return {
+        next_billing_date: subscription?.current_end,
+        next_billing_price:
+          subscription?.quantity * (plan_details?.item.amount / 100),
+        total_sheets: sheets_detail.total_sheets,
+        available_sheets: sheets_detail.occupied_sheets.length,
+        subscription,
+        referral_points: {
+          erned_points: 200, //this static data as of now
+          available_points: 100, // this is static data as of now
+        },
+      };
+    } catch (error) {
+      logger.error(`Error while getting the referral: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  planDetails = async (plan_id) => {
+    try {
+      return Promise.resolve(razorpay.plans.fetch(plan_id));
+    } catch (error) {
+      logger.error(
+        `Error while getting the plan details from the razorpay: ${error}`
+      );
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  paymentDetails = async (payment_id) => {
+    try {
+      return Promise.resolve(razorpay.payments.fetch(payment_id));
+    } catch (error) {
+      logger.error(
+        `Error while getting the plan details from the razorpay: ${error}`
+      );
       return throwError(error?.message, error?.statusCode);
     }
   };

@@ -6,7 +6,8 @@
     "emailRequired": "Email is required",
     "tokenRequired": "Token is required",
     "companyNameRequired": "Company name is required",
-    "nameRequired": "Name is required"
+    "lastRequired": "Last name is required",
+    "firstRequired": "First name is required"
   },
   "general": {
     "invalidPassword": "Password should be at least 6 characters long and include at least one letter, one number, and one special character.",

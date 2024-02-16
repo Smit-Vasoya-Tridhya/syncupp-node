@@ -7,11 +7,12 @@ const {
   returnMessage,
   paginationObject,
   getKeywordType,
+  validateRequestFields,
 } = require("../utils/utils");
 const moment = require("moment");
 const { default: mongoose } = require("mongoose");
-const { ObjectId } = require("mongodb");
 const Team_Agency = require("../models/teamAgencySchema");
+const statusCode = require("../messages/statusCodes.json");
 class ActivityService {
   createTask = async (payload, user) => {
     try {
@@ -2453,6 +2454,10 @@ class ActivityService {
         update_status = await ActivityStatus.findOne({
           name: "overdue",
         }).lean();
+      } else if (status === "cancel") {
+        update_status = await ActivityStatus.findOne({
+          name: "cancel",
+        }).lean();
       }
 
       const updateTasks = await Activity.findByIdAndUpdate(
@@ -2468,6 +2473,577 @@ class ActivityService {
     } catch (error) {
       logger.error(`Error while Updating status, ${error}`);
       throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // this function is used to create the call meeting and other call details
+  createCallMeeting = async (payload, user) => {
+    try {
+      if (user?.role?.name === "client" || user?.role?.name === "team_client")
+        return throwError(
+          returnMessage("auth", "unAuthorized"),
+          statusCode.forbidden
+        );
+
+      validateRequestFields(payload, [
+        "title",
+        "agenda",
+        "client_id",
+        "due_date",
+        "assign_to",
+        "activity_type",
+        "meeting_start_time",
+        "meeting_end_time",
+      ]);
+
+      const {
+        client_id,
+        assign_to,
+        title,
+        agenda,
+        due_date,
+        meeting_start_time,
+        meeting_end_time,
+        activity_type,
+        internal_info,
+        mark_as_done,
+      } = payload;
+
+      let recurring_date;
+      const current_date = moment.utc().startOf("day");
+      const start_date = moment.utc(due_date, "DD-MM-YYYY").startOf("day");
+      const start_time = moment.utc(
+        `${due_date}-${meeting_start_time}`,
+        "DD-MM-YYYY-HH:mm"
+      );
+      const end_time = moment.utc(
+        `${due_date}-${meeting_end_time}`,
+        "DD-MM-YYYY-HH:mm"
+      );
+      if (!start_date.isSameOrAfter(current_date))
+        return throwError(returnMessage("activity", "dateinvalid"));
+
+      if (!end_time.isAfter(start_time))
+        return throwError(returnMessage("activity", "invalidTime"));
+
+      // if (activity_type === "others" && !payload?.recurring_end_date)
+      //   return throwError(returnMessage("activity", "recurringDateRequired"));
+
+      if (activity_type === "others" && payload?.recurring_end_date) {
+        recurring_date = moment
+          .utc(payload?.recurring_end_date, "DD-MM-YYYY")
+          .endOf("day");
+        if (!recurring_date.isSameOrAfter(start_date))
+          return throwError(returnMessage("activity", "invalidRecurringDate"));
+      }
+
+      const [activity_type_id, activity_status_type] = await Promise.all([
+        ActivityType.findOne({
+          name: activity_type,
+        })
+          .select("_id")
+          .lean(),
+        ActivityStatus.findOne({ name: "pending" }).select("name").lean(),
+      ]);
+
+      if (!activity_type_id)
+        return throwError(
+          returnMessage("activity", "activityTypeNotFound"),
+          statusCode.notFound
+        );
+
+      // this condition is used for the check if client or team member is assined to any same time activity or not
+      const or_condition = [
+        {
+          $and: [
+            { meeting_start_time: { $gte: start_time } },
+            { meeting_end_time: { $lte: end_time } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $lte: start_time } },
+            { meeting_end_time: { $gte: end_time } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $gte: start_time } },
+            { meeting_end_time: { $lte: end_time } },
+            { due_date: { $gte: start_date } },
+            { recurring_end_date: { $lte: recurring_date } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $lte: start_time } },
+            { meeting_end_time: { $gte: end_time } },
+            { due_date: { $gte: start_date } },
+            { recurring_end_date: { $lte: recurring_date } },
+          ],
+        },
+      ];
+
+      // check for the user role. if the role is team_agency then we need to
+      // find the agency id for that user which he is assigned
+
+      // let team_agency_detail;
+      if (user?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          user?.reference_id
+        ).lean();
+        user.agency_id = team_agency_detail?.agency_id;
+      }
+
+      // this below function is used to check weather client is assign to any type of the call or other
+      // activity or not if yes then throw an error but it should be in the same agency id not in the other
+      let meeting_exist;
+      if (user?.role?.name === "agency" && !mark_as_done) {
+        meeting_exist = await Activity.findOne({
+          client_id,
+          agency_id: user?.reference_id,
+          activity_status: { $eq: activity_status_type?._id },
+          activity_type: activity_type_id?._id,
+          $or: or_condition,
+        }).lean();
+      } else if (user?.role?.name === "team_agency" && !mark_as_done) {
+        meeting_exist = await Activity.findOne({
+          client_id,
+          agency_id: user?.agency_id,
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
+          activity_type: activity_type_id?._id,
+        }).lean();
+      }
+      if (meeting_exist)
+        return throwError(
+          returnMessage("activity", "meetingScheduledForClient")
+        );
+
+      // if the user role is agency then we need to check weather team member is assined to other call or not
+
+      if (user?.role?.name === "agency" && !mark_as_done) {
+        const meeting_exist = await Activity.findOne({
+          assign_to,
+          agency_id: user?.reference_id,
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
+          activity_type: activity_type_id?._id,
+        }).lean();
+
+        if (meeting_exist)
+          return throwError(
+            returnMessage("activity", "meetingScheduledForTeam")
+          );
+      } else if (user?.role?.name === "team_agency" && !mark_as_done) {
+        const meeting_exist = await Activity.findOne({
+          assign_to,
+          agency_id: user?.agency_id,
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
+          activity_type: activity_type_id?._id,
+        }).lean();
+
+        if (meeting_exist)
+          return throwError(
+            returnMessage("activity", "meetingScheduledForTeam")
+          );
+      }
+
+      let status;
+      if (mark_as_done && mark_as_done === true) {
+        status = await ActivityStatus.findOne({ name: "completed" }).lean();
+      } else {
+        status = await ActivityStatus.findOne({ name: "pending" }).lean();
+      }
+
+      await Activity.create({
+        activity_status: status?._id,
+        activity_type: activity_type_id?._id,
+        agency_id: user?.agency_id || user?.reference_id,
+        assign_by: user?.reference_id,
+        agenda,
+        assign_to,
+        title,
+        client_id,
+        internal_info,
+        meeting_start_time: start_time,
+        meeting_end_time: end_time,
+        due_date: start_date,
+        recurring_end_date: recurring_date,
+      });
+      return;
+    } catch (error) {
+      logger.error(`Error while creating call meeting and other: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // this function is used to fetch the call or other call detials by id
+  getActivity = async (activity_id) => {
+    try {
+      const activity = await Activity.findById(activity_id)
+        .populate("activity_type", "name")
+        .populate("activity_status", "name")
+        .lean();
+      if (!activity)
+        return throwError(
+          returnMessage("activity", "activityNotFound"),
+          statusCode.notFound
+        );
+      return activity;
+    } catch (error) {
+      logger.error(`Error while Getting the activity, ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // this function is used to update the call type activity or other
+  updateActivity = async (activity_id, payload, user) => {
+    try {
+      const activity_exist = await Activity.findById(activity_id).lean();
+      if (!activity_exist)
+        return throwError(
+          returnMessage("activity", "activityNotFound"),
+          statusCode.notFound
+        );
+
+      if (user?.role?.name === "client" || user?.role?.name === "team_client")
+        return throwError(
+          returnMessage("auth", "unAuthorized"),
+          statusCode.forbidden
+        );
+
+      validateRequestFields(payload, [
+        "title",
+        "agenda",
+        "client_id",
+        "due_time",
+        "due_date",
+        "assign_to",
+        "activity_type",
+      ]);
+
+      const {
+        client_id,
+        assign_to,
+        title,
+        agenda,
+        due_date,
+        meeting_start_time,
+        meeting_end_time,
+        activity_type,
+        internal_info,
+      } = payload;
+
+      let recurring_date;
+      const current_date = moment.utc().startOf("day");
+      const start_date = moment.utc(due_date).startOf("day");
+      const start_time = moment(meeting_start_time, "HH:mm a");
+      const end_time = moment(meeting_end_time, "HH:mm a");
+      if (!start_date.isSameOrAfter(current_date))
+        return throwError(returnMessage("activity", "dateinvalid"));
+
+      if (!end_time.isAfter(start_time))
+        return throwError(returnMessage("activity", "invalidTime"));
+
+      if (activity_type === "others" && !payload?.recurring_end_date)
+        return throwError(returnMessage("activity", "recurringDateRequired"));
+
+      if (activity_type === "others" && payload?.recurring_end_date) {
+        recurring_date = moment.utc(payload?.recurring_end_date).endOf("day");
+        if (!recurring_date.isSameOrAfter(start_date))
+          return throwError(returnMessage("activity", "invalidRecurringDate"));
+      }
+
+      const [activity_type_id, activity_status_type] = await Promise.all([
+        ActivityType.findOne({
+          name: activity_type,
+        })
+          .select("_id")
+          .lean(),
+        ActivityStatus.findOne({ name: "pending" }).select("name").lean(),
+      ]);
+
+      if (!activity_type_id)
+        return throwError(
+          returnMessage("activity", "activityTypeNotFound"),
+          statusCode.notFound
+        );
+
+      // check for the user role. if the role is team_agency then we need to
+      // find the agency id for that user which he is assigned
+
+      // let team_agency_detail;
+      if (user?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          user?.reference_id
+        ).lean();
+        user.agency_id = team_agency_detail?.agency_id;
+      }
+
+      // this below function is used to check weather client is assign to any type of the call or other
+      // activity or not if yes then throw an error but it should be in the same agency id not in the other
+      let meeting_exist;
+      if (user?.role?.name === "agency" && !mark_as_done) {
+        meeting_exist = await Activity.findOne({
+          client_id,
+          agency_id: user?.reference_id,
+          due_date: start_date,
+          activity_status: { $ne: activity_status_type?._id },
+          $or: [
+            {
+              $and: [
+                { meeting_start_time: { $gt: start_time } },
+                { meeting_end_time: { $lt: end_time } },
+              ],
+            },
+            {
+              $and: [
+                { due_date: { $gt: start_date } },
+                { recurring_end_date: { $lt: recurring_date } },
+              ],
+            },
+          ],
+          activity_type: activity_type_id?._id,
+        })
+          .where("_id")
+          .ne(activity_id)
+          .lean();
+      } else if (user?.role?.name === "team_agency" && !mark_as_done) {
+        meeting_exist = await Activity.findOne({
+          client_id,
+          agency_id: user?.agency_id,
+          activity_status: { $ne: activity_status_type?._id },
+          due_date: start_date,
+          $or: [
+            {
+              $and: [
+                { meeting_start_time: { $gt: start_time } },
+                { meeting_end_time: { $lt: end_time } },
+              ],
+            },
+            {
+              $and: [
+                { due_date: { $gt: start_date } },
+                { recurring_end_date: { $lt: recurring_date } },
+              ],
+            },
+          ],
+          activity_type: activity_type_id?._id,
+        })
+          .where("_id")
+          .ne(activity_id)
+          .lean();
+      }
+      if (meeting_exist)
+        return throwError(
+          returnMessage("activity", "meetingScheduledForClient")
+        );
+
+      // if the user role is agency then we need to check weather team member is assined to other call or not
+
+      if (user?.role?.name === "agency" && !mark_as_done) {
+        const meeting_exist = await Activity.findOne({
+          assign_to,
+          agency_id: user?.reference_id,
+          due_date: start_date,
+          activity_status: { $ne: activity_status_type?._id },
+          $or: [
+            {
+              $and: [
+                { meeting_start_time: { $gt: start_time } },
+                { meeting_end_time: { $lt: end_time } },
+              ],
+            },
+            {
+              $and: [
+                { due_date: { $gt: start_date } },
+                { recurring_end_date: { $lt: recurring_date } },
+              ],
+            },
+          ],
+          activity_type: activity_type_id?._id,
+        })
+          .where("_id")
+          .ne(activity_id)
+          .lean();
+
+        if (meeting_exist)
+          return throwError(
+            returnMessage("activity", "meetingScheduledForTeam")
+          );
+      } else if (user?.role?.name === "team_agency" && !mark_as_done) {
+        const meeting_exist = await Activity.findOne({
+          assign_to,
+          agency_id: user?.agency_id,
+          due_date: start_date,
+          activity_status: { $ne: activity_status_type?._id },
+          $or: [
+            {
+              $and: [
+                { meeting_start_time: { $gt: start_time } },
+                { meeting_end_time: { $lt: end_time } },
+              ],
+            },
+            {
+              $and: [
+                { due_date: { $gt: start_date } },
+                { recurring_end_date: { $lt: recurring_date } },
+              ],
+            },
+          ],
+          activity_type: activity_type_id?._id,
+        })
+          .where("_id")
+          .ne(activity_id)
+          .lean();
+
+        if (meeting_exist)
+          return throwError(
+            returnMessage("activity", "meetingScheduledForTeam")
+          );
+      }
+
+      let status;
+      if (mark_as_done === true) {
+        status = await ActivityStatus.findOne({ name: "completed" }).lean();
+      } else {
+        status = await ActivityStatus.findOne({ name: "pending" }).lean();
+      }
+
+      await Activity.findByIdAndUpdate(activity_id, {
+        activity_status: status?._id,
+        agency_id: user?.agency_id || user?.reference_id,
+        assign_by: user?.reference_id,
+        agenda,
+        assign_to,
+        title,
+        client_id,
+        internal_info,
+        meeting_start_time: moment(meeting_start_time, "HH:mm a").format(
+          "HH:mm a"
+        ),
+        meeting_end_time: moment(meeting_end_time, "HH:mm a").format("HH:mm a"),
+        due_date: start_date,
+        recurring_end_date: moment
+          .utc(payload?.recurring_end_date)
+          .endOf("day"),
+      });
+      return;
+    } catch (error) {
+      logger.error(`Error while updating call meeting and other: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // this function is used for to get the activity with date and user based filter
+  getActivities = async (payload, user) => {
+    try {
+      const match_obj = {};
+      const pagination = paginationObject(payload);
+      if (user?.role?.name === "agency") {
+        match_obj["$match"] = {
+          agency_id: user?.reference_id,
+          client_id: payload?.client_id,
+        };
+      } else if (user?.role?.name === "team_agency") {
+        match_obj["$match"] = {
+          assign_to: user?.reference_id,
+        };
+      } else if (user?.role?.name === "client") {
+        match_obj["$match"] = {
+          client_id: user?.reference_id,
+          agency_id: payload?.agency_id,
+        };
+      }
+
+      let aggragate = [
+        match_obj,
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "assign_to",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$assign_to" },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_by",
+            foreignField: "reference_id",
+            as: "assign_by",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$assign_by" },
+        {
+          $lookup: {
+            from: "activity_status_masters",
+            localField: "activity_status",
+            foreignField: "_id",
+            as: "activity_status",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$activity_status",
+        },
+        {
+          $lookup: {
+            from: "activity_type_masters",
+            localField: "activity_type",
+            foreignField: "_id",
+            as: "activity_type",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$activity_type",
+        },
+      ];
+
+      const [activity, total_activity] = await Promise.all([
+        Activity.aggregate(aggragate)
+          .sort(pagination.sort)
+          .skip(pagination.skip)
+          .limit(pagination.result_per_page),
+        Activity.aggregate(aggragate),
+      ]);
+
+      return {
+        activity,
+        page_count:
+          Math.ceil(total_activity.length / pagination.result_per_page) || 0,
+      };
+    } catch (error) {
+      logger.error(`Error while fetching the activity: ${error}`);
+      return throwError(error?.message, error?.statusCode);
     }
   };
 }

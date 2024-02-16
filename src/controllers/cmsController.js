@@ -117,6 +117,19 @@ exports.getTechnologyStack = catchAsyncError(async (req, res, next) => {
   );
 });
 
+// get All FQA
+
+exports.getAllFaqCms = catchAsyncError(async (req, res, next) => {
+  const faqs = await cmsService.getAllFaqCms();
+  sendResponse(
+    res,
+    true,
+    returnMessage("admin", "getAllFaq"),
+    faqs,
+    statusCode.success
+  );
+});
+
 exports.updateAboutUs = catchAsyncError(async (req, res, next) => {
   const data = await cmsService.updateAboutUs(req?.body);
   sendResponse(
@@ -130,7 +143,7 @@ exports.updateAboutUs = catchAsyncError(async (req, res, next) => {
 
 // GET   technology Stack CMS
 
-exports.getAboutUS = catchAsyncError(async (req, res, next) => {
+exports.getAboutUs = catchAsyncError(async (req, res, next) => {
   const data = await cmsService.getAboutUs();
   sendResponse(
     res,

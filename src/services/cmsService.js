@@ -10,6 +10,7 @@ const Price_Plan = require("../models/cms/priceSchema");
 const Privacy_Policy = require("../models/cms/privacyPolicySchema");
 const Contact_Us = require("../models/cms/contactUsSchema");
 const Technology_Stack = require("../models/cms/technologyStackSchema");
+const AdminFqa = require("../models/adminFaqSchema");
 const About_Us = require("../models/cms/aboutUsSchema");
 
 class cmsService {
@@ -146,6 +147,16 @@ class cmsService {
     }
   };
 
+  // GET All FQA CMS
+  getAllFaqCms = async () => {
+    try {
+      const faqs = await AdminFqa.find({ is_deleted: false });
+      return faqs;
+    } catch (error) {
+      logger.error(`Error while Admin FQA  CMS Listing, ${error}`);
+      throwError(error?.message, error?.statusCode);
+    }
+  };
   //About Us
   updateAboutUs = async (payload) => {
     try {
