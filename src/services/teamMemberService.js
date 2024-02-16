@@ -636,7 +636,7 @@ class TeamMemberService {
               .lean();
           }
         }
-        if (payload?.client_id) {
+        if (payload?.client_team) {
           const query_obj = {
             "agency_ids.agency_id": user?.reference_id,
             client_id: payload?.client_id,
@@ -803,7 +803,7 @@ class TeamMemberService {
           agency_id: user?.reference_id,
         }).lean();
       }
-
+      teams.unshift(user.reference_id);
       const aggregateArray = [
         {
           $match: {
@@ -814,7 +814,9 @@ class TeamMemberService {
         },
         {
           $project: {
-            name: 1,
+            name: {
+              $concat: ["$first_name", " ", "$last_name"],
+            },
             first_name: 1,
             last_name: 1,
             email: 1,

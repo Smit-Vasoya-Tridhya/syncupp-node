@@ -892,7 +892,7 @@ class PaymentService {
       if (sheets.total_sheets === 1)
         return throwError(returnMessage("payment", "canNotCancelSubscription"));
 
-      if (!(sheets.occupied_sheets.length > 0))
+      if (!(sheets.occupied_sheets.length >= 0))
         return throwError(returnMessage("payment", "canNotCancel"));
 
       const updated_sheet = await SheetManagement.findByIdAndUpdate(
