@@ -174,7 +174,8 @@
     "taskList": "Task List fetched successfully",
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
-    "deleteTask": "Task deleted successfully."
+    "deleteTask": "Task deleted successfully.",
+    "CannotUpdate": "Task can not be updated."
   },
 
   "payment": {
@@ -208,6 +209,9 @@
     "updateTermAndCondition": "Term and Condition updated successfully.",
     "AboutUsUpdated": "About us updated successfully.",
     "AboutUsFetched": "About us fetched successfully."
+  },
+  "referral": {
+    "checkRefferal": "Referral check successfully."
   },
 
   "default": { "default": "Something went wrong." }

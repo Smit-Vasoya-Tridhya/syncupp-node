@@ -686,16 +686,22 @@ class AuthService {
 
       await ReferralHistory.create({
         referral_code,
-        referred_by: referral_code_exist._id,
-        referred_to: referred_to._id,
+        referred_by: referral_code_exist?._id,
+        referred_to: referred_to?._id,
         email: referred_to?.email,
         registered: true,
       });
 
-      const referral_data = Configuration.find({});
-      await Authentication.findByOneAndUpdate(
+      const referral_data = await Configuration.findOne().lean();
+
+      await Authentication.findOneAndUpdate(
         { referral_code: referral_code },
-        { $inc: { total_referral_point: referral_data.referral_point } },
+        {
+          $inc: {
+            total_referral_point:
+              referral_data?.referral?.successful_referral_point,
+          },
+        },
         { new: true }
       );
       return;
