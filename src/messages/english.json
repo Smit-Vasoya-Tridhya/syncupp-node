@@ -216,7 +216,9 @@
     "incorrectPassword": "Email or password is incorrect.",
     "dashboardDataFetched": "Dashboard data fetched successfully.",
     "affiliateNotFound": "Account not found.",
-    "countAdded": "Count added."
+    "countAdded": "Count added.",
+    "getProfile": "Profile fetched successful.",
+    "userUpdated": "User updated successful."
   },
   "cms": {
     "contactUpdated": "Contact CRM updated successfully.",

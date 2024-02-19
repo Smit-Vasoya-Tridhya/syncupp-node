@@ -75,7 +75,12 @@ const signUp = {
               description: "Enter company_name",
               required: true,
             },
-            name: {
+            first_name: {
+              type: "string",
+              description: "Enter name",
+              required: true,
+            },
+            last_name: {
               type: "string",
               description: "Enter name",
               required: true,
@@ -239,6 +244,82 @@ const changePassword = {
   },
 };
 
+const getProfile = {
+  tags: ["Affiliate - Auth"],
+  description: "",
+  summary: "Change password affiliate",
+
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const updateProfile = {
+  tags: ["Affiliate - Auth"],
+  description: "",
+  summary: "Update Profile affiliate",
+
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            first_name: {
+              type: "string",
+              description: "Enter First_name",
+              required: true,
+            },
+            last_name: {
+              type: "string",
+              description: "Enter Last_name",
+              required: true,
+            },
+            company_name: {
+              type: "string",
+              description: "Enter Company name",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const affiliateRoutes = {
   "/api/v1/affiliate/signup": {
     post: signUp,
@@ -254,6 +335,12 @@ const affiliateRoutes = {
   },
   "/api/v1/affiliate/change-password": {
     post: changePassword,
+  },
+  "/api/v1/affiliate/get-profile": {
+    get: getProfile,
+  },
+  "/api/v1/affiliate/update-profile": {
+    put: updateProfile,
   },
 };
 

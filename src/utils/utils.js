@@ -4840,20 +4840,43 @@ exports.invoiceTemplate = (invoiceData) => {
                                         text-align: right;
                                         ">
                                     <li></li>
-                                    <li>${invoiceData?.from?.company_name},</li>
+                                    <li>${
+                                      invoiceData?.from?.company_name
+                                        ? invoiceData?.from?.company_name + ","
+                                        : `&nbsp;`
+                                    }</li>
 
                                     <li>
-                                    ${invoiceData?.from?.address},${
+                                    ${
+                                      invoiceData?.from?.address
+                                        ? invoiceData?.from?.address + ","
+                                        : `&nbsp;`
+                                    }${
     invoiceData?.from?.city?.name
-  },
+      ? invoiceData?.from?.city?.name + ","
+      : `&nbsp;`
+  }
                                     </li>
-                                    <li>${invoiceData?.from?.state?.name}, ${
-    invoiceData?.from?.pincode
-  },</li>
-                                    <li>${invoiceData?.from?.country?.name}</li>
+                                    <li>${
+                                      invoiceData?.from?.state?.name
+                                        ? invoiceData?.from?.state?.name + ","
+                                        : `&nbsp;`
+                                    } ${
+    invoiceData?.from?.pincode ? invoiceData?.from?.pincode + "," : `&nbsp;`
+  }</li>
+                                    <li>${
+                                      invoiceData?.from?.country?.name
+                                        ? invoiceData?.from?.country?.name + ","
+                                        : `&nbsp;`
+                                    }</li>
                                     <li>
                                       <span style="font-weight: bold;">M :</span>
-                                       ${invoiceData?.from?.contact_number}
+                                       ${
+                                         invoiceData?.from?.contact_number
+                                           ? invoiceData?.from?.contact_number +
+                                             ","
+                                           : `&nbsp;`
+                                       }
                                     </li>
                                   </ul>
                                   <hr />
@@ -4907,23 +4930,41 @@ exports.invoiceTemplate = (invoiceData) => {
                                                                                 ">
                                           <li>${
                                             invoiceData?.to?.client_full_name
-                                          },</li>
+                                              ? invoiceData?.to
+                                                  ?.client_full_name + ","
+                                              : `&nbsp;`
+                                          }</li>
                                          
 
                                           <li>
-                                          ${invoiceData?.to?.address},${
-    invoiceData?.to?.city?.name
-  },
+                                          ${
+                                            invoiceData?.to?.address ?? `&nbsp;`
+                                          }${
+    invoiceData?.to?.city?.name ? invoiceData?.to?.city?.name + "," : `&nbsp;`
+  }
                                           </li>
                                           <li>${
                                             invoiceData?.to?.state?.name
-                                          }, ${invoiceData?.to?.pincode},</li>
+                                              ? invoiceData?.to?.state?.name +
+                                                ","
+                                              : `&nbsp;`
+                                          } ${
+    invoiceData?.to?.pincode ? invoiceData?.to?.pincode + "," : `&nbsp;`
+  }</li>
                                           <li>${
                                             invoiceData?.to?.country?.name
+                                              ? invoiceData?.to?.country?.name +
+                                                ","
+                                              : `&nbsp;`
                                           }</li>
                                           <li>
                                             <span style="font-weight: bold;">M :</span>
-                                           ${invoiceData?.to?.contact_number}
+                                           ${
+                                             invoiceData?.to?.contact_number
+                                               ? invoiceData?.to
+                                                   ?.contact_number + ","
+                                               : `&nbsp;`
+                                           }
                                           </li>
                                         </ul>
                                       </td>

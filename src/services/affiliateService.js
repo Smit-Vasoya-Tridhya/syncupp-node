@@ -193,6 +193,40 @@ class AffiliateService {
     }
   };
 
+  // Affiliate  get Profile
+  getProfile = async (user) => {
+    try {
+      const getUser = await Affiliate.findOne(
+        { _id: user._id, is_deleted: false },
+        { is_deleted: 0, password: 0, __v: 0 }
+      );
+
+      return getUser;
+    } catch (error) {
+      logger.error(`Error while affiliate signup: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Affiliate  get Profile
+  updateProfile = async (payload, user) => {
+    try {
+      const { first_name, last_name, company_name } = payload;
+      await Affiliate.findOneAndUpdate(
+        {
+          _id: user._id,
+        },
+        { first_name, last_name, company_name },
+        { new: true, useFindAndModify: false }
+      );
+
+      return;
+    } catch (error) {
+      logger.error(`Error while affiliate signup: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
   // Affiliate Reset Password
 
   resetPassword = async (payload) => {
