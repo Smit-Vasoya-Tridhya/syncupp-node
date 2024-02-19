@@ -271,11 +271,15 @@ class ClientService {
           { $set: { "agency_ids.$.status": "active" } },
           { new: true }
         );
+
+        const referral_code = await this.referralCodeGenerator();
+
         await Authentication.findByIdAndUpdate(
           client_auth?._id,
           {
             status: "confirmed",
             password: hash_password,
+            referral_code: referral_code,
           },
           { new: true }
         );
@@ -775,6 +779,31 @@ class ClientService {
         `Error While fetching list of client for the agency: ${error}`
       );
       return throwError(error?.message, error?.statusCode);
+    }
+  };
+  referralCodeGenerator = async () => {
+    try {
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      let referral_code = "";
+
+      // Generate the initial code
+      for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        referral_code += characters.charAt(randomIndex);
+      }
+
+      const referral_code_exist = await Authentication.findOne({
+        referral_code,
+      })
+        .select("referral_code")
+        .lean();
+      if (referral_code_exist) return this.referralCodeGenerator();
+
+      return referral_code;
+    } catch (error) {
+      logger.error("Error while generating the referral code", error);
+      return false;
     }
   };
 }

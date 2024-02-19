@@ -12,6 +12,7 @@ const { insertData } = require("./seeder/seeder");
 const swagger = require("swagger-ui-express");
 const swaggerDoc = require("./swagger/swagger.index");
 const basicAuth = require("express-basic-auth");
+const { setupNightlyCronJob } = require("./utils/cronJob");
 
 // -----------------------------Swagger start-----------------------------------
 const auth = {
@@ -48,6 +49,9 @@ app.use("/api/v1", rootRoutes);
 
 // handling error from all of the route
 app.use(errorHandler);
+
+setupNightlyCronJob();
+
 app.listen(port, async () => {
   // await insertData();
   logger.info(`Server started at port:${port}`);
