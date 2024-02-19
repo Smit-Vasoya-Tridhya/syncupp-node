@@ -177,6 +177,7 @@
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
     "deleteTask": "Task deleted successfully.",
+    "CannotUpdate": "Task can not be updated.",
     "activityTypeNotFound": "This type of actvity not found.",
     "invalidTime": "End time should be greater than start time.",
     "meetingScheduledForClient": "Meeting is already set for this client.",
@@ -234,6 +235,9 @@
     "updateTermAndCondition": "Term and Condition updated successfully.",
     "AboutUsUpdated": "About us updated successfully.",
     "AboutUsFetched": "About us fetched successfully."
+  },
+  "referral": {
+    "checkRefferal": "Referral check successfully."
   },
 
   "default": { "default": "Something went wrong." }

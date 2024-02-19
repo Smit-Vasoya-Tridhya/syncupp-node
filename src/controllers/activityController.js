@@ -35,6 +35,8 @@ exports.taskList = catchAsyncError(async (req, res, next) => {
     taskList = await activityService.clientTaskList(req.body, req.user);
   } else if (req?.user?.role?.name === "team_agency") {
     taskList = await activityService.teamAdminTaskList(req.body, req.user);
+  } else if (req?.user?.role?.name === "team_client") {
+    taskList = await activityService.teamClientTaskList(req.body, req.user);
   }
   sendResponse(
     res,
