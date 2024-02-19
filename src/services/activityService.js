@@ -34,7 +34,6 @@ class ActivityService {
         }).lean();
         agency_id = agencies.agency_id;
       }
-      console.log(user);
       const dueDateObject = moment(due_date);
       const duetimeObject = moment(due_date);
 
@@ -2771,6 +2770,38 @@ class ActivityService {
           statusCode.notFound
         );
 
+      // this condition is used for the check if client or team member is assined to any same time activity or not
+      const or_condition = [
+        {
+          $and: [
+            { meeting_start_time: { $gte: start_time } },
+            { meeting_end_time: { $lte: end_time } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $lte: start_time } },
+            { meeting_end_time: { $gte: end_time } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $gte: start_time } },
+            { meeting_end_time: { $lte: end_time } },
+            { due_date: { $gte: start_date } },
+            { recurring_end_date: { $lte: recurring_date } },
+          ],
+        },
+        {
+          $and: [
+            { meeting_start_time: { $lte: start_time } },
+            { meeting_end_time: { $gte: end_time } },
+            { due_date: { $gte: start_date } },
+            { recurring_end_date: { $lte: recurring_date } },
+          ],
+        },
+      ];
+
       // check for the user role. if the role is team_agency then we need to
       // find the agency id for that user which he is assigned
 
@@ -2784,28 +2815,15 @@ class ActivityService {
 
       // this below function is used to check weather client is assign to any type of the call or other
       // activity or not if yes then throw an error but it should be in the same agency id not in the other
+
       let meeting_exist;
       if (user?.role?.name === "agency" && !mark_as_done) {
         meeting_exist = await Activity.findOne({
           client_id,
           agency_id: user?.reference_id,
-          due_date: start_date,
-          activity_status: { $ne: activity_status_type?._id },
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
           activity_type: activity_type_id?._id,
+          $or: or_condition,
         })
           .where("_id")
           .ne(activity_id)
@@ -2814,22 +2832,8 @@ class ActivityService {
         meeting_exist = await Activity.findOne({
           client_id,
           agency_id: user?.agency_id,
-          activity_status: { $ne: activity_status_type?._id },
-          due_date: start_date,
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
           activity_type: activity_type_id?._id,
         })
           .where("_id")
@@ -2847,22 +2851,8 @@ class ActivityService {
         const meeting_exist = await Activity.findOne({
           assign_to,
           agency_id: user?.reference_id,
-          due_date: start_date,
-          activity_status: { $ne: activity_status_type?._id },
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
           activity_type: activity_type_id?._id,
         })
           .where("_id")
@@ -2877,22 +2867,8 @@ class ActivityService {
         const meeting_exist = await Activity.findOne({
           assign_to,
           agency_id: user?.agency_id,
-          due_date: start_date,
-          activity_status: { $ne: activity_status_type?._id },
-          $or: [
-            {
-              $and: [
-                { meeting_start_time: { $gt: start_time } },
-                { meeting_end_time: { $lt: end_time } },
-              ],
-            },
-            {
-              $and: [
-                { due_date: { $gt: start_date } },
-                { recurring_end_date: { $lt: recurring_date } },
-              ],
-            },
-          ],
+          activity_status: { $eq: activity_status_type?._id },
+          $or: or_condition,
           activity_type: activity_type_id?._id,
         })
           .where("_id")
@@ -2941,12 +2917,135 @@ class ActivityService {
   getActivities = async (payload, user) => {
     try {
       const match_obj = {};
+
+      if (payload?.given_date) {
+        match_obj["$match"]["due_date"] = {
+          $eq: moment.utc(payload?.given_date, "YYYY-MM-DD").startOf("day"),
+        };
+      }
+
+      // this will used for the date filter in the listing
+      const filter = {
+        $match: {},
+      };
+      if (payload?.filter) {
+        if (payload?.filter?.status === "todo") {
+          const [in_progress, pending] = await Promise.all([
+            ActivityStatus.findOne({
+              name: "in_progress",
+            })
+              .select("_id")
+              .lean(),
+            ActivityStatus.findOne({
+              name: "pending",
+            })
+              .select("_id")
+              .lean(),
+          ]);
+          filter["$match"] = {
+            ...filter["$match"],
+            $or: [
+              { activity_status: in_progress?._id },
+              { activity_status: pending?._id },
+            ],
+          };
+        } else if (payload?.filter?.status === "overdue") {
+          const activity_status = await ActivityStatus.findOne({
+            name: "overdue",
+          })
+            .select("_id")
+            .lean();
+          filter["$match"] = {
+            ...filter["$match"],
+            activity_status: activity_status?._id,
+          };
+        } else if (payload?.filter?.status === "done") {
+          const activity_status = await ActivityStatus.findOne({
+            name: "completed",
+          })
+            .select("_id")
+            .lean();
+          filter["$match"] = {
+            ...filter["$match"],
+            activity_status: activity_status?._id,
+          };
+        }
+        if (payload?.filter?.date === "today") {
+          filter["$match"] = {
+            ...filter["$match"],
+            due_date: { $eq: moment.utc().startOf("day") },
+          };
+        } else if (payload?.filter?.date === "this_week") {
+          filter["$match"] = {
+            ...filter["$match"],
+            $and: [
+              {
+                due_date: { $gte: moment.utc().startOf("week") },
+              },
+              {
+                due_date: { $lte: moment.utc().endOf("week") },
+              },
+            ],
+          };
+        } else if (payload?.filter?.date === "period") {
+          // need the start and end date to fetch the data between 2 dates
+
+          if (!(payload?.filter?.start_date && payload?.filter?.end_date))
+            return throwError(
+              returnMessage("activity", "startEnddateRequired")
+            );
+
+          const start_date = moment
+            .utc(payload?.filter?.start_date, "YYYY-MM-DD")
+            .startOf("day");
+          const end_date = moment
+            .utc(payload?.filter?.end_date, "YYYY-MM-DD")
+            .endOf("day");
+
+          if (end_date.isBefore(start_date))
+            return throwError(returnMessage("activity", "invalidDate"));
+
+          filter["$match"] = {
+            ...filter["$match"],
+            $and: [
+              { due_date: { $gte: start_date } },
+              { due_date: { $lte: end_date } },
+            ],
+          };
+        }
+        if (payload?.filter?.activity_type) {
+          const activity_type = await ActivityType.findOne({
+            name: payload?.filter?.activity_type,
+          })
+            .select("_id")
+            .lean();
+
+          if (!activity_type)
+            return throwError(
+              returnMessage("activity", "activityTypeNotFound"),
+              statusCode.notFound
+            );
+
+          filter["$match"] = {
+            ...filter["$match"],
+            activity_type: activity_type?._id,
+          };
+        }
+      }
+
       const pagination = paginationObject(payload);
       if (user?.role?.name === "agency") {
         match_obj["$match"] = {
-          agency_id: user?.reference_id,
-          client_id: payload?.client_id,
+          $or: [
+            { agency_id: user?.reference_id }, // this is removed because agency can also assign the activity
+            { assign_to: user?.reference_id },
+          ],
         };
+        if (payload?.client_id) {
+          match_obj["$match"] = {
+            client_id: payload?.client_id,
+          };
+        }
       } else if (user?.role?.name === "team_agency") {
         match_obj["$match"] = {
           assign_to: user?.reference_id,
@@ -2956,10 +3055,16 @@ class ActivityService {
           client_id: user?.reference_id,
           agency_id: payload?.agency_id,
         };
+      } else if (user?.role?.name === "team_client") {
+        match_obj["$match"] = {
+          client_id: user?.reference_id,
+          agency_id: payload?.agency_id,
+        };
       }
 
       let aggragate = [
         match_obj,
+        filter,
         {
           $lookup: {
             from: "authentications",
@@ -2969,10 +3074,10 @@ class ActivityService {
             pipeline: [
               {
                 $project: {
-                  name: 1,
                   first_name: 1,
                   last_name: 1,
-                  assigned_to_name: {
+                  email: 1,
+                  name: {
                     $concat: ["$first_name", " ", "$last_name"],
                   },
                 },
@@ -2990,10 +3095,10 @@ class ActivityService {
             pipeline: [
               {
                 $project: {
-                  name: 1,
                   first_name: 1,
                   last_name: 1,
-                  assigned_to_name: {
+                  email: 1,
+                  name: {
                     $concat: ["$first_name", " ", "$last_name"],
                   },
                 },
@@ -3002,6 +3107,27 @@ class ActivityService {
           },
         },
         { $unwind: "$assign_by" },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "client_id",
+            foreignField: "reference_id",
+            as: "client_id",
+            pipeline: [
+              {
+                $project: {
+                  first_name: 1,
+                  last_name: 1,
+                  email: 1,
+                  name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        { $unwind: "$client_id" },
         {
           $lookup: {
             from: "activity_status_masters",

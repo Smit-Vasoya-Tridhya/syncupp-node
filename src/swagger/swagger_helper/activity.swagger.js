@@ -229,12 +229,19 @@ const activityList = {
               type: "string",
               description: "Enter value of search",
             },
-            client_id: {
-              type: "string",
+            client_id: { type: "string" },
+            agency_id: { type: "string" },
+            filter: {
+              type: "object",
+              properties: {
+                status: { type: "string" },
+                date: { type: "string" },
+                start_date: { type: "string" },
+                end_date: { type: "string" },
+                activity_type: { type: "string" },
+              },
             },
-            agency_id: {
-              type: "string",
-            },
+            given_date: { type: "string" },
           },
         },
       },
