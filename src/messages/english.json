@@ -241,6 +241,9 @@
     "AboutUsUpdated": "About us updated successfully.",
     "AboutUsFetched": "About us fetched successfully."
   },
+  "notification": {
+    "messageAdded": "Message added successfully."
+  },
   "referral": {
     "checkRefferal": "Referral check successfully.",
     "insufficientReferralPoints": "Insufficient Referral Points"
