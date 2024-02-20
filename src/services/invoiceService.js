@@ -212,14 +212,35 @@ class InvoiceService {
 
       const invoiceItems = invoice_content;
       calculateAmount(invoiceItems);
-      const isInvoice = await Invoice.findOne({
-        invoice_number: invoice_number,
-        agency_id: user_id,
-      });
 
-      if (isInvoice) {
-        return throwError(returnMessage("invoice", "invoiceNumberExists"));
+      let newInvoiceNumber;
+
+      // If invoice_number is not provided, generate a new one based on count
+      if (!invoice_number) {
+        let invoiceCount = await Invoice.countDocuments({
+          agency_id: user_id,
+        });
+
+        // Generate a new invoice number and ensure it's unique
+        do {
+          invoiceCount += 1;
+          newInvoiceNumber = `INV-${invoiceCount}`;
+          var existingInvoice = await Invoice.findOne({
+            invoice_number: newInvoiceNumber,
+            agency_id: user_id,
+          });
+        } while (existingInvoice);
+      } else {
+        newInvoiceNumber = invoice_number;
+        const isInvoice = await Invoice.findOne({
+          invoice_number: newInvoiceNumber,
+          agency_id: user_id,
+        });
+        if (isInvoice) {
+          return throwError(returnMessage("invoice", "invoiceNumberExists"));
+        }
       }
+
       const { total, sub_total } = calculateInvoice(invoiceItems);
 
       // Update Invoice status
@@ -235,7 +256,7 @@ class InvoiceService {
       }
       var invoice = await Invoice.create({
         due_date,
-        invoice_number,
+        invoice_number: newInvoiceNumber,
         invoice_date,
         total,
         sub_total,
