@@ -21,6 +21,9 @@ const { ObjectId } = require("mongodb");
 const Agency = require("../models/agencySchema");
 const AuthService = require("./authService");
 const authService = new AuthService();
+const Activity_Status = require("../models/masters/activityStatusMasterSchema");
+const Activity = require("../models/activitySchema");
+const SheetManagement = require("../models/sheetManagementSchema");
 
 class TeamMemberService {
   // Add Team Member by agency or client
@@ -511,36 +514,143 @@ class TeamMemberService {
   };
 
   // this function will used for the delete team member only for the agency
-  deleteMember = async (payload) => {
+  deleteMember = async (payload, agency) => {
     try {
       const { teamMemberIds } = payload;
-
-      const teamMember = await Authentication.find({
-        _id: { $in: teamMemberIds },
-        is_deleted: false,
+      const activity_status = await Activity_Status.findOne({
+        name: "pending",
       })
-        .populate({
-          path: "role",
-          model: "role_master",
-        })
-        .populate({
-          path: "reference_id",
-          model: "team_agency",
-          populate: {
-            path: "role",
-            model: "team_role_master",
-          },
-        })
+        .select("_id")
         .lean();
 
-      // Delete from Authentication collection
-      await Authentication.updateMany(
-        { _id: { $in: teamMemberIds } },
-        { $set: { is_deleted: true } }
-      );
-      if (!teamMember) {
-        return throwError(returnMessage("teamMember", "invalidId"));
+      if (agency?.role?.name === "team_agency") {
+        const team_agency_detail = await Team_Agency.findById(
+          agency?.reference_id
+        )
+          .populate("role", "name")
+          .lean();
+
+        if (team_agency_detail?.role?.name === "admin") {
+          agency = await Authentication.findOne({
+            reference_id: team_agency_detail?.agency_id,
+          })
+            .populate("role", "name")
+            .lean();
+        }
       }
+
+      if (agency?.role?.name === "agency" && !payload?.client_team) {
+        // check for the clients are assined to any activity that are in pending state
+
+        const activity_assigned = await Activity.findOne({
+          agency_id: agency?.reference_id,
+          assign_to: { $in: teamMemberIds },
+          activity_status: activity_status?._id,
+        }).lean();
+
+        if (activity_assigned && !payload?.force_fully_remove)
+          return { force_fully_remove: true };
+
+        if (
+          (activity_assigned && payload?.force_fully_remove) ||
+          !activity_assigned
+        ) {
+          // Delete from Authentication collection
+          await Authentication.updateMany(
+            { reference_id: { $in: teamMemberIds } },
+            { $set: { is_deleted: true } }
+          );
+
+          const sheets = await SheetManagement.findOne({
+            agency_id: agency?.reference_id,
+          }).lean();
+
+          const available_sheets = sheets?.occupied_sheets?.filter(
+            (sheet) => !teamMemberIds.includes(sheet?.user_id.toString())
+          );
+
+          await SheetManagement.findByIdAndUpdate(sheets._id, {
+            occupied_sheets: available_sheets,
+          });
+        }
+      } else if (agency?.role?.name === "agency" && payload?.client_team) {
+        // check for the clients are assined to any activity that are in pending state
+
+        const activity_assigned = await Activity.findOne({
+          agency_id: agency?.reference_id,
+          client_id: { $in: teamMemberIds },
+          activity_status: activity_status?._id,
+        }).lean();
+
+        if (activity_assigned && !payload?.force_fully_remove)
+          return { force_fully_remove: true };
+
+        if (
+          (activity_assigned && payload?.force_fully_remove) ||
+          !activity_assigned
+        ) {
+          // Delete from Authentication collection
+          await Authentication.updateMany(
+            { reference_id: { $in: teamMemberIds } },
+            { $set: { is_deleted: true } }
+          );
+
+          const sheets = await SheetManagement.findOne({
+            agency_id: agency?.reference_id,
+          }).lean();
+
+          let teams_ids = [];
+
+          teams_ids.forEach((id) => teams_ids.push(id.toString()));
+
+          const available_sheets = sheets?.occupied_sheets?.filter(
+            (sheet) => !teamMemberIds.includes(sheet?.user_id.toString())
+          );
+
+          await SheetManagement.findByIdAndUpdate(sheets._id, {
+            occupied_sheets: available_sheets,
+          });
+        }
+      } else if (agency?.role?.name === "client" && payload?.agency_id) {
+        // check for the clients are assined to any activity that are in pending state
+
+        const activity_assigned = await Activity.findOne({
+          agency_id: payload?.agency_id,
+          client_id: { $in: teamMemberIds },
+          activity_status: activity_status?._id,
+        }).lean();
+
+        if (activity_assigned && !payload?.force_fully_remove)
+          return { force_fully_remove: true };
+
+        if (
+          (activity_assigned && payload?.force_fully_remove) ||
+          !activity_assigned
+        ) {
+          // Delete from Authentication collection
+          await Authentication.updateMany(
+            { reference_id: { $in: teamMemberIds } },
+            { $set: { is_deleted: true } }
+          );
+
+          const sheets = await SheetManagement.findOne({
+            agency_id: payload?.agency_id,
+          }).lean();
+
+          let teams_ids = [];
+
+          teams_ids.forEach((id) => teams_ids.push(id.toString()));
+
+          const available_sheets = sheets?.occupied_sheets?.filter(
+            (sheet) => !teamMemberIds.includes(sheet?.user_id.toString())
+          );
+
+          await SheetManagement.findByIdAndUpdate(sheets._id, {
+            occupied_sheets: available_sheets,
+          });
+        }
+      }
+
       return;
     } catch (error) {
       logger.error(`Error while Team member  delete, ${error}`);
