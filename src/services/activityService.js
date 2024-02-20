@@ -8,23 +8,18 @@ const {
   paginationObject,
   getKeywordType,
   validateRequestFields,
+  taskTemplate,
 } = require("../utils/utils");
 const moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Team_Agency = require("../models/teamAgencySchema");
 const statusCode = require("../messages/statusCodes.json");
+const sendEmail = require("../helpers/sendEmail");
 class ActivityService {
   createTask = async (payload, user) => {
     try {
-      const {
-        title,
-        agenda,
-        due_date,
-        // due_time,
-        assign_to,
-        client_id,
-        mark_as_done,
-      } = payload;
+      const { title, agenda, due_date, assign_to, client_id, mark_as_done } =
+        payload;
       let agency_id;
       if (user.role.name === "agency") {
         agency_id = user?.reference_id;
@@ -59,13 +54,79 @@ class ActivityService {
         due_date: dueDateObject.toDate(),
         due_time: timeOnly,
         assign_to,
-        assign_by: user._id,
+        assign_by: user.reference_id,
         client_id,
         activity_status: status._id,
         activity_type: type._id,
         agency_id,
       });
-      return newTask.save();
+      const added_task = await newTask.save();
+
+      const pipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "team_Data",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  email: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$team_Data",
+        },
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(added_task._id),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            agenda: 1,
+            assigned_by_first_name: "$assign_by.first_name",
+            assigned_by_last_name: "$assign_by.last_name",
+            assigned_to_first_name: "$team_Data.first_name",
+            assigned_to_last_name: "$team_Data.last_name",
+            assigned_to_name: "$team_Data.assigned_to_name",
+            assigned_by_name: "$assign_by.assigned_by_name",
+            client_name: "$client_Data.client_name",
+            column_id: "$status.name",
+            assign_email: "$team_Data.email",
+          },
+        },
+      ];
+
+      const getTask = await Activity.aggregate(pipeline);
+      let data = {
+        TaskTitle: "New Task Created",
+        taskName: title,
+        status: status?.name,
+        assign_by: user.first_name + " " + user.last_name,
+        dueDate: moment(dueDateObject)?.format("DD/MM/YYYY"),
+        dueTime: timeOnly,
+        agginTo_email: getTask[0]?.assign_email,
+        assignName: getTask[0]?.assigned_to_name,
+      };
+      const taskMessage = taskTemplate(data);
+      await sendEmail({
+        email: getTask[0]?.assign_email,
+        subject: returnMessage("activity", "createSubject"),
+        message: taskMessage,
+      });
+      return added_task;
     } catch (error) {
       logger.error(`Error while creating task : ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -210,7 +271,7 @@ class ActivityService {
             $lookup: {
               from: "authentications",
               localField: "assign_by",
-              foreignField: "_id",
+              foreignField: "reference_id",
               as: "assign_by",
               pipeline: [
                 {
@@ -420,7 +481,7 @@ class ActivityService {
             $lookup: {
               from: "authentications",
               localField: "assign_by",
-              foreignField: "_id",
+              foreignField: "reference_id",
               as: "assign_by",
               pipeline: [
                 {
@@ -637,7 +698,7 @@ class ActivityService {
             $lookup: {
               from: "authentications",
               localField: "assign_by",
-              foreignField: "_id",
+              foreignField: "reference_id",
               as: "assign_by",
               pipeline: [
                 {
@@ -858,7 +919,7 @@ class ActivityService {
             $lookup: {
               from: "authentications",
               localField: "assign_by",
-              foreignField: "_id",
+              foreignField: "reference_id",
               as: "assign_by",
               pipeline: [
                 {
@@ -1074,7 +1135,7 @@ class ActivityService {
             $lookup: {
               from: "authentications",
               localField: "assign_by",
-              foreignField: "_id",
+              foreignField: "reference_id",
               as: "assign_by",
               pipeline: [
                 {
@@ -1295,7 +1356,7 @@ class ActivityService {
             $lookup: {
               from: "authentications",
               localField: "assign_by",
-              foreignField: "_id",
+              foreignField: "reference_id",
               as: "assign_by",
               pipeline: [
                 {
@@ -1522,7 +1583,7 @@ class ActivityService {
               $lookup: {
                 from: "authentications",
                 localField: "assign_by",
-                foreignField: "_id",
+                foreignField: "reference_id",
                 as: "team_by",
                 pipeline: [
                   {
@@ -1740,7 +1801,7 @@ class ActivityService {
               $lookup: {
                 from: "authentications",
                 localField: "assign_by",
-                foreignField: "_id",
+                foreignField: "reference_id",
                 as: "team_by",
                 pipeline: [
                   {
@@ -1973,7 +2034,7 @@ class ActivityService {
               $lookup: {
                 from: "authentications",
                 localField: "assign_by",
-                foreignField: "_id",
+                foreignField: "reference_id",
                 as: "team_by",
                 pipeline: [
                   {
@@ -2188,7 +2249,7 @@ class ActivityService {
               $lookup: {
                 from: "authentications",
                 localField: "assign_by",
-                foreignField: "_id",
+                foreignField: "reference_id",
                 as: "team_by",
                 pipeline: [
                   {
@@ -2300,7 +2361,7 @@ class ActivityService {
           $lookup: {
             from: "authentications",
             localField: "assign_by",
-            foreignField: "_id",
+            foreignField: "reference_id",
             as: "assign_by",
             pipeline: [{ $project: { name: 1, first_name: 1, last_name: 1 } }],
           },
@@ -2377,6 +2438,107 @@ class ActivityService {
         { _id: { $in: taskIdsToDelete } },
         { $set: { is_deleted: true } }
       );
+
+      const pipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "team_Data",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  email: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$team_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_by",
+            foreignField: "reference_id",
+            as: "assign_by",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_by_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$assign_by",
+        },
+        {
+          $lookup: {
+            from: "activity_status_masters",
+            localField: "activity_status",
+            foreignField: "_id",
+            as: "status",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$status",
+        },
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(id),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            agenda: 1,
+            status: "$status.name",
+            assigned_by_first_name: "$assign_by.first_name",
+            assigned_by_last_name: "$assign_by.last_name",
+            assigned_to_first_name: "$team_Data.first_name",
+            assigned_to_last_name: "$team_Data.last_name",
+            assigned_to_name: "$team_Data.assigned_to_name",
+            assigned_by_name: "$assign_by.assigned_by_name",
+            client_name: "$client_Data.client_name",
+            column_id: "$status.name",
+            assign_email: "$team_Data.email",
+          },
+        },
+      ];
+
+      const getTask = await Activity.aggregate(pipeline);
+      let data = {
+        TaskTitle: "Deleted Task ",
+        taskName: title,
+        status: getTask[0]?.status,
+        assign_by: getTask[0]?.assigned_by_name,
+        dueDate: moment(dueDateObject)?.format("DD/MM/YYYY"),
+        dueTime: timeOnly,
+        agginTo_email: getTask[0]?.assign_email,
+        assignName: getTask[0]?.assigned_to_name,
+      };
+      const taskMessage = taskTemplate(data);
+      await sendEmail({
+        email: getTask[0]?.assign_email,
+        subject: returnMessage("activity", "UpdateSubject"),
+        message: taskMessage,
+      });
       return deletedTask;
     } catch (error) {
       logger.error(`Error while Deleting task, ${error}`);
@@ -2426,6 +2588,94 @@ class ActivityService {
         },
         { new: true, useFindAndModify: false }
       );
+
+      const pipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "team_Data",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  email: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$team_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_by",
+            foreignField: "reference_id",
+            as: "assign_by",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_by_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$assign_by",
+        },
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(id),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            agenda: 1,
+            assigned_by_first_name: "$assign_by.first_name",
+            assigned_by_last_name: "$assign_by.last_name",
+            assigned_to_first_name: "$team_Data.first_name",
+            assigned_to_last_name: "$team_Data.last_name",
+            assigned_to_name: "$team_Data.assigned_to_name",
+            assigned_by_name: "$assign_by.assigned_by_name",
+            client_name: "$client_Data.client_name",
+            column_id: "$status.name",
+            assign_email: "$team_Data.email",
+          },
+        },
+      ];
+
+      const getTask = await Activity.aggregate(pipeline);
+      let data = {
+        TaskTitle: "Updated Task ",
+        taskName: title,
+        status: status?.name,
+        assign_by: getTask[0]?.assigned_by_name,
+        dueDate: moment(dueDateObject)?.format("DD/MM/YYYY"),
+        dueTime: timeOnly,
+        agginTo_email: getTask[0]?.assign_email,
+        assignName: getTask[0]?.assigned_to_name,
+      };
+      const taskMessage = taskTemplate(data);
+      await sendEmail({
+        email: getTask[0]?.assign_email,
+        subject: returnMessage("activity", "UpdateSubject"),
+        message: taskMessage,
+      });
       return updateTasks;
     } catch (error) {
       logger.error(`Error while Updating task, ${error}`);
@@ -2681,10 +2931,117 @@ class ActivityService {
   // this function is used to fetch the call or other call detials by id
   getActivity = async (activity_id) => {
     try {
-      const activity = await Activity.findById(activity_id)
-        .populate("activity_type", "name")
-        .populate("activity_status", "name")
-        .lean();
+      const taskPipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "client_id",
+            foreignField: "reference_id",
+            as: "client_Data",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  client_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$client_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "team_Data",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$team_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_by",
+            foreignField: "reference_id",
+            as: "assign_by",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_by_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$assign_by",
+        },
+        {
+          $lookup: {
+            from: "activity_status_masters",
+            localField: "activity_status",
+            foreignField: "_id",
+            as: "status",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        {
+          $unwind: "$status",
+        },
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(activity_id),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            contact_number: 1,
+            title: 1,
+            status: "$status.name",
+            due_time: 1,
+            due_date: 1,
+            createdAt: 1,
+            agenda: 1,
+            assigned_by_first_name: "$assign_by.first_name",
+            assigned_by_last_name: "$assign_by.last_name",
+            assigned_to_first_name: "$team_Data.first_name",
+            assigned_to_last_name: "$team_Data.last_name",
+            assigned_to_name: "$team_Data.assigned_to_name",
+            assigned_by_name: "$assign_by.assigned_by_name",
+            client_name: "$client_Data.client_name",
+            client_first_name: "$client_Data.first_name",
+            client_last_name: "$client_Data.last_name",
+            column_id: "$status.name",
+          },
+        },
+      ];
+      const activity = await Activity.aggregate(taskPipeline);
       if (!activity)
         return throwError(
           returnMessage("activity", "activityNotFound"),

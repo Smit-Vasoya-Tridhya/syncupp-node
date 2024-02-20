@@ -5,6 +5,7 @@ const { protect } = require("../middlewares/authMiddleware");
 paymentRoute.post("/plan-create", paymentConrtoller.createPlan);
 paymentRoute.post("/webhook", paymentConrtoller.webHookHandler);
 paymentRoute.post("/verify-signature", paymentConrtoller.verifySignature);
+paymentRoute.post("/verify-referral", paymentConrtoller.verifyReferral);
 
 paymentRoute.use(protect);
 paymentRoute.post("/order", paymentConrtoller.singleTimePayment);

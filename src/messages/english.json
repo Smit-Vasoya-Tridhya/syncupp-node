@@ -190,7 +190,9 @@
     "activityUpdated": "Activity updated successfully.",
     "activityListFetched": "Activities list fetch successfully.",
     "startEnddateRequired": "start and end dates are required for the filter.",
-    "invalidDate": "End date should be greater than start date."
+    "invalidDate": "End date should be greater than start date.",
+    "createSubject": "New Task Created",
+    "UpdateSubject": "Updated Task"
   },
 
   "payment": {
@@ -237,7 +239,8 @@
     "AboutUsFetched": "About us fetched successfully."
   },
   "referral": {
-    "checkRefferal": "Referral check successfully."
+    "checkRefferal": "Referral check successfully.",
+    "insufficientReferralPoints": "Insufficient Referral Points"
   },
 
   "default": { "default": "Something went wrong." }
