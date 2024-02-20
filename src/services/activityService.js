@@ -2470,7 +2470,7 @@ class ActivityService {
   deleteTask = async (payload) => {
     const { taskIdsToDelete } = payload;
     try {
-      const deletedTask = await Activity.updateMany(
+      await Activity.updateMany(
         { _id: { $in: taskIdsToDelete } },
         { $set: { is_deleted: true } }
       );
@@ -2537,7 +2537,7 @@ class ActivityService {
         },
         {
           $match: {
-            _id: new mongoose.Types.ObjectId(id),
+            _id: { $in: taskIdsToDelete },
             is_deleted: false,
           },
         },
@@ -2560,7 +2560,7 @@ class ActivityService {
 
       const getTask = await Activity.aggregate(pipeline);
       let data = {
-        TaskTitle: "Deleted Task ",
+        TaskTitle: "Deleted Task",
         taskName: title,
         status: getTask[0]?.status,
         assign_by: getTask[0]?.assigned_by_name,
@@ -2575,7 +2575,7 @@ class ActivityService {
         subject: returnMessage("activity", "UpdateSubject"),
         message: taskMessage,
       });
-      return deletedTask;
+      return;
     } catch (error) {
       logger.error(`Error while Deleting task, ${error}`);
       throwError(error?.message, error?.statusCode);
