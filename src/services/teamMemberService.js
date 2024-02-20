@@ -250,10 +250,13 @@ class TeamMemberService {
           password,
         });
 
+        const referral_code = await this.referralCodeGenerator();
+
         teamMember.email = email;
         teamMember.invitation_token = undefined;
         teamMember.password = hash_password;
         teamMember.status = "confirmed";
+        teamMember.referral_code = referral_code;
 
         await teamMember.save();
         const welcome_mail = welcomeMail(teamMember?.name);
@@ -636,7 +639,7 @@ class TeamMemberService {
               .lean();
           }
         }
-        if (payload?.client_id) {
+        if (payload?.client_team) {
           const query_obj = {
             "agency_ids.agency_id": user?.reference_id,
             client_id: payload?.client_id,
@@ -803,7 +806,7 @@ class TeamMemberService {
           agency_id: user?.reference_id,
         }).lean();
       }
-
+      teams.unshift(user.reference_id);
       const aggregateArray = [
         {
           $match: {
@@ -814,7 +817,9 @@ class TeamMemberService {
         },
         {
           $project: {
-            name: 1,
+            name: {
+              $concat: ["$first_name", " ", "$last_name"],
+            },
             first_name: 1,
             last_name: 1,
             email: 1,
@@ -981,6 +986,32 @@ class TeamMemberService {
     } catch (error) {
       logger.error(`Error while Team member  delete, ${error}`);
       return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  referralCodeGenerator = async () => {
+    try {
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      let referral_code = "";
+
+      // Generate the initial code
+      for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        referral_code += characters.charAt(randomIndex);
+      }
+
+      const referral_code_exist = await Authentication.findOne({
+        referral_code,
+      })
+        .select("referral_code")
+        .lean();
+      if (referral_code_exist) return this.referralCodeGenerator();
+
+      return referral_code;
+    } catch (error) {
+      logger.error("Error while generating the referral code", error);
+      return false;
     }
   };
 }

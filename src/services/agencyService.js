@@ -7,7 +7,8 @@ const Authentication = require("../models/authenticationSchema");
 const SubscriptionPlan = require("../models/subscriptionplanSchema");
 const PaymentService = require("./paymentService");
 const paymentService = new PaymentService();
-
+const ReferralService = require("./referralService");
+const referralService = new ReferralService();
 // Register Agency
 class AgencyService {
   agencyRegistration = async (payload) => {
@@ -162,6 +163,8 @@ class AgencyService {
           plan
         ) / 100
       ).toFixed(2);
+      let check_referral = await referralService.checkReferralAvailable(agency);
+      agency_detail.check_referral = check_referral.referralAvailable;
       return agency_detail;
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);

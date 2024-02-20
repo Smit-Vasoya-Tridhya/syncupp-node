@@ -175,6 +175,7 @@
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
     "deleteTask": "Task deleted successfully.",
+    "CannotUpdate": "Task cannot be updated.",
     "activityTypeNotFound": "This type of actvity not found.",
     "invalidTime": "End time should be greater than start time.",
     "meetingScheduledForClient": "Meeting is already set for this client.",
@@ -185,7 +186,12 @@
     "callScheduled": "Call meeting is scheduled successfully.",
     "activityCreated": "Activity created successfully.",
     "activityUpdated": "Activity updated successfully.",
-    "activityListFetched": "Activities list fetch successfully."
+    "activityListFetched": "Activities list fetch successfully.",
+    "startEnddateRequired": "start and end dates are required for the filter.",
+    "invalidDate": "End date should be greater than start date.",
+    "createSubject": "New Task Created",
+    "UpdateSubject": "Updated Task",
+    "ActivityCannotUpdate": "Activity cannot be Update"
   },
 
   "payment": {
@@ -206,12 +212,17 @@
     "userRemoved": "User removed successfully.",
     "subscriptionCancelled": "Subscription cancelled successfully.",
     "subscriptionFetched": "Subscription details fetched successfully.",
-    "canNotCancel": "Sunscription can not be cancelled."
+    "canNotCancel": "Subscription can not be cancelled."
   },
   "affiliate": {
     "registered": "User registered successfully.",
     "emailExist": "Email already registered.",
-    "incorrectPassword": "Email or password is incorrect."
+    "incorrectPassword": "Email or password is incorrect.",
+    "dashboardDataFetched": "Dashboard data fetched successfully.",
+    "affiliateNotFound": "Account not found.",
+    "countAdded": "Count added.",
+    "getProfile": "Profile fetched successful.",
+    "userUpdated": "User updated successful."
   },
   "cms": {
     "contactUpdated": "Contact CRM updated successfully.",
@@ -222,6 +233,10 @@
     "planFetched": "Plan fetched successfully.",
     "technologyUpdated": "Technology stack updated successfully.",
     "technologyFetched": "Technology stack fetched successfully."
+  },
+  "referral": {
+    "checkRefferal": "Referral check successfully.",
+    "insufficientReferralPoints": "Insufficient Referral Points"
   },
 
   "default": { "default": "Something went wrong." }

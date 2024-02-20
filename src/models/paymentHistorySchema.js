@@ -9,7 +9,12 @@ const paymentHistorySchema = new mongoose.Schema(
     subscription_id: { type: String },
     order_id: { type: String },
     amount: { type: Number },
-    currency: { type: String, required: true },
+    currency: { type: String },
+    payment_mode: {
+      type: String,
+      enum: ["payment", "referral"],
+      default: "payment",
+    },
   },
   { timestamps: true }
 );

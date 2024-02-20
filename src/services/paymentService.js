@@ -20,6 +20,7 @@ const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
 const moment = require("moment");
 const sendEmail = require("../helpers/sendEmail");
+const Configuration = require("../models/configurationSchema");
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_SECRET,
@@ -60,7 +61,7 @@ class PaymentService {
 
       return;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
       logger.error(`Error while creating the plan: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -115,7 +116,8 @@ class PaymentService {
         contact_number: user?.contact_number,
       };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while creating subscription: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -144,6 +146,8 @@ class PaymentService {
 
       return;
     } catch (error) {
+      console.log(JSON.stringify(error));
+
       console.log(`Error with webhook handler`, error);
       return throwError(
         error?.message || error?.error?.description,
@@ -176,7 +180,8 @@ class PaymentService {
 
       return proratedAmount.toFixed(2);
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while calculating the custom payment: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -241,7 +246,7 @@ class PaymentService {
         { new: true }
       );
       return {
-        referral_points: 0, // this wil be change in future when the referral point will be integrate
+        referral_points: user?.total_referral_point, // this wil be change in future when the referral point will be integrate
         payment_id: order?.id,
         amount: prorate_value,
         currency: plan?.currency,
@@ -251,7 +256,8 @@ class PaymentService {
         contact_number: user?.contact_number,
       };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while doing the one time payment: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -286,7 +292,8 @@ class PaymentService {
       // await this.deleteUsers(payload);
       return { success: false };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while verifying signature: ${error}`);
       return throwError(
         error?.message || error?.error?.description,
@@ -347,7 +354,8 @@ class PaymentService {
       }
       return false;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while checking agency exist: ${error}`);
       return false;
     }
@@ -519,11 +527,11 @@ class PaymentService {
           occupied_sheets,
         };
         await SheetManagement.findByIdAndUpdate(sheets._id, sheet_obj);
-        await Team_Client.updateOne(
-          { _id: user_id, "agency_ids.agency_id": agency_id },
-          { $set: { "agency_ids.$.status": "confirmed" } },
-          { new: true }
-        );
+        // await Team_Client.updateOne(
+        //   { _id: user_id, "agency_ids.agency_id": agency_id },
+        //   { $set: { "agency_ids.$.status": "confirmed" } },
+        //   { new: true }
+        // );
         await this.updateSubscription(agency_id, sheet_obj.total_sheets);
 
         let message;
@@ -539,7 +547,7 @@ class PaymentService {
       }
       return { success: false };
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
 
       logger.error(`Error while changing status after the payment: ${error}`);
       return false;
@@ -561,7 +569,7 @@ class PaymentService {
       }
       return;
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
 
       logger.error(`Error while deleting the User: ${error}`);
       return false;
@@ -575,7 +583,8 @@ class PaymentService {
         razorpay.subscriptions.fetch(subscription_id)
       );
     } catch (error) {
-      console.log(error);
+      console.log(JSON.stringify(error));
+
       logger.error(`Error while gettign subscription detail: ${error}`);
       return false;
     }
@@ -884,7 +893,7 @@ class PaymentService {
       if (sheets.total_sheets === 1)
         return throwError(returnMessage("payment", "canNotCancelSubscription"));
 
-      if (!(sheets.occupied_sheets.length > 0))
+      if (!(sheets.occupied_sheets.length >= 0))
         return throwError(returnMessage("payment", "canNotCancel"));
 
       const updated_sheet = await SheetManagement.findByIdAndUpdate(
@@ -953,6 +962,238 @@ class PaymentService {
         `Error while getting the plan details from the razorpay: ${error}`
       );
       return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  referralPay = async (user, payload) => {
+    try {
+      const { total_referral_point, agency_id } = payload;
+
+      if (!total_referral_point) {
+        return returnMessage("referral", "insufficientReferralPoints");
+      }
+      const referral_data = await Configuration.findOne().lean();
+      if (total_referral_point >= referral_data.referral.reedem_requred_point) {
+        const update_referral = await Authentication.findOneAndUpdate(
+          { reference_id: agency_id },
+          {
+            $inc: {
+              total_referral_point:
+                -referral_data?.referral?.reedem_requred_point,
+            },
+          },
+          { new: true }
+        );
+        if (update_referral) {
+          const status_change = await this.referralStatusChange(payload);
+          if (!status_change.success) return { success: false };
+          return { success: true, message: status_change?.message };
+        } else {
+          return { success: false };
+        }
+        return update_referral;
+      } else {
+        return throwError(
+          returnMessage("referral", "insufficientReferralPoints")
+        );
+      }
+    } catch (error) {
+      logger.error(`Error while verifying referral: ${error}`);
+      return throwError(
+        error?.message || error?.error?.description,
+        error?.statusCode
+      );
+    }
+  };
+
+  referralStatusChange = async (payload) => {
+    try {
+      const {
+        agency_id,
+        user_id,
+        amount,
+        subscription_id,
+        razorpay_order_id,
+        total_referral_point,
+        currency,
+      } = payload;
+      if (payload?.agency_id && !payload?.user_id) {
+        await Authentication.findOneAndUpdate(
+          { reference_id: agency_id },
+          {
+            status: "confirmed",
+            subscribe_date: moment().format("YYYY-MM-DD").toString(),
+          }
+        );
+        await PaymentHistory.create({
+          agency_id,
+          amount: total_referral_point,
+          payment_mode: "referral",
+        });
+
+        await SheetManagement.findOneAndUpdate(
+          { agency_id },
+          {
+            agency_id,
+            total_sheets: 1,
+            occupied_sheets: [],
+          },
+          { upsert: true }
+        );
+        return {
+          success: true,
+          message: returnMessage("payment", "paymentCompleted"),
+        };
+      } else if (payload?.agency_id && payload?.user_id) {
+        const [agency_details, user_details, sheets] = await Promise.all([
+          Authentication.findOne({
+            reference_id: agency_id,
+          }).lean(),
+          Authentication.findOne({
+            reference_id: payload?.user_id,
+          })
+            .populate("role", "name")
+            .lean(),
+          SheetManagement.findOne({ agency_id }).lean(),
+        ]);
+        // const agency_details = await Authentication.findOne({
+        //   reference_id: agency_id,
+        // }).lean();
+        // const user_details = await Authentication.findOne({
+        //   reference_id: payload?.user_id,
+        // })
+        //   .populate("role", "name")
+        //   .lean();
+        // const sheets = await SheetManagement.findOne({ agency_id }).lean();
+        if (!sheets) return { success: false };
+
+        if (user_details?.role?.name === "client") {
+          let link = `${
+            process.env.REACT_APP_URL
+          }/client/verify?name=${encodeURIComponent(
+            agency_details?.first_name + " " + agency_details?.last_name
+          )}&email=${encodeURIComponent(
+            user_details?.email
+          )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
+
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_mail = invitationEmail(
+            link,
+            user_details?.first_name + " " + user_details?.last_name,
+            invitation_text
+          );
+
+          await sendEmail({
+            email: user_details?.email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_mail,
+          });
+          await Client.updateOne(
+            { _id: user_id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "pending" } },
+            { new: true }
+          );
+        } else if (user_details?.role?.name === "team_agency") {
+          const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+            agency_details?.first_name + " " + agency_details?.last_name
+          }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
+            user_details?.email
+          )}&token=${user_details?.invitation_token}&redirect=false`;
+
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_template = invitationEmail(
+            link,
+            user_details?.first_name + " " + user_details?.last_name,
+            invitation_text
+          );
+
+          await Authentication.findByIdAndUpdate(
+            user_details?._id,
+            { status: "confirm_pending" },
+            { new: true }
+          );
+
+          await sendEmail({
+            email: user_details?.email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_template,
+          });
+        } else if (user_details?.role?.name === "team_client") {
+          const team_client_detail = await Team_Client.findById(
+            user_details.reference_id
+          ).lean();
+
+          const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+            agency_details?.first_name + " " + agency_details?.last_name
+          }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
+            user_details?.email
+          )}&clientId=${team_client_detail.client_id}`;
+          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+
+          const invitation_template = invitationEmail(
+            link,
+            user_details?.first_name + " " + user_details?.last_name,
+            invitation_text
+          );
+
+          await sendEmail({
+            email: user_details?.email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_template,
+          });
+
+          await Team_Client.updateOne(
+            { _id: user_id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "pending" } },
+            { new: true }
+          );
+        }
+
+        await PaymentHistory.create({
+          agency_id,
+          user_id: user_details?.reference_id,
+          amount: total_referral_point,
+          role: user_details?.role?.name,
+          payment_mode: "referral",
+        });
+
+        const occupied_sheets = [
+          ...sheets.occupied_sheets,
+          {
+            user_id,
+            role: user_details?.role?.name,
+          },
+        ];
+
+        const sheet_obj = {
+          total_sheets: sheets?.total_sheets + 1,
+          occupied_sheets,
+        };
+        await SheetManagement.findByIdAndUpdate(sheets._id, sheet_obj);
+        // await Team_Client.updateOne(
+        //   { _id: user_id, "agency_ids.agency_id": agency_id },
+        //   { $set: { "agency_ids.$.status": "confirmed" } },
+        //   { new: true }
+        // );
+        await this.updateSubscription(agency_id, sheet_obj.total_sheets);
+
+        let message;
+        if (user_details?.role?.name === "client") {
+          message = returnMessage("agency", "clientCreated");
+        } else if (user_details?.role?.name === "team_agency") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        } else if (user_details?.role?.name === "team_client") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        }
+
+        return { success: true, message };
+      }
+      return { success: false };
+    } catch (error) {
+      console.log(JSON.stringify(error));
+
+      logger.error(`Error while changing status after the payment: ${error}`);
+      return false;
     }
   };
 }

@@ -271,11 +271,15 @@ class ClientService {
           { $set: { "agency_ids.$.status": "active" } },
           { new: true }
         );
+
+        const referral_code = await this.referralCodeGenerator();
+
         await Authentication.findByIdAndUpdate(
           client_auth?._id,
           {
             status: "confirmed",
             password: hash_password,
+            referral_code: referral_code,
           },
           { new: true }
         );
@@ -300,7 +304,7 @@ class ClientService {
   // delete the client from the particuar agency
   deleteClient = async (payload, agency) => {
     try {
-      let { client_ids, force_fully_remove } = payload;
+      let { client_ids } = payload;
       if (agency?.role?.name === "team_agency") {
         const team_agency_detail = await Team_Agency.findById(
           agency?.reference_id
@@ -318,23 +322,26 @@ class ClientService {
       });
 
       // check for the clients are assined to any activity that are in pending state
-      if (!force_fully_remove) {
-        const activity_status = await Activity_Status.findOne({
-          name: "pending",
-        })
-          .select("_id")
-          .lean();
 
-        const activity_assigned = await Activity.find({
-          agency_id: agency?.reference_id,
-          client_id: { $in: clientIds },
-          activity_status: activity_status?._id,
-        }).lean();
+      const activity_status = await Activity_Status.findOne({
+        name: "pending",
+      })
+        .select("_id")
+        .lean();
 
-        if (activity_assigned.length > 0) return { force_fully_remove: true };
-      }
+      const activity_assigned = await Activity.findOne({
+        agency_id: agency?.reference_id,
+        client_id: { $in: clientIds },
+        activity_status: activity_status?._id,
+      }).lean();
 
-      if (force_fully_remove) {
+      if (activity_assigned && !payload?.force_fully_remove)
+        return { force_fully_remove: true };
+
+      if (
+        (activity_assigned && payload?.force_fully_remove) ||
+        !activity_assigned
+      ) {
         await Client.updateMany(
           {
             _id: { $in: clientIds },
@@ -385,8 +392,11 @@ class ClientService {
         }
       }
 
-      if (!payload?.pagination)
+      if (!payload?.pagination && !payload?.for_activity)
         return await this.clientListWithoutPagination(agency);
+
+      if (!payload?.pagination && payload?.for_activity)
+        return await this.clientListWithoutPaginationForActivity(agency);
 
       if (
         payload.sort_field &&
@@ -704,6 +714,96 @@ class ClientService {
     } catch (error) {
       logger.error(`Error while registering the agency: ${error}`);
       return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // Get the client ist for the Agency without pagination
+  //  and this will used for the activity only to add client team member
+  clientListWithoutPaginationForActivity = async (agency) => {
+    try {
+      let clients;
+      let team_client;
+      if (agency?.role?.name === "team_agency") {
+        const agency_detail = await Team_Agency.findById(agency.reference_id);
+        clients = await Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: {
+              agency_id: agency_detail?.agency_id,
+              status: "active",
+            },
+          },
+        }).lean();
+        team_client = await Team_Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: {
+              agency_id: agency_detail?.agency_id,
+              status: "confirmed",
+            },
+          },
+        }).lean();
+        clients = [...clients, ...team_client];
+      } else {
+        clients = await Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: { agency_id: agency?.reference_id, status: "active" },
+          },
+        }).lean();
+        team_client = await Team_Client.distinct("_id", {
+          agency_ids: {
+            $elemMatch: {
+              agency_id: agency?.reference_id,
+              status: "confirmed",
+            },
+          },
+        }).lean();
+        clients = [...clients, ...team_client];
+      }
+      const aggrage_array = [
+        { $match: { reference_id: { $in: clients }, is_deleted: false } },
+        {
+          $project: {
+            first_name: 1,
+            last_name: 1,
+            email: 1,
+            name: { $concat: ["$first_name", " ", "$last_name"] },
+            createdAt: 1,
+            reference_id: 1,
+            contact_number: 1,
+          },
+        },
+      ];
+
+      return await Authentication.aggregate(aggrage_array);
+    } catch (error) {
+      logger.error(
+        `Error While fetching list of client for the agency: ${error}`
+      );
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+  referralCodeGenerator = async () => {
+    try {
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      let referral_code = "";
+
+      // Generate the initial code
+      for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        referral_code += characters.charAt(randomIndex);
+      }
+
+      const referral_code_exist = await Authentication.findOne({
+        referral_code,
+      })
+        .select("referral_code")
+        .lean();
+      if (referral_code_exist) return this.referralCodeGenerator();
+
+      return referral_code;
+    } catch (error) {
+      logger.error("Error while generating the referral code", error);
+      return false;
     }
   };
 }

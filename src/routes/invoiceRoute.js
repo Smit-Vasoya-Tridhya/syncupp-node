@@ -42,7 +42,7 @@ invoiceRoute.post(
   invoiceController.sendInvoice
 );
 invoiceRoute.post(
-  "/download-invoice",
+  "/download-invoice/:invoice_id",
   authorizeRole("agency"),
   invoiceController.downloadPdf
 );

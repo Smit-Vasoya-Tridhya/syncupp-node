@@ -41,6 +41,30 @@ exports.changePassword = catchAsyncError(async (req, res, next) => {
   );
 });
 
+// Get Profile
+exports.getProfile = catchAsyncError(async (req, res, next) => {
+  const user = await affiliateService.getProfile(req?.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("affiliate", "getProfile"),
+    user,
+    statusCode.success
+  );
+});
+
+// Update Profile
+exports.updateProfile = catchAsyncError(async (req, res, next) => {
+  await affiliateService.updateProfile(req?.body, req?.user);
+  sendResponse(
+    res,
+    true,
+    returnMessage("affiliate", "userUpdated"),
+    null,
+    statusCode.success
+  );
+});
+
 // Affiliate Forgot Password
 exports.forgotPassword = catchAsyncError(async (req, res, next) => {
   await affiliateService.forgotPassword(req.body);

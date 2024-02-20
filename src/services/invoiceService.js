@@ -37,6 +37,7 @@ class InvoiceService {
                   first_name: 1,
                   last_name: 1,
                   name: 1,
+                  contact_number: 1,
                   client_full_name: {
                     $concat: ["$first_name", " ", "$last_name"],
                   },
@@ -48,25 +49,110 @@ class InvoiceService {
         {
           $unwind: { path: "$clientInfo", preserveNullAndEmptyArrays: true },
         },
+
         {
           $lookup: {
             from: "clients",
-            localField: "_id",
-            foreignField: "_id",
-            as: "clientDetails",
+            localField: "client_id",
+            foreignField: "reference_id",
+            as: "clientData",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  company_name: 1,
+                  address: 1,
+                  industry: 1,
+                  no_of_people: 1,
+                  pincode: 1,
+                  city: 1,
+                  country: 1,
+                  state: 1,
+                },
+              },
+            ],
           },
         },
+
         {
-          $unwind: { path: "$clientDetails", preserveNullAndEmptyArrays: true },
+          $unwind: { path: "$clientData", preserveNullAndEmptyArrays: true },
         },
         {
+          $lookup: {
+            from: "state_masters",
+            localField: "clientData.state",
+            foreignField: "_id",
+            as: "clientState",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  _id: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: { path: "$clientState", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "city_masters",
+            localField: "clientData.city",
+            foreignField: "_id",
+            as: "clientCity",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  _id: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: { path: "$clientCity", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "country_masters",
+            localField: "clientData.country",
+            foreignField: "_id",
+            as: "clientCountry",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  _id: 1,
+                },
+              },
+            ],
+          },
+        },
+
+        {
+          $unwind: { path: "$clientCountry", preserveNullAndEmptyArrays: true },
+        },
+
+        {
           $project: {
-            _id: "$clientDetails._id",
-            company_name: "$clientDetails.company_name",
-            name: "$clientInfo.name",
+            _id: "$clientData._id",
+            company_name: "$clientData.company_name",
             first_name: "$clientInfo.first_name",
             last_name: "$clientInfo.last_name",
             client_full_name: "$clientInfo.client_full_name",
+            contact_number: "$clientInfo.contact_number",
+            address: "$clientData.address",
+            industry: "$clientData.industry",
+            no_of_people: "$clientData.no_of_people",
+            pincode: "$clientData.pincode",
+            city: "$clientCity",
+            state: "$clientState",
+            country: "$clientCountry",
           },
         },
       ];
@@ -856,7 +942,9 @@ class InvoiceService {
 
   downloadPdf = async (payload, res) => {
     try {
+      console.log(payload);
       const { invoice_id } = payload;
+      console.log(invoice_id);
       const invoice = await this.getInvoice(invoice_id);
       const renderedHtml = invoiceTemplate(invoice[0]);
 
@@ -870,6 +958,9 @@ class InvoiceService {
           }
         });
       });
+
+      // res.set({ "Content-Type": "application/pdf" });
+      // res.send(pdfBuffer);
       return pdfBuffer;
     } catch (error) {
       logger.error(`Error while generating PDF, ${error}`);

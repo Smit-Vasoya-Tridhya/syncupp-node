@@ -503,6 +503,139 @@ class AuthService {
       return throwError(error?.message, error?.statusCode);
     }
   };
+
+  referralCodeGenerator = async () => {
+    try {
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      let referral_code = "";
+
+      // Generate the initial code
+      for (let i = 0; i < 8; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        referral_code += characters.charAt(randomIndex);
+      }
+
+      const referral_code_exist = await Authentication.findOne({
+        referral_code,
+      })
+        .select("referral_code")
+        .lean();
+      if (referral_code_exist) return this.referralCodeGenerator();
+
+      return referral_code;
+    } catch (error) {
+      logger.error("Error while generating the referral code", error);
+      return false;
+    }
+  };
+
+  referralSignUp = async ({ referral_code, referred_to }) => {
+    try {
+      const referral_code_exist = await Authentication.findOne({
+        referral_code,
+      })
+        .select("referral_code")
+        .lean();
+
+      if (!referral_code_exist)
+        return throwError(returnMessage("auth", "referralCodeNotFound"));
+
+      await ReferralHistory.deleteMany({
+        referral_code,
+        registered: false,
+        referred_by: referral_code_exist._id,
+        email: referred_to?.email,
+      });
+
+      await ReferralHistory.create({
+        referral_code,
+        referred_by: referral_code_exist?._id,
+        referred_to: referred_to?._id,
+        email: referred_to?.email,
+        registered: true,
+      });
+
+      const referral_data = await Configuration.findOne().lean();
+
+      await Authentication.findOneAndUpdate(
+        { referral_code: referral_code },
+        {
+          $inc: {
+            total_referral_point:
+              referral_data?.referral?.successful_referral_point,
+          },
+        },
+        { new: true }
+      );
+      return;
+    } catch (error) {
+      logger.error("Error while referral SignUp", error);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  affiliateReferralSignUp = async ({
+    referral_code,
+    referred_to,
+    email,
+    first_name,
+    last_name,
+  }) => {
+    try {
+      const referral_code_exist = await Affiliate.findOne({
+        referral_code,
+        email,
+      }).lean();
+
+      if (!referral_code_exist)
+        return throwError(returnMessage("auth", "referralCodeNotFound"));
+
+      await Affiliate_Referral.create({
+        referral_code,
+        referred_by: referral_code_exist._id,
+        referred_to: referred_to,
+      });
+
+      return;
+    } catch (error) {
+      logger.error("Error while referral SignUp", error);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  sendReferaal = async (user, payload) => {
+    try {
+      const { email } = payload;
+      if (!validateEmail(email)) return returnMessage("invalidEmail");
+      const email_exist = await Authentication.findOne({ email }).lean();
+      if (email_exist) return returnMessage("emailExist");
+      const link = `${process.env.REACT_APP_URL}/signup?referral=${user?.referral_code}`;
+
+      const refferralEmail = invitationEmailTemplate({
+        link: link,
+        user: `${user?.first_name}+ " "+ ${user?.last_name} `,
+      });
+
+      await sendEmail({
+        email: email,
+        subject: returnMessage("auth", "invitationEmailSubject"),
+        message: refferralEmail,
+      });
+
+      await ReferralHistory.create({
+        referral_code: user?.referral_code,
+        referred_by: user?._id,
+        email,
+        registered: false,
+      });
+
+      return;
+    } catch (error) {
+      logger.error(`Error while sending email: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
 }
 
 module.exports = AuthService;
