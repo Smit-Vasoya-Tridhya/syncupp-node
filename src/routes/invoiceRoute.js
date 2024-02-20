@@ -41,7 +41,7 @@ invoiceRoute.post(
   authorizeRole("agency"),
   invoiceController.sendInvoice
 );
-invoiceRoute.post(
+invoiceRoute.get(
   "/download-invoice/:invoice_id",
   authorizeRole("agency"),
   invoiceController.downloadPdf
