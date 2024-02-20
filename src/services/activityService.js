@@ -3286,7 +3286,7 @@ class ActivityService {
       }
 
       let status;
-      if (mark_as_done === true) {
+      if (payload?.mark_as_done === true) {
         status = await ActivityStatus.findOne({ name: "completed" }).lean();
       } else {
         status = await ActivityStatus.findOne({ name: "pending" }).lean();
@@ -3324,7 +3324,7 @@ class ActivityService {
 
       if (payload?.given_date) {
         match_obj["$match"]["due_date"] = {
-          $eq: moment.utc(payload?.given_date, "YYYY-MM-DD").startOf("day"),
+          $eq: moment.utc(payload?.given_date, "DD-MM-YYYY").startOf("day"),
         };
       }
 
@@ -3379,6 +3379,11 @@ class ActivityService {
             ...filter["$match"],
             due_date: { $eq: moment.utc().startOf("day") },
           };
+        } else if (payload?.filter?.date === "tommorrow") {
+          filter["$match"] = {
+            ...filter["$match"],
+            due_date: { $eq: moment.utc().add(1, "day").startOf("day") },
+          };
         } else if (payload?.filter?.date === "this_week") {
           filter["$match"] = {
             ...filter["$match"],
@@ -3394,16 +3399,20 @@ class ActivityService {
         } else if (payload?.filter?.date === "period") {
           // need the start and end date to fetch the data between 2 dates
 
-          if (!(payload?.filter?.start_date && payload?.filter?.end_date))
+          if (
+            !(payload?.filter?.start_date && payload?.filter?.end_date) &&
+            payload?.filter?.start_date !== "" &&
+            payload?.filter?.end_date !== ""
+          )
             return throwError(
               returnMessage("activity", "startEnddateRequired")
             );
 
           const start_date = moment
-            .utc(payload?.filter?.start_date, "YYYY-MM-DD")
+            .utc(payload?.filter?.start_date, "DD-MM-YYYY")
             .startOf("day");
           const end_date = moment
-            .utc(payload?.filter?.end_date, "YYYY-MM-DD")
+            .utc(payload?.filter?.end_date, "DD-MM-YYYY")
             .endOf("day");
 
           if (end_date.isBefore(start_date))
@@ -3463,6 +3472,89 @@ class ActivityService {
         match_obj["$match"] = {
           client_id: user?.reference_id,
           agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
+        };
+      }
+
+      if (payload?.search && payload?.search !== "") {
+        match_obj["$match"] = {
+          ...match_obj["$match"],
+          $or: [
+            {
+              title: {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              status: { $regex: payload?.search.toLowerCase(), $options: "i" },
+            },
+            {
+              "assign_by.first_name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.last_name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_by.name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_to.first_name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_to.last_name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "assign_to.name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_id.first_name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_id.last_name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "client_id.name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "activity_status.name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+            {
+              "activity_type.name": {
+                $regex: payload?.search.toLowerCase(),
+                $options: "i",
+              },
+            },
+          ],
         };
       }
 
