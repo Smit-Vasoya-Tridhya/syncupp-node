@@ -3028,6 +3028,8 @@ class ActivityService {
             due_date: 1,
             createdAt: 1,
             agenda: 1,
+            client_id: 1,
+            assign_to: 1,
             assigned_by_first_name: "$assign_by.first_name",
             assigned_by_last_name: "$assign_by.last_name",
             assigned_to_first_name: "$team_Data.first_name",
@@ -3069,7 +3071,12 @@ class ActivityService {
           returnMessage("auth", "unAuthorized"),
           statusCode.forbidden
         );
-
+      const status_check = await Activity.findById(id).populate(
+        "activity_status"
+      );
+      if (status_check?.activity_status?.name === "completed") {
+        return throwError(returnMessage("activity", "ActivityCannotUpdate"));
+      }
       validateRequestFields(payload, [
         "title",
         "agenda",
@@ -3106,11 +3113,11 @@ class ActivityService {
       if (activity_type === "others" && !payload?.recurring_end_date)
         return throwError(returnMessage("activity", "recurringDateRequired"));
 
-      if (activity_type === "others" && payload?.recurring_end_date) {
-        recurring_date = moment.utc(payload?.recurring_end_date).endOf("day");
-        if (!recurring_date.isSameOrAfter(start_date))
-          return throwError(returnMessage("activity", "invalidRecurringDate"));
-      }
+      // if (activity_type === "others" && payload?.recurring_end_date) {
+      //   recurring_date = moment.utc(payload?.recurring_end_date).endOf("day");
+      //   if (!recurring_date.isSameOrAfter(start_date))
+      //     return throwError(returnMessage("activity", "invalidRecurringDate"));
+      // }
 
       const [activity_type_id, activity_status_type] = await Promise.all([
         ActivityType.findOne({

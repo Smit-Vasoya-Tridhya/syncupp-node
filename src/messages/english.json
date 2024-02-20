@@ -177,7 +177,7 @@
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
     "deleteTask": "Task deleted successfully.",
-    "CannotUpdate": "Task can not be updated.",
+    "CannotUpdate": "Task cannot be updated.",
     "activityTypeNotFound": "This type of actvity not found.",
     "invalidTime": "End time should be greater than start time.",
     "meetingScheduledForClient": "Meeting is already set for this client.",
@@ -192,7 +192,8 @@
     "startEnddateRequired": "start and end dates are required for the filter.",
     "invalidDate": "End date should be greater than start date.",
     "createSubject": "New Task Created",
-    "UpdateSubject": "Updated Task"
+    "UpdateSubject": "Updated Task",
+    "ActivityCannotUpdate": "Activity cannot be Update"
   },
 
   "payment": {
