@@ -302,7 +302,7 @@ class TeamMemberService {
         const agency_id_exist = team_client?.agency_ids.filter(
           (agency) =>
             agency?.agency_id.toString() === agency_id &&
-            agency?.status === "confirmed"
+            agency?.status === "pending"
         );
 
         if (agency_id_exist.length === 0)

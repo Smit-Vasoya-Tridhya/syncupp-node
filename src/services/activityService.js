@@ -3059,7 +3059,9 @@ class ActivityService {
   // this function is used to update the call type activity or other
   updateActivity = async (activity_id, payload, user) => {
     try {
-      const activity_exist = await Activity.findById(activity_id).lean();
+      const activity_exist = await Activity.findById(activity_id)
+        .populate("activity_status")
+        .lean();
       if (!activity_exist)
         return throwError(
           returnMessage("activity", "activityNotFound"),
@@ -3071,17 +3073,19 @@ class ActivityService {
           returnMessage("auth", "unAuthorized"),
           statusCode.forbidden
         );
-      const status_check = await Activity.findById(id).populate(
-        "activity_status"
-      );
-      if (status_check?.activity_status?.name === "completed") {
+
+      if (
+        activity_exist?.activity_status?.name === "completed" ||
+        activity_exist?.activity_status?.name === "cancel"
+      ) {
         return throwError(returnMessage("activity", "ActivityCannotUpdate"));
       }
       validateRequestFields(payload, [
         "title",
         "agenda",
         "client_id",
-        "due_time",
+        "meeting_start_time",
+        "meeting_end_time",
         "due_date",
         "assign_to",
         "activity_type",
@@ -3101,23 +3105,23 @@ class ActivityService {
 
       let recurring_date;
       const current_date = moment.utc().startOf("day");
-      const start_date = moment.utc(due_date).startOf("day");
+      const start_date = moment.utc(due_date, "DD-MM-YYYY").startOf("day");
       const start_time = moment(meeting_start_time, "HH:mm a");
       const end_time = moment(meeting_end_time, "HH:mm a");
       if (!start_date.isSameOrAfter(current_date))
         return throwError(returnMessage("activity", "dateinvalid"));
 
-      if (!end_time.isAfter(start_time))
+      if (!end_time.isSameOrAfter(start_time))
         return throwError(returnMessage("activity", "invalidTime"));
 
-      if (activity_type === "others" && !payload?.recurring_end_date)
-        return throwError(returnMessage("activity", "recurringDateRequired"));
+      // if (activity_type === "others" && !payload?.recurring_end_date)
+      //   return throwError(returnMessage("activity", "recurringDateRequired"));
 
-      // if (activity_type === "others" && payload?.recurring_end_date) {
-      //   recurring_date = moment.utc(payload?.recurring_end_date).endOf("day");
-      //   if (!recurring_date.isSameOrAfter(start_date))
-      //     return throwError(returnMessage("activity", "invalidRecurringDate"));
-      // }
+      if (activity_type === "others" && payload?.recurring_end_date) {
+        recurring_date = moment.utc(payload?.recurring_end_date).endOf("day");
+        if (!recurring_date.isSameOrAfter(start_date))
+          return throwError(returnMessage("activity", "invalidRecurringDate"));
+      }
 
       const [activity_type_id, activity_status_type] = await Promise.all([
         ActivityType.findOne({
@@ -3181,7 +3185,7 @@ class ActivityService {
       // activity or not if yes then throw an error but it should be in the same agency id not in the other
 
       let meeting_exist;
-      if (user?.role?.name === "agency" && !mark_as_done) {
+      if (user?.role?.name === "agency" && !payload?.mark_as_done) {
         meeting_exist = await Activity.findOne({
           client_id,
           agency_id: user?.reference_id,
@@ -3192,7 +3196,7 @@ class ActivityService {
           .where("_id")
           .ne(activity_id)
           .lean();
-      } else if (user?.role?.name === "team_agency" && !mark_as_done) {
+      } else if (user?.role?.name === "team_agency" && !payload?.mark_as_done) {
         meeting_exist = await Activity.findOne({
           client_id,
           agency_id: user?.agency_id,
@@ -3211,7 +3215,7 @@ class ActivityService {
 
       // if the user role is agency then we need to check weather team member is assined to other call or not
 
-      if (user?.role?.name === "agency" && !mark_as_done) {
+      if (user?.role?.name === "agency" && !payload?.mark_as_done) {
         const meeting_exist = await Activity.findOne({
           assign_to,
           agency_id: user?.reference_id,
@@ -3227,7 +3231,7 @@ class ActivityService {
           return throwError(
             returnMessage("activity", "meetingScheduledForTeam")
           );
-      } else if (user?.role?.name === "team_agency" && !mark_as_done) {
+      } else if (user?.role?.name === "team_agency" && !payload?.mark_as_done) {
         const meeting_exist = await Activity.findOne({
           assign_to,
           agency_id: user?.agency_id,
@@ -3407,7 +3411,7 @@ class ActivityService {
         };
         if (payload?.client_id) {
           match_obj["$match"] = {
-            client_id: payload?.client_id,
+            client_id: new mongoose.Types.ObjectId(payload?.client_id),
           };
         }
       } else if (user?.role?.name === "team_agency") {
@@ -3417,12 +3421,12 @@ class ActivityService {
       } else if (user?.role?.name === "client") {
         match_obj["$match"] = {
           client_id: user?.reference_id,
-          agency_id: payload?.agency_id,
+          agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
         };
       } else if (user?.role?.name === "team_client") {
         match_obj["$match"] = {
           client_id: user?.reference_id,
-          agency_id: payload?.agency_id,
+          agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
         };
       }
 
@@ -3501,9 +3505,7 @@ class ActivityService {
             pipeline: [{ $project: { name: 1 } }],
           },
         },
-        {
-          $unwind: "$activity_status",
-        },
+        { $unwind: "$activity_status" },
         {
           $lookup: {
             from: "activity_type_masters",
@@ -3513,9 +3515,7 @@ class ActivityService {
             pipeline: [{ $project: { name: 1 } }],
           },
         },
-        {
-          $unwind: "$activity_type",
-        },
+        { $unwind: "$activity_type" },
       ];
 
       const [activity, total_activity] = await Promise.all([

@@ -191,9 +191,9 @@
     "activityListFetched": "Activities list fetch successfully.",
     "startEnddateRequired": "start and end dates are required for the filter.",
     "invalidDate": "End date should be greater than start date.",
-    "createSubject": "New Task Created",
-    "UpdateSubject": "Updated Task",
-    "ActivityCannotUpdate": "Activity cannot be Update"
+    "createSubject": "New task created.",
+    "UpdateSubject": "Updated Task.",
+    "ActivityCannotUpdate": "Activity cannot be updated."
   },
 
   "payment": {
