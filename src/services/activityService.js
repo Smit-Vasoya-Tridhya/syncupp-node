@@ -145,7 +145,13 @@ class ActivityService {
   taskList = async (searchObj, user) => {
     if (!searchObj.pagination) {
       try {
-        const queryObj = { is_deleted: false, agency_id: user.reference_id };
+        const queryObj = {
+          is_deleted: false,
+          agency_id: user.reference_id,
+          activity_type: new mongoose.Types.ObjectId(
+            "65b0cd6188299cb811ea06a1"
+          ),
+        };
         const pagination = paginationObject(searchObj);
 
         if (searchObj.search && searchObj.search !== "") {
@@ -348,7 +354,13 @@ class ActivityService {
       }
     } else {
       try {
-        const queryObj = { is_deleted: false, agency_id: user.reference_id };
+        const queryObj = {
+          is_deleted: false,
+          agency_id: user.reference_id,
+          activity_type: new mongoose.Types.ObjectId(
+            "65b0cd6188299cb811ea06a1"
+          ),
+        };
         const pagination = paginationObject(searchObj);
 
         if (searchObj.search && searchObj.search !== "") {
@@ -564,6 +576,9 @@ class ActivityService {
         const queryObj = {
           is_deleted: false,
           client_id: user.reference_id,
+          activity_type: new mongoose.Types.ObjectId(
+            "65b0cd6188299cb811ea06a1"
+          ),
         };
         const pagination = paginationObject(searchObj);
         if (searchObj.search && searchObj.search !== "") {
@@ -779,6 +794,9 @@ class ActivityService {
         const queryObj = {
           is_deleted: false,
           client_id: user.reference_id,
+          activity_type: new mongoose.Types.ObjectId(
+            "65b0cd6188299cb811ea06a1"
+          ),
         };
         const pagination = paginationObject(searchObj);
         if (searchObj.search && searchObj.search !== "") {
@@ -1000,7 +1018,10 @@ class ActivityService {
       try {
         const queryObj = {
           is_deleted: false,
-          assign_to: user.reference_id,
+          client_id: user.reference_id,
+          activity_type: new mongoose.Types.ObjectId(
+            "65b0cd6188299cb811ea06a1"
+          ),
         };
         const pagination = paginationObject(searchObj);
         if (searchObj.search && searchObj.search !== "") {
@@ -1043,13 +1064,13 @@ class ActivityService {
               },
             },
             {
-              "assign_by.last_name": {
+              "team_by.last_name": {
                 $regex: searchObj.search.toLowerCase(),
                 $options: "i",
               },
             },
             {
-              "assign_by.assigned_by_name": {
+              "team_by.assigned_by_name": {
                 $regex: searchObj.search.toLowerCase(),
                 $options: "i",
               },
@@ -1136,7 +1157,7 @@ class ActivityService {
               from: "authentications",
               localField: "assign_by",
               foreignField: "reference_id",
-              as: "assign_by",
+              as: "team_by",
               pipeline: [
                 {
                   $project: {
@@ -1152,7 +1173,7 @@ class ActivityService {
             },
           },
           {
-            $unwind: "$assign_by",
+            $unwind: "$team_by",
           },
           {
             $lookup: {
@@ -1178,14 +1199,14 @@ class ActivityService {
               client_name: "$client_Data.name",
 
               agenda: 1,
-              assigned_by_first_name: "$assign_by.first_name",
-              assigned_by_last_name: "$assign_by.last_name",
+              assigned_by_first_name: "$team_by.first_name",
+              assigned_by_last_name: "$team_by.last_name",
               assigned_to_first_name: "$team_Data.first_name",
               assigned_to_last_name: "$team_Data.last_name",
               assigned_to_name: "$team_Data.assigned_to_name",
-              assigned_by_name: "$assign_by.assigned_by_name",
+              assigned_by_name: "$team_by.assigned_by_name",
               client_name: "$client_Data.client_name",
-
+              assign_by: 1,
               column_id: "$status.name",
             },
           },
@@ -1215,7 +1236,10 @@ class ActivityService {
       try {
         const queryObj = {
           is_deleted: false,
-          assign_to: user.reference_id,
+          client_id: user.reference_id,
+          activity_type: new mongoose.Types.ObjectId(
+            "65b0cd6188299cb811ea06a1"
+          ),
         };
         const pagination = paginationObject(searchObj);
         if (searchObj.search && searchObj.search !== "") {
@@ -1246,7 +1270,7 @@ class ActivityService {
               },
             },
             {
-              "assign_by.first_name": {
+              "team_by.first_name": {
                 $regex: searchObj.search.toLowerCase(),
                 $options: "i",
               },
@@ -1264,13 +1288,13 @@ class ActivityService {
               },
             },
             {
-              "assign_by.last_name": {
+              "team_by.last_name": {
                 $regex: searchObj.search.toLowerCase(),
                 $options: "i",
               },
             },
             {
-              "assign_by.assigned_by_name": {
+              "team_by.assigned_by_name": {
                 $regex: searchObj.search.toLowerCase(),
                 $options: "i",
               },
@@ -1357,7 +1381,7 @@ class ActivityService {
               from: "authentications",
               localField: "assign_by",
               foreignField: "reference_id",
-              as: "assign_by",
+              as: "team_by",
               pipeline: [
                 {
                   $project: {
@@ -1373,7 +1397,7 @@ class ActivityService {
             },
           },
           {
-            $unwind: "$assign_by",
+            $unwind: "$team_by",
           },
           {
             $lookup: {
@@ -1397,14 +1421,14 @@ class ActivityService {
               due_date: 1,
               createdAt: 1,
               agenda: 1,
-              assigned_by_first_name: "$assign_by.first_name",
-              assigned_by_last_name: "$assign_by.last_name",
+              assigned_by_first_name: "$team_by.first_name",
+              assigned_by_last_name: "$team_by.last_name",
               assigned_to_first_name: "$team_Data.first_name",
               assigned_to_last_name: "$team_Data.last_name",
               assigned_to_name: "$team_Data.assigned_to_name",
-              assigned_by_name: "$assign_by.assigned_by_name",
+              assigned_by_name: "$team_by.assigned_by_name",
               client_name: "$client_Data.client_name",
-
+              assign_by: 1,
               column_id: "$status.name",
             },
           },
@@ -1443,6 +1467,9 @@ class ActivityService {
           const queryObj = {
             is_deleted: false,
             assign_by: user.reference_id,
+            activity_type: new mongoose.Types.ObjectId(
+              "65b0cd6188299cb811ea06a1"
+            ),
           };
           const pagination = paginationObject(searchObj);
           if (searchObj.search && searchObj.search !== "") {
@@ -1497,7 +1524,7 @@ class ActivityService {
                 },
               },
               {
-                "assign_by.assigned_by_name": {
+                "team_by.assigned_by_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
@@ -1627,12 +1654,12 @@ class ActivityService {
                 client_name: "$client_Data.name",
 
                 agenda: 1,
-                assigned_by_first_name: "$assign_by.first_name",
-                assigned_by_last_name: "$assign_by.last_name",
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
                 assigned_to_first_name: "$team_Data.first_name",
                 assigned_to_last_name: "$team_Data.last_name",
                 assigned_to_name: "$team_Data.assigned_to_name",
-                assigned_by_name: "$assign_by.assigned_by_name",
+                assigned_by_name: "$team_by.assigned_by_name",
                 client_name: "$client_Data.client_name",
                 assign_by: 1,
 
@@ -1661,6 +1688,9 @@ class ActivityService {
           const queryObj = {
             is_deleted: false,
             assign_to: user.reference_id,
+            activity_type: new mongoose.Types.ObjectId(
+              "65b0cd6188299cb811ea06a1"
+            ),
           };
           const pagination = paginationObject(searchObj);
           if (searchObj.search && searchObj.search !== "") {
@@ -1691,7 +1721,7 @@ class ActivityService {
                 },
               },
               {
-                "assign_by.first_name": {
+                "team_by.first_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
@@ -1709,13 +1739,13 @@ class ActivityService {
                 },
               },
               {
-                "assign_by.last_name": {
+                "team_by.last_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
               },
               {
-                "assign_by.assigned_by_name": {
+                "team_by.assigned_by_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
@@ -1846,12 +1876,12 @@ class ActivityService {
                 agenda: 1,
 
                 assign_by: 1,
-                assigned_by_first_name: "$assign_by.first_name",
-                assigned_by_last_name: "$assign_by.last_name",
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
                 assigned_to_first_name: "$team_Data.first_name",
                 assigned_to_last_name: "$team_Data.last_name",
                 assigned_to_name: "$team_Data.assigned_to_name",
-                assigned_by_name: "$assign_by.assigned_by_name",
+                assigned_by_name: "$team_by.assigned_by_name",
                 client_name: "$client_Data.client_name",
 
                 column_id: "$status.name",
@@ -1894,6 +1924,9 @@ class ActivityService {
               { assign_to: user.reference_id },
             ],
             is_deleted: false,
+            activity_type: new mongoose.Types.ObjectId(
+              "65b0cd6188299cb811ea06a1"
+            ),
           };
           const pagination = paginationObject(searchObj);
           if (searchObj.search && searchObj.search !== "") {
@@ -1948,7 +1981,7 @@ class ActivityService {
                 },
               },
               {
-                "assign_by.assigned_by_name": {
+                "team_by.assigned_by_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
@@ -2077,12 +2110,12 @@ class ActivityService {
                 createdAt: 1,
                 client_name: "$client_Data.name",
                 agenda: 1,
-                assigned_by_first_name: "$assign_by.first_name",
-                assigned_by_last_name: "$assign_by.last_name",
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
                 assigned_to_first_name: "$team_Data.first_name",
                 assigned_to_last_name: "$team_Data.last_name",
                 assigned_to_name: "$team_Data.assigned_to_name",
-                assigned_by_name: "$assign_by.assigned_by_name",
+                assigned_by_name: "$team_by.assigned_by_name",
                 client_name: "$client_Data.client_name",
                 assign_by: 1,
                 column_id: "$status.name",
@@ -2109,6 +2142,9 @@ class ActivityService {
           const queryObj = {
             is_deleted: false,
             assign_to: user.reference_id,
+            activity_type: new mongoose.Types.ObjectId(
+              "65b0cd6188299cb811ea06a1"
+            ),
           };
           const pagination = paginationObject(searchObj);
           if (searchObj.search && searchObj.search !== "") {
@@ -2139,7 +2175,7 @@ class ActivityService {
                 },
               },
               {
-                "assign_by.first_name": {
+                "team_by.first_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
@@ -2157,13 +2193,13 @@ class ActivityService {
                 },
               },
               {
-                "assign_by.last_name": {
+                "team_by.last_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
               },
               {
-                "assign_by.assigned_by_name": {
+                "team_by.assigned_by_name": {
                   $regex: searchObj.search.toLowerCase(),
                   $options: "i",
                 },
@@ -2294,12 +2330,12 @@ class ActivityService {
                 agenda: 1,
 
                 assign_by: 1,
-                assigned_by_first_name: "$assign_by.first_name",
-                assigned_by_last_name: "$assign_by.last_name",
+                assigned_by_first_name: "$team_by.first_name",
+                assigned_by_last_name: "$team_by.last_name",
                 assigned_to_first_name: "$team_Data.first_name",
                 assigned_to_last_name: "$team_Data.last_name",
                 assigned_to_name: "$team_Data.assigned_to_name",
-                assigned_by_name: "$assign_by.assigned_by_name",
+                assigned_by_name: "$team_by.assigned_by_name",
                 client_name: "$client_Data.client_name",
 
                 column_id: "$status.name",
