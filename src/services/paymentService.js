@@ -286,7 +286,7 @@ class PaymentService {
         expected_signature_2 === razorpay_signature
       ) {
         const status_change = await this.statusChange(payload);
-        if (!status_change.success) return { success: false };
+        // if (!status_change.success) return { success: false };
         return { success: true, message: status_change?.message };
       }
 
@@ -428,15 +428,23 @@ class PaymentService {
           let link = `${
             process.env.REACT_APP_URL
           }/client/verify?name=${encodeURIComponent(
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(agency_details?.last_name)
           )}&email=${encodeURIComponent(
             user_details?.email
           )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_mail = invitationEmail(
             link,
-            user_details?.first_name + " " + user_details?.last_name,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
             invitation_text
           );
 
@@ -452,15 +460,23 @@ class PaymentService {
           );
         } else if (user_details?.role?.name === "team_agency") {
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}&token=${user_details?.invitation_token}&redirect=false`;
 
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_template = invitationEmail(
             link,
-            user_details?.first_name + " " + user_details?.last_name,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
             invitation_text
           );
 
@@ -481,11 +497,17 @@ class PaymentService {
           ).lean();
 
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}&clientId=${team_client_detail.client_id}`;
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
           const invitation_template = invitationEmail(
             link,
