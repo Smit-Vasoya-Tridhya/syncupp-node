@@ -741,7 +741,7 @@ class ActivityService {
             assigned_by_name: {
               $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
             },
-            assign_to_name: {
+            assigned_to_name: {
               $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
             },
           },
@@ -843,27 +843,34 @@ class ActivityService {
             client_name: "$client_Data.client_name",
             column_id: "$status.name",
             assign_email: "$team_Data.email",
+            due_date: 1,
+            due_time: 1,
+            title: 1,
           },
         },
       ];
 
       const getTask = await Activity.aggregate(pipeline);
-      let data = {
-        TaskTitle: "Deleted Task",
-        taskName: title,
-        status: getTask[0]?.status,
-        assign_by: getTask[0]?.assigned_by_name,
-        dueDate: moment(dueDateObject)?.format("DD/MM/YYYY"),
-        dueTime: timeOnly,
-        agginTo_email: getTask[0]?.assign_email,
-        assignName: getTask[0]?.assigned_to_name,
-      };
-      const taskMessage = taskTemplate(data);
-      await sendEmail({
-        email: getTask[0]?.assign_email,
-        subject: returnMessage("activity", "UpdateSubject"),
-        message: taskMessage,
+      getTask.forEach(async (task) => {
+        let data = {
+          TaskTitle: "Deleted Task",
+          taskName: task?.title,
+          status: task?.status,
+          assign_by: task?.assigned_by_name,
+          dueDate: moment(task?.due_date)?.format("DD/MM/YYYY"),
+          dueTime: task?.due_time,
+          agginTo_email: task?.assign_email,
+          assignName: task?.assigned_to_name,
+        };
+        const taskMessage = taskTemplate(data);
+        await sendEmail({
+          email: task?.assign_email,
+          subject: returnMessage("activity", "UpdateSubject"),
+          message: taskMessage,
+        });
+        return;
       });
+
       return;
     } catch (error) {
       logger.error(`Error while Deleting task, ${error}`);
@@ -1740,6 +1747,7 @@ class ActivityService {
       const pagination = paginationObject(payload);
       if (user?.role?.name === "agency") {
         match_obj["$match"] = {
+          is_deleted: false,
           $or: [
             { agency_id: user?.reference_id }, // this is removed because agency can also assign the activity
             { assign_to: user?.reference_id },
@@ -1747,20 +1755,26 @@ class ActivityService {
         };
         if (payload?.client_id) {
           match_obj["$match"] = {
+            is_deleted: false,
+
             client_id: new mongoose.Types.ObjectId(payload?.client_id),
           };
         }
       } else if (user?.role?.name === "team_agency") {
         match_obj["$match"] = {
+          is_deleted: false,
+
           assign_to: user?.reference_id,
         };
       } else if (user?.role?.name === "client") {
         match_obj["$match"] = {
+          is_deleted: false,
           client_id: user?.reference_id,
           agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
         };
       } else if (user?.role?.name === "team_client") {
         match_obj["$match"] = {
+          is_deleted: false,
           client_id: user?.reference_id,
           agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
         };
@@ -1937,13 +1951,21 @@ class ActivityService {
         { $unwind: "$activity_type" },
       ];
 
-      const [activity, total_activity] = await Promise.all([
-        Activity.aggregate(aggragate)
-          .sort(pagination.sort)
-          .skip(pagination.skip)
-          .limit(pagination.result_per_page),
-        Activity.aggregate(aggragate),
-      ]);
+      let activity, total_activity;
+      if (!payload?.pagination) {
+        [activity, total_activity] = await Promise.all([
+          Activity.aggregate(aggragate),
+          Activity.aggregate(aggragate),
+        ]);
+      } else {
+        [activity, total_activity] = await Promise.all([
+          Activity.aggregate(aggragate)
+            .sort(pagination.sort)
+            .skip(pagination.skip)
+            .limit(pagination.result_per_page),
+          Activity.aggregate(aggragate),
+        ]);
+      }
 
       return {
         activity,
