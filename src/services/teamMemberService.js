@@ -451,7 +451,7 @@ class TeamMemberService {
           },
         },
         {
-          $unwind: "$user_type",
+          $unwind: { path: "$user_type", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -463,7 +463,7 @@ class TeamMemberService {
           },
         },
         {
-          $unwind: "$member_data",
+          $unwind: { path: "$member_data", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -481,7 +481,7 @@ class TeamMemberService {
             email: 1,
             user_type: "$user_type.name",
             [memberOf]: "$member_data." + memberOf,
-
+            reference_id: 1,
             createdAt: 1,
             updatedAt: 1,
             first_name: 1,
@@ -489,7 +489,7 @@ class TeamMemberService {
             contact_number: 1,
             image_url: 1,
             status: 1,
-            name: 1,
+            name: { $concat: ["$first_name", " ", "$last_name"] },
             contact_number: 1,
             member_role: {
               $cond: {

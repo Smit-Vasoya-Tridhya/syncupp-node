@@ -1480,8 +1480,14 @@ class ActivityService {
       let recurring_date;
       const current_date = moment.utc().startOf("day");
       const start_date = moment.utc(due_date, "DD-MM-YYYY").startOf("day");
-      const start_time = moment(meeting_start_time, "HH:mm a");
-      const end_time = moment(meeting_end_time, "HH:mm a");
+      const start_time = moment.utc(
+        `${due_date}-${meeting_start_time}`,
+        "DD-MM-YYYY-HH:mm"
+      );
+      const end_time = moment.utc(
+        `${due_date}-${meeting_end_time}`,
+        "DD-MM-YYYY-HH:mm"
+      );
       if (!start_date.isSameOrAfter(current_date))
         return throwError(returnMessage("activity", "dateinvalid"));
 
@@ -1827,15 +1833,19 @@ class ActivityService {
         };
         if (payload?.client_id) {
           match_obj["$match"] = {
-            is_deleted: false,
-
+            ...match_obj["$match"],
             client_id: new mongoose.Types.ObjectId(payload?.client_id),
+          };
+        }
+        if (payload?.team_id) {
+          match_obj["$match"] = {
+            ...match_obj["$match"],
+            assign_to: new mongoose.Types.ObjectId(payload?.team_id),
           };
         }
       } else if (user?.role?.name === "team_agency") {
         match_obj["$match"] = {
           is_deleted: false,
-
           assign_to: user?.reference_id,
         };
       } else if (user?.role?.name === "client") {
@@ -1844,6 +1854,12 @@ class ActivityService {
           client_id: user?.reference_id,
           agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
         };
+        if (payload?.team_id) {
+          match_obj["$match"] = {
+            ...match_obj["$match"],
+            assign_to: new mongoose.Types.ObjectId(payload?.team_id),
+          };
+        }
       } else if (user?.role?.name === "team_client") {
         match_obj["$match"] = {
           is_deleted: false,
