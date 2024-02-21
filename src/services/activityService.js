@@ -9,12 +9,14 @@ const {
   getKeywordType,
   validateRequestFields,
   taskTemplate,
+  activityTemplate,
 } = require("../utils/utils");
 const moment = require("moment");
 const { default: mongoose } = require("mongoose");
 const Team_Agency = require("../models/teamAgencySchema");
 const statusCode = require("../messages/statusCodes.json");
 const sendEmail = require("../helpers/sendEmail");
+const Authentication = require("../models/authenticationSchema");
 class ActivityService {
   createTask = async (payload, user) => {
     try {
@@ -2906,7 +2908,7 @@ class ActivityService {
         status = await ActivityStatus.findOne({ name: "pending" }).lean();
       }
 
-      await Activity.create({
+      const newActivity = await Activity.create({
         activity_status: status?._id,
         activity_type: activity_type_id?._id,
         agency_id: user?.agency_id || user?.reference_id,
@@ -2921,6 +2923,32 @@ class ActivityService {
         due_date: start_date,
         recurring_end_date: recurring_date,
       });
+      const activityData = await this.getActivity(newActivity?._id);
+      console.log(activityData);
+
+      const [assign_to_data, client_data] = await Promise.all([
+        Authentication.findOne({ reference_id: assign_to }),
+        Authentication.findOne({ reference_id: client_id }),
+      ]);
+
+      const activity_email_template = activityTemplate(activityData[0]);
+
+      await sendEmail({
+        email: user?.email,
+        subject: returnMessage("emailTemplate", "newActivityMeeting"),
+        message: activity_email_template,
+      });
+      await sendEmail({
+        email: client_data?.email,
+        subject: returnMessage("emailTemplate", "newActivityMeeting"),
+        message: activity_email_template,
+      });
+      await sendEmail({
+        email: assign_to_data?.email,
+        subject: returnMessage("emailTemplate", "newActivityMeeting"),
+        message: activity_email_template,
+      });
+
       return;
     } catch (error) {
       logger.error(`Error while creating call meeting and other: ${error}`);
