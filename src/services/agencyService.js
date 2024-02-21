@@ -153,9 +153,10 @@ class AgencyService {
         SubscriptionPlan.findOne({ active: true }).lean(),
       ]);
       agency_detail.reference_id = agency_reference;
-      const subscription_detail = await paymentService.subscripionDetail(
-        agency_detail?.subscription_id
-      );
+      const [subscription_detail, check_referral] = await Promise.all([
+        paymentService.subscripionDetail(agency_detail?.subscription_id),
+        referralService.checkReferralAvailable(agency),
+      ]);
       agency_detail.payable_amount = (
         paymentService.customPaymentCalculator(
           subscription_detail?.current_start,
@@ -163,7 +164,7 @@ class AgencyService {
           plan
         ) / 100
       ).toFixed(2);
-      let check_referral = await referralService.checkReferralAvailable(agency);
+      // let check_referral = await referralService.checkReferralAvailable(agency);
       agency_detail.check_referral = check_referral.referralAvailable;
       return agency_detail;
     } catch (error) {
