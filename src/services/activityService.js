@@ -3662,18 +3662,21 @@ class ActivityService {
         { $unwind: "$activity_type" },
       ];
 
+      let activity, total_activity;
       if (!payload?.pagination) {
-        pagination.sort = { createdAt: 1 };
-        pagination.result_per_page = undefined;
-        pagination.skip = undefined;
+        [activity, total_activity] = await Promise.all([
+          Activity.aggregate(aggragate),
+          Activity.aggregate(aggragate),
+        ]);
+      } else {
+        [activity, total_activity] = await Promise.all([
+          Activity.aggregate(aggragate)
+            .sort(pagination.sort)
+            .skip(pagination.skip)
+            .limit(pagination.result_per_page),
+          Activity.aggregate(aggragate),
+        ]);
       }
-      const [activity, total_activity] = await Promise.all([
-        Activity.aggregate(aggragate)
-          .sort(pagination.sort)
-          .skip(pagination.skip)
-          .limit(pagination.result_per_page),
-        Activity.aggregate(aggragate),
-      ]);
 
       return {
         activity,
