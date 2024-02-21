@@ -1629,7 +1629,6 @@ class ActivityService {
       } else {
         status = await ActivityStatus.findOne({ name: "pending" }).lean();
       }
-      console.log("first");
 
       await Activity.findByIdAndUpdate(activity_id, {
         activity_status: status?._id,
