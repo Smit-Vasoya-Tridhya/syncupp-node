@@ -359,11 +359,10 @@ class ClientService {
 
         clientIds.forEach((id) => client_ids.push(id.toString()));
 
-        const available_sheets = sheets?.occupied_sheets?.map(
+        const available_sheets = sheets?.occupied_sheets?.filter(
           (sheet) => !client_ids.includes(sheet?.user_id.toString())
         );
-
-        SheetManagement.findByIdAndUpdate(sheets._id, {
+        await SheetManagement.findByIdAndUpdate(sheets._id, {
           occupied_sheets: available_sheets,
         });
       }

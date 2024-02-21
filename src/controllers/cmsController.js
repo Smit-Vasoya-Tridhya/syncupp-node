@@ -153,3 +153,47 @@ exports.getAboutUs = catchAsyncError(async (req, res, next) => {
     statusCode.success
   );
 });
+
+//Cancellation and Refund
+exports.getcancellationAndRefund = catchAsyncError(async (req, res, next) => {
+  const data = await cmsService.getcancellationAndRefund();
+  sendResponse(
+    res,
+    true,
+    returnMessage("cms", "cancellationAndRefundFetched"),
+    data,
+    statusCode.success
+  );
+});
+exports.updatecancellationAndRefund = catchAsyncError(
+  async (req, res, next) => {
+    const data = await cmsService.updatecancellationAndRefund(req?.body);
+    sendResponse(
+      res,
+      true,
+      returnMessage("cms", "cancellationAndRefundUpdate"),
+      data,
+      statusCode.success
+    );
+  }
+);
+exports.getShippingandDelivery = catchAsyncError(async (req, res, next) => {
+  const data = await cmsService.getShippingandDelivery();
+  sendResponse(
+    res,
+    true,
+    returnMessage("cms", "ShippingandDeliveryFetched"),
+    data,
+    statusCode.success
+  );
+});
+exports.updateShippingandDelivery = catchAsyncError(async (req, res, next) => {
+  const data = await cmsService.updateShippingandDelivery(req?.body);
+  sendResponse(
+    res,
+    true,
+    returnMessage("cms", "ShippingandDeliveryUpdate"),
+    data,
+    statusCode.success
+  );
+});

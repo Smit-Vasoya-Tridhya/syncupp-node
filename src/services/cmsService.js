@@ -12,6 +12,8 @@ const Contact_Us = require("../models/cms/contactUsSchema");
 const Technology_Stack = require("../models/cms/technologyStackSchema");
 const AdminFqa = require("../models/adminFaqSchema");
 const About_Us = require("../models/cms/aboutUsSchema");
+const cancellation_and_Refund = require("../models/cms/refundSchema");
+const Shipping_and_Delivery = require("../models/cms/ShippingandDeliverySchems");
 
 class cmsService {
   updateContactUs = async (payload) => {
@@ -186,6 +188,70 @@ class cmsService {
     } catch (error) {
       console.log(error);
       logger.error(`Error while get About Us CRM : ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  getcancellationAndRefund = async () => {
+    try {
+      const aboutUsDetail = await cancellation_and_Refund.findOne({});
+      return aboutUsDetail;
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while get About Us CRM : ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  updatecancellationAndRefund = async (payload) => {
+    try {
+      const { description } = payload;
+      const aboutDetailCrm = await cancellation_and_Refund.findOne({});
+      // await cancellation_and_Refund.create({ description });
+
+      await cancellation_and_Refund.findOneAndUpdate(
+        {
+          _id: aboutDetailCrm._id,
+        },
+        { description },
+        { new: true, useFindAndModify: false }
+      );
+
+      return true;
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while update About Us CRM : ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  getShippingandDelivery = async () => {
+    try {
+      const aboutUsDetail = await Shipping_and_Delivery.findOne({});
+      return aboutUsDetail;
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while get About Us CRM : ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+  updateShippingandDelivery = async (payload) => {
+    try {
+      const { description } = payload;
+      const aboutDetailCrm = await Shipping_and_Delivery.findOne({});
+
+      await Shipping_and_Delivery.findOneAndUpdate(
+        {
+          _id: aboutDetailCrm._id,
+        },
+        { description },
+        { new: true, useFindAndModify: false }
+      );
+
+      return true;
+    } catch (error) {
+      console.log(error);
+      logger.error(`Error while update About Us CRM : ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
   };
