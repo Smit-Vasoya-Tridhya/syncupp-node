@@ -5,14 +5,30 @@ const NotificationService = require("../services/notificationService");
 const { sendResponse } = require("../utils/sendResponse");
 const notificationService = new NotificationService();
 
-// Add Clients ------   AGENCY API
+// create ------
 
-exports.notificationService = catchAsyncError(async (req, res, next) => {
-  const notification = await notificationService.addNotification(req?.user);
+exports.addNotification = catchAsyncError(async (req, res, next) => {
+  const notification = await notificationService.addNotification(req?.body);
   sendResponse(
     res,
     true,
     returnMessage("notification", "messageAdded"),
+    notification,
+    statusCode.success
+  );
+});
+
+// Get ------
+
+exports.getNotification = catchAsyncError(async (req, res, next) => {
+  const notification = await notificationService.getNotification(
+    req?.user,
+    req?.query
+  );
+  sendResponse(
+    res,
+    true,
+    returnMessage("notification", "notificationFetched"),
     notification,
     statusCode.success
   );

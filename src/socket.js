@@ -14,31 +14,18 @@ exports.socket_connection = (http_server) => {
   });
 
   io.on("connection", (socket) => {
-    logger.info(`Socket connected ${socket.id}`);
+    console.log(`Socket connected ${socket.id}`);
     socket.on("disconnect", () => {
-      logger.info(`Socket ${socket.id} has disconnected.`);
+      console.log(`Socket ${socket.id} has disconnected.`);
     });
 
-    socket.on("NOTIFICATION", (obj) => {
-      logger.info(obj.id, 15);
+    socket.on("ROOM", (obj) => {
+      console.log(obj.id, 15);
       socket.join(obj.id);
     });
 
-    socket.on("createActivity", ({ user }) => {
-      users[socket.id] = user;
-      console.log(`${user} has joined `);
-      socket.broadcast.emit("userJoined", {
-        user: "Admin",
-        message: ` ${[socket.id]} has joined`,
-      });
-      socket.emit("welcome", {
-        user: "Admin",
-        message: `Welcome to the chat,${users[socket.id]} `,
-      });
-    });
-
     socket.on("CONFIRMATION", (payload) => {
-      logger.info(`Event Confirmation : ${payload}`);
+      console.log(`Event Confirmation : ${payload}`);
     });
   });
 };
@@ -48,6 +35,14 @@ exports.eventEmitter = (event_name, payload, user_id) => {
     console.log("Inside", event_name, payload, user_id);
     io.to(user_id.toString()).emit(event_name, payload);
   } catch (error) {
-    logger.info("Error while emitting socket error", error);
+    console.log("Error while emitting socket error", error);
+  }
+};
+
+exports.sendNotification = (userId, notification) => {
+  try {
+    io.to(userId).emit("notification", notification);
+  } catch (error) {
+    console.log("Error while sendNotification socket error", error);
   }
 };

@@ -52,12 +52,12 @@ app.use("/api/v1", rootRoutes);
 app.use(errorHandler);
 
 // Set up Socket.IO server
-const http_server = require("http").Server(app);
+const http_server = require("http").createServer(app);
 socket_connection(http_server);
 
 setupNightlyCronJob();
 
-app.listen(port, async () => {
+http_server.listen(port, async () => {
   // await insertData();
   logger.info(`Server started at port:${port}`);
 });
