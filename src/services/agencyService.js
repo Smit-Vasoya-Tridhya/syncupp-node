@@ -67,6 +67,9 @@ class AgencyService {
               $options: "i",
             },
           },
+          {
+            status: { $regex: payload.search, $options: "i" },
+          },
         ];
 
         // const keyword_type = getKeywordType(payload.search);
