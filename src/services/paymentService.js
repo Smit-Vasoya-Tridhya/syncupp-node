@@ -15,6 +15,7 @@ const {
   invitationEmail,
   paginationObject,
   capitalizeFirstLetter,
+  getKeywordType,
 } = require("../utils/utils");
 const statusCode = require("../messages/statusCodes.json");
 const crypto = require("crypto");
@@ -285,7 +286,7 @@ class PaymentService {
         expected_signature_2 === razorpay_signature
       ) {
         const status_change = await this.statusChange(payload);
-        if (!status_change.success) return { success: false };
+        // if (!status_change.success) return { success: false };
         return { success: true, message: status_change?.message };
       }
 
@@ -427,15 +428,23 @@ class PaymentService {
           let link = `${
             process.env.REACT_APP_URL
           }/client/verify?name=${encodeURIComponent(
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(agency_details?.last_name)
           )}&email=${encodeURIComponent(
             user_details?.email
           )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_mail = invitationEmail(
             link,
-            user_details?.first_name + " " + user_details?.last_name,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
             invitation_text
           );
 
@@ -451,15 +460,23 @@ class PaymentService {
           );
         } else if (user_details?.role?.name === "team_agency") {
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}&token=${user_details?.invitation_token}&redirect=false`;
 
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_template = invitationEmail(
             link,
-            user_details?.first_name + " " + user_details?.last_name,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
             invitation_text
           );
 
@@ -480,11 +497,17 @@ class PaymentService {
           ).lean();
 
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}&clientId=${team_client_detail.client_id}`;
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
           const invitation_template = invitationEmail(
             link,
@@ -633,13 +656,27 @@ class PaymentService {
             .populate("role", "name")
             .lean();
       }
+      let search_obj = {};
+      if (payload?.search && payload?.search !== "") {
+        search_obj["$or"] = [
+          { amount: { $regex: payload.search.toLowerCase(), $options: "i" } },
+        ];
+
+        const keywordType = getKeywordType(payload.search);
+        const dateKeyword = new Date(payload.search);
+        search_obj["$or"].push({ createdAt: dateKeyword });
+      }
 
       const [payment_history, total_history] = await Promise.all([
-        PaymentHistory.find({ agency_id: user?.reference_id })
+        PaymentHistory.find({ agency_id: user?.reference_id, ...search_obj })
+          .sort(pagination.sort)
           .skip(pagination.skip)
           .limit(pagination.result_per_page)
           .lean(),
-        PaymentHistory.countDocuments({ agency_id: user?.reference_id }),
+        PaymentHistory.countDocuments({
+          agency_id: user?.reference_id,
+          ...search_obj,
+        }),
       ]);
 
       return {
@@ -763,6 +800,49 @@ class PaymentService {
             status: "Available",
           };
         }
+      }
+
+      if (payload?.search && payload?.search !== "") {
+        // Create a regex pattern based on the query
+        const regex = new RegExp(
+          payload?.search.toLowerCase().split(/\s+/).join(".*")
+        );
+        occupied_sheets.items = occupied_sheets?.items?.filter((item) => {
+          return (
+            regex.test(item.first_name.toLowerCase()) ||
+            regex.test(item.last_name.toLowerCase()) ||
+            regex.test(item.name.toLowerCase()) ||
+            regex.test(item.role.toLowerCase()) ||
+            regex.test(item.status.toLowerCase()) ||
+            regex.test(item.seat_no)
+          );
+        });
+      }
+
+      if (payload?.sort && payload?.sort !== "") {
+        // Sort the results based on the name
+        occupied_sheets?.items.sort((a, b) => {
+          let nameA, nameB;
+          if (payload?.sort === "name") {
+            nameA = a.name.toLowerCase();
+            nameB = b.name.toLowerCase();
+          } else if (payload?.sort === "role") {
+            nameA = a.role.toLowerCase();
+            nameB = b.role.toLowerCase();
+          } else if (payload?.sort === "status") {
+            nameA = a.status.toLowerCase();
+            nameB = b.status.toLowerCase();
+          } else if (payload?.sort === "seat_no") {
+            nameA = a.seat_no;
+            nameB = b.seat_no;
+          }
+
+          if (payload?.sort_order === "asc") {
+            return nameA.localeCompare(nameB);
+          } else {
+            return nameB.localeCompare(nameA);
+          }
+        });
       }
 
       const page = pagination.page;

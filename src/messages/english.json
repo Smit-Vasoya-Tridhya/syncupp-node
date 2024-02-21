@@ -178,7 +178,7 @@
     "fetchTask": "Task fetched successfully.",
     "updateTask": "Task updated successfully.",
     "deleteTask": "Task deleted successfully.",
-    "CannotUpdate": "Task can not be updated.",
+    "CannotUpdate": "Task cannot be updated.",
     "activityTypeNotFound": "This type of actvity not found.",
     "invalidTime": "End time should be greater than start time.",
     "meetingScheduledForClient": "Meeting is already set for this client.",
@@ -192,8 +192,9 @@
     "activityListFetched": "Activities list fetch successfully.",
     "startEnddateRequired": "start and end dates are required for the filter.",
     "invalidDate": "End date should be greater than start date.",
-    "createSubject": "New Task Created",
-    "UpdateSubject": "Updated Task"
+    "createSubject": "New task created.",
+    "UpdateSubject": "Updated Task.",
+    "ActivityCannotUpdate": "Activity cannot be updated."
   },
 
   "payment": {
@@ -239,7 +240,11 @@
     "TermAndConditionAdded": "Term and Condition added successfully.",
     "updateTermAndCondition": "Term and Condition updated successfully.",
     "AboutUsUpdated": "About us updated successfully.",
-    "AboutUsFetched": "About us fetched successfully."
+    "AboutUsFetched": "About us fetched successfully.",
+    "cancellationAndRefundFetched": "Cancellation and Refund fetched successfully.",
+    "cancellationAndRefundUpdate": "Cancellation and refund update successfully",
+    "ShippingandDeliveryUpdate": "Shipping and delivery update successfully",
+    "ShippingandDeliveryFetched": "Shipping and delivery fetched successfully."
   },
   "referral": {
     "checkRefferal": "Referral check successfully.",

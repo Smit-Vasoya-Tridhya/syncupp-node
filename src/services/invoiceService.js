@@ -53,8 +53,8 @@ class InvoiceService {
         {
           $lookup: {
             from: "clients",
-            localField: "client_id",
-            foreignField: "reference_id",
+            localField: "_id",
+            foreignField: "_id",
             as: "clientData",
             pipeline: [
               {

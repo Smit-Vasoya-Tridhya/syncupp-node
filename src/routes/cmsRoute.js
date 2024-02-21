@@ -9,6 +9,14 @@ const {
   getTermAndCondition,
   updateTermAndCondition,
 } = require("../controllers/termAndConditionController");
+const {
+  addClientReview,
+  getAllClientReview,
+  deleteClientReview,
+  updateClientReview,
+  getClientReviewByID,
+} = require("../controllers/adminClientReviewController");
+// const { upload } = require("../helpers/multer");
 // adminRoute.use(protect);
 
 // Contact Us
@@ -39,4 +47,32 @@ adminRoute.put("/term-and-condition", updateTermAndCondition);
 adminRoute.put("/about-us", cmsController.updateAboutUs);
 adminRoute.get("/about-us", cmsController.getAboutUs);
 
+adminRoute.get("/get-client-review/:id", getClientReviewByID);
+adminRoute.post("/get-client-review", getAllClientReview);
+
+adminRoute.post(
+  "/add-client-review",
+  upload.single("client_review_image"),
+  addClientReview
+);
+adminRoute.put(
+  "/update-client-review/:id",
+  upload.single("client_review_image"),
+  updateClientReview
+);
+adminRoute.delete("/delete-client-review", validatorFunc, deleteClientReview);
+
+adminRoute.put(
+  "/Cancellation-and-Refund",
+  cmsController.updatecancellationAndRefund
+);
+adminRoute.get(
+  "/Cancellation-and-Refund",
+  cmsController.getcancellationAndRefund
+);
+adminRoute.put(
+  "/Shipping-and-Delivery",
+  cmsController.updateShippingandDelivery
+);
+adminRoute.get("/Shipping-and-Delivery", cmsController.getShippingandDelivery);
 module.exports = adminRoute;

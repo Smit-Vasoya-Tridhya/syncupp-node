@@ -33,10 +33,13 @@ exports.deleteClient = catchAsyncError(async (req, res, next) => {
     return throwError(returnMessage("default", "default"));
 
   const delete_clients = await clientService.deleteClient(req.body, req.user);
+
   sendResponse(
     res,
     true,
-    returnMessage("client", "clientDeleted"),
+    !delete_clients.force_fully_remove
+      ? returnMessage("client", "clientDeleted")
+      : undefined,
     delete_clients,
     statusCode.success
   );
