@@ -6980,23 +6980,7 @@ exports.activityTemplate = (data) => {
                                 " role="presentation">
                               <tr>
                                 <td align="center" style="padding: 20px; margin: 0">
-                                  <h3 style="
-                                        margin: 0;
-                                        line-height: 34px;
-                                        mso-line-height-rule: exactly;
-                                        font-family: -apple-system,
-                                          blinkmacsystemfont, 'segoe ui', roboto,
-                                          helvetica, arial, sans-serif,
-                                          'apple color emoji', 'segoe ui emoji',
-                                          'segoe ui symbol';
-                                        font-size: 24px;
-                                        font-style: normal;
-                                        font-weight: bold;
-                                        color: #111318;
-                                        text-align: center;
-                                      ">
-                                    Hi <span>(Name)</span>,&nbsp;
-                                  </h3>
+                              
                                   <p style="
                                         margin: 0;
                                         -webkit-text-size-adjust: none;
@@ -7029,7 +7013,11 @@ exports.activityTemplate = (data) => {
                                         margin-bottom: 30px;
                                       ">
                                     Recent Activity :
-                                    <span style="font-weight: 600;">New call meeting schedule</span>
+                                    <span style="font-weight: 600;">${
+                                      data.isNew
+                                        ? "New call meeting schedule"
+                                        : "Call meeting updated"
+                                    }</span>
 
                                   </p>
                                   <table cellpadding="0" cellspacing="0" width="70%" style="
@@ -7059,7 +7047,7 @@ exports.activityTemplate = (data) => {
   border-collapse: collapse; font-weight: 600; max-width: 100px;
  overflow: hidden;
  text-overflow: ellipsis;
- white-space: nowrap;">${data?.title}</td>
+ white-space: nowrap;">${data?.title ?? `&nbsp;`}</td>
                                           </tr>
                                           <tr>
                                           <td style=" border-top-left-radius: 5px;
@@ -7068,7 +7056,7 @@ border-collapse: collapse;">Agenda :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.agenda}</td>
+white-space: nowrap;">${data?.agenda ?? `&nbsp;`}</td>
                                         </tr>
 
 
@@ -7079,7 +7067,7 @@ border-collapse: collapse;">Assign by :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.assigned_by_name}</td>
+white-space: nowrap;">${data?.assigned_by_name ?? `&nbsp;`}</td>
                                       </tr>
                                       <tr>
                                       <td style=" border-top-left-radius: 5px;
@@ -7088,7 +7076,7 @@ border-collapse: collapse;">Client name :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.client_name}</td>
+white-space: nowrap;">${data?.client_name ?? `&nbsp;`}</td>
                                     </tr>
 
                                       <tr>
@@ -7099,7 +7087,7 @@ border-collapse: collapse;">Assign to:</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.assigned_to_name}</td>
+white-space: nowrap;">${data?.assigned_to_name ?? `&nbsp;`}</td>
                                       </tr>
 
                                         <tr>
@@ -7109,7 +7097,9 @@ border-collapse: collapse;">Due Date :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.due_date}</td>
+white-space: nowrap;">${
+    data?.due_date ? new Date(data?.due_date).toLocaleDateString() : `&nbsp;`
+  }</td>
                                       </tr>
 
 
@@ -7121,18 +7111,32 @@ border-collapse: collapse;">Meeting start time :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.meeting_start_time}</td>
+white-space: nowrap;">${
+    data?.meeting_start_time
+      ? new Date(data?.meeting_start_time).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : `&nbsp;`
+  }</td>
                                     </tr>
 
                                     
                                     <tr>
                                     <td style=" border-top-left-radius: 5px;
-border-collapse: collapse;">Meeting start time :</td>
+border-collapse: collapse;">Meeting end time :</td>
                                     <td style="
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.meeting_end_time}</td>
+white-space: nowrap;">${
+    data?.meeting_end_time
+      ? new Date(data?.meeting_end_time).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : `&nbsp;`
+  }</td>
                                   </tr>
 
                                   
@@ -7144,7 +7148,7 @@ border-collapse: collapse;">Activity type :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.activity_type}</td>
+white-space: nowrap;">${data?.activity_type.name ?? `&nbsp;`}</td>
                                 </tr>
 
                                 <tr>
@@ -7154,51 +7158,19 @@ border-collapse: collapse;">Status :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.status}</td>
+white-space: nowrap;">${data?.status ?? `&nbsp;`}</td>
                               </tr>
-
-                              <tr>
-                              <td style=" border-top-left-radius: 5px;
-border-collapse: collapse;">Recurring End Date :</td>
-                              <td style="
-border-collapse: collapse; font-weight: 600; max-width: 100px;
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;">${data?.recurring_end_date}</td>
-                            </tr>
-
-                                          
+                                  
+                                        
                                           <tr>
-                                            <td style=" border-top-left-radius: 5px;
-                                                                                      border-collapse: collapse;">Status
-                                              :
-                                            </td>
-                                            <td
-                                              style="
-                                                                                      border-collapse: collapse; font-weight: 600;">
-                                              In Progress</td>
-                                          </tr>
-                                          <tr>
-                                            <td
-                                              style=" border-top-left-radius: 5px;
-                                                                                                                                border-collapse: collapse;">
-                                              Created By :
-                                            </td>
-                                            <td
-                                              style="
-                                                                                                                                border-collapse: collapse; font-weight: 600;">
-                                              Peter Parker</td>
-                                          </tr>
-                                          <tr>
-                                            <td style=" border-top-left-radius: 5px;
-                                                                                      border-collapse: collapse;">
-                                              Created On :
-                                            </td>
-                                            <td
-                                              style="
-                                                                                      border-collapse: collapse; font-weight: 600;">
-                                              19/02/2024 | 19:00</td>
-                                          </tr>
+                                          <td style=" border-top-left-radius: 5px;
+            border-collapse: collapse;">Recurring End Date :</td>
+                                          <td style="
+            border-collapse: collapse; font-weight: 600; max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;">${data?.recurring_end_date ?? `-`}</td>
+                                        </tr>
                                          
                                           
                                         </table>

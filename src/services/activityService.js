@@ -1629,6 +1629,7 @@ class ActivityService {
       } else {
         status = await ActivityStatus.findOne({ name: "pending" }).lean();
       }
+      console.log("first");
 
       await Activity.findByIdAndUpdate(activity_id, {
         activity_status: status?._id,
@@ -1648,6 +1649,36 @@ class ActivityService {
           .utc(payload?.recurring_end_date)
           .endOf("day"),
       });
+
+      // const activityData = await this.getActivity(activity_id);
+      // console.log(activityData);
+
+      // const [assign_to_data, client_data] = await Promise.all([
+      //   Authentication.findOne({ reference_id: assign_to }),
+      //   Authentication.findOne({ reference_id: client_id }),
+      // ]);
+
+      // const activity_email_template = activityTemplate({
+      //   ...activityData[0],
+      //   isNew: true,
+      // });
+
+      // await sendEmail({
+      //   email: user?.email,
+      //   subject: returnMessage("emailTemplate", "activityUpdated"),
+      //   message: activity_email_template,
+      // });
+      // await sendEmail({
+      //   email: client_data?.email,
+      //   subject: returnMessage("emailTemplate", "activityUpdated"),
+      //   message: activity_email_template,
+      // });
+      // await sendEmail({
+      //   email: assign_to_data?.email,
+      //   subject: returnMessage("emailTemplate", "activityUpdated"),
+      //   message: activity_email_template,
+      // });
+
       return;
     } catch (error) {
       logger.error(`Error while updating call meeting and other: ${error}`);

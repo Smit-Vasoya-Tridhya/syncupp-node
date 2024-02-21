@@ -158,7 +158,8 @@
     "forgotPasswordSubject": "Reset your password now.",
     "invitation": "Join to SyncUpp",
     "welcomeMailSubject": "Welcome to Syncupp.",
-    "newActivityMeeting": "New meeting scheduled"
+    "newActivityMeeting": "New meeting scheduled",
+    "activityUpdated": "Activity updated"
   },
 
   "client": {
