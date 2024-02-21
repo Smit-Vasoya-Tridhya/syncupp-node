@@ -646,12 +646,15 @@ class PaymentService {
       }
 
       const [payment_history, total_history] = await Promise.all([
-        PaymentHistory.find({ agency_id: user?.reference_id })
+        PaymentHistory.find({ agency_id: user?.reference_id, ...search_obj })
           .sort(pagination.sort)
           .skip(pagination.skip)
           .limit(pagination.result_per_page)
           .lean(),
-        PaymentHistory.countDocuments({ agency_id: user?.reference_id }),
+        PaymentHistory.countDocuments({
+          agency_id: user?.reference_id,
+          ...search_obj,
+        }),
       ]);
 
       return {
