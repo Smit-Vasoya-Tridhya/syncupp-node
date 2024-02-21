@@ -590,9 +590,13 @@ class TeamMemberService {
           !activity_assigned
         ) {
           // Delete from Authentication collection
-          await Authentication.updateMany(
-            { reference_id: { $in: teamMemberIds } },
-            { $set: { is_deleted: true } }
+          await Team_Client.updateOne(
+            {
+              _id: { $in: teamMemberIds },
+              "agency_ids.agency_id": agency?.reference_id,
+            },
+            { $set: { "agency_ids.$.status": "deleted" } },
+            { new: true }
           );
 
           const sheets = await SheetManagement.findOne({
@@ -628,9 +632,13 @@ class TeamMemberService {
           !activity_assigned
         ) {
           // Delete from Authentication collection
-          await Authentication.updateMany(
-            { reference_id: { $in: teamMemberIds } },
-            { $set: { is_deleted: true } }
+          await Team_Client.updateOne(
+            {
+              _id: { $in: teamMemberIds },
+              "agency_ids.agency_id": agency?.reference_id,
+            },
+            { $set: { "agency_ids.$.status": "deleted" } },
+            { new: true }
           );
 
           const sheets = await SheetManagement.findOne({
@@ -878,6 +886,10 @@ class TeamMemberService {
         ]);
 
         teams.forEach((team) => {
+          team.name =
+            capitalizeFirstLetter(team?.first_name) +
+            " " +
+            capitalizeFirstLetter(team?.last_name);
           if (team?.reference_id?.agency_ids) {
             return team?.reference_id?.agency_ids.forEach((t) => {
               if (t?.agency_id?.toString() == payload?.agency_id)
