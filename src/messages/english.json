@@ -239,7 +239,11 @@
     "TermAndConditionAdded": "Term and Condition added successfully.",
     "updateTermAndCondition": "Term and Condition updated successfully.",
     "AboutUsUpdated": "About us updated successfully.",
-    "AboutUsFetched": "About us fetched successfully."
+    "AboutUsFetched": "About us fetched successfully.",
+    "cancellationAndRefundFetched": "Cancellation and Refund fetched successfully.",
+    "cancellationAndRefundUpdate": "Cancellation and refund update successfully",
+    "ShippingandDeliveryUpdate": "Shipping and delivery update successfully",
+    "ShippingandDeliveryFetched": "Shipping and delivery fetched successfully."
   },
   "referral": {
     "checkRefferal": "Referral check successfully.",
