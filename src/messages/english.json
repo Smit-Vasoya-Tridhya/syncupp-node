@@ -157,7 +157,8 @@
   "emailTemplate": {
     "forgotPasswordSubject": "Reset your password now.",
     "invitation": "Join to SyncUpp",
-    "welcomeMailSubject": "Welcome to Syncupp."
+    "welcomeMailSubject": "Welcome to Syncupp.",
+    "newActivityMeeting": "New meeting scheduled"
   },
 
   "client": {
