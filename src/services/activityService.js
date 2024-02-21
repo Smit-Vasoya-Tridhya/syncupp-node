@@ -2452,7 +2452,7 @@ class ActivityService {
             assigned_by_name: {
               $concat: ["$assign_by.first_name", " ", "$assign_by.last_name"],
             },
-            assign_to_name: {
+            assigned_to_name: {
               $concat: ["$team_Data.first_name", " ", "$team_Data.last_name"],
             },
           },
