@@ -1289,6 +1289,16 @@ class ActivityService {
         },
         {
           $lookup: {
+            from: "activity_type_masters",
+            localField: "activity_type",
+            foreignField: "_id",
+            as: "activity_type",
+            pipeline: [{ $project: { name: 1 } }],
+          },
+        },
+        { $unwind: "$activity_type" },
+        {
+          $lookup: {
             from: "authentications",
             localField: "assign_to",
             foreignField: "reference_id",
@@ -1372,11 +1382,15 @@ class ActivityService {
             client_first_name: "$client_Data.first_name",
             client_last_name: "$client_Data.last_name",
             column_id: "$status.name",
+            meeting_start_time: 1,
+            meeting_end_time: 1,
+            recurring_end_date: 1,
+            activity_type: 1,
           },
         },
       ];
       const activity = await Activity.aggregate(taskPipeline);
-      if (!activity)
+      if (activity.length === 0)
         return throwError(
           returnMessage("activity", "activityNotFound"),
           statusCode.notFound
