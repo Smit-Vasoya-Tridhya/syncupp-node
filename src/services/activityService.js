@@ -3377,22 +3377,24 @@ class ActivityService {
         if (payload?.filter?.date === "today") {
           filter["$match"] = {
             ...filter["$match"],
-            due_date: { $eq: moment.utc().startOf("day") },
+            due_date: { $eq: new Date(moment.utc().startOf("day")) },
           };
         } else if (payload?.filter?.date === "tommorrow") {
           filter["$match"] = {
             ...filter["$match"],
-            due_date: { $eq: moment.utc().add(1, "day").startOf("day") },
+            due_date: {
+              $eq: new Date(moment.utc().add(1, "day").startOf("day")),
+            },
           };
         } else if (payload?.filter?.date === "this_week") {
           filter["$match"] = {
             ...filter["$match"],
             $and: [
               {
-                due_date: { $gte: moment.utc().startOf("week") },
+                due_date: { $gte: new Date(moment.utc().startOf("week")) },
               },
               {
-                due_date: { $lte: moment.utc().endOf("week") },
+                due_date: { $lte: new Date(moment.utc().endOf("week")) },
               },
             ],
           };
@@ -3421,8 +3423,8 @@ class ActivityService {
           filter["$match"] = {
             ...filter["$match"],
             $and: [
-              { due_date: { $gte: start_date } },
-              { due_date: { $lte: end_date } },
+              { due_date: { $gte: new Date(start_date) } },
+              { due_date: { $lte: new Date(end_date) } },
             ],
           };
         }
