@@ -144,7 +144,8 @@
     "agencyIdRequired": "Agency ID required.",
     "invoiceSent": "Invoice sent successfully.",
     "downloadPDF": "Download PDF successfully.",
-    "invoiceSubject": "invoiceSubject: Your Invoice - "
+    "invoiceSubject": "invoiceSubject: Your Invoice - ",
+    "invalidDueDate": "Invoice due date should not be less than invoice date."
   },
 
   "inquiry": {

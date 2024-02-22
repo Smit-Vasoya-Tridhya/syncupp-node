@@ -210,6 +210,10 @@ class InvoiceService {
         sent,
       } = payload;
 
+      if (due_date < invoice_date) {
+        return throwError(returnMessage("invoice", "invalidDueDate"));
+      }
+
       const invoiceItems = invoice_content;
       calculateAmount(invoiceItems);
 
@@ -721,6 +725,11 @@ class InvoiceService {
     try {
       const { due_date, invoice_content, client_id, invoice_date, sent } =
         payload;
+
+      if (due_date < invoice_date) {
+        return throwError(returnMessage("invoice", "invalidDueDate"));
+      }
+
       const invoice = await Invoice.findById(invoiceIdToUpdate).populate(
         "status"
       );

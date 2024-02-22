@@ -42,19 +42,37 @@ exports.validateCreateInvoice = [
     .notEmpty()
     .withMessage(validationMessage.invoice.qtyRequired)
     .isNumeric()
-    .withMessage(validationMessage.invoice.qtyNumeric),
+    .withMessage(validationMessage.invoice.qtyNumeric)
+    .custom((value) => {
+      // Check if the quantity has 0 digits after the decimal point
+      const decimalPart = value.toString().split(".")[1];
+      return !decimalPart || decimalPart.length === 0;
+    })
+    .withMessage(validationMessage.invoice.decimalLengthExceed),
 
   body("invoice_content.*.rate")
     .notEmpty()
     .withMessage(validationMessage.invoice.rateRequired)
     .isNumeric()
-    .withMessage(validationMessage.invoice.rateNumeric),
+    .withMessage(validationMessage.invoice.rateNumeric)
+    .custom((value) => {
+      // Check if there are at most 2 digits after the decimal point
+      const decimalPart = value.toString().split(".")[1];
+      return !decimalPart || decimalPart.length <= 2;
+    })
+    .withMessage(validationMessage.invoice.decimalLength),
 
   body("invoice_content.*.tax")
     .notEmpty()
     .withMessage(validationMessage.invoice.taxRequired)
     .isNumeric()
-    .withMessage(validationMessage.invoice.taxNumeric),
+    .withMessage(validationMessage.invoice.taxNumeric)
+    .custom((value) => {
+      // Check if there are at most 2 digits after the decimal point
+      const decimalPart = value.toString().split(".")[1];
+      return !decimalPart || decimalPart.length <= 2;
+    })
+    .withMessage(validationMessage.invoice.decimalLength),
 
   body("invoice_content.*.description")
     .notEmpty()
