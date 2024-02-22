@@ -39,16 +39,15 @@ exports.calculateInvoice = (invoice_content) => {
   subTotalData.forEach((item) => (sub_total += item));
 
   // Round off to 0 digits after the decimal point
-  total = total.toFixed(0);
-  sub_total = sub_total.toFixed(0);
-
+  total = total.toFixed(2).replace(/\.(\d)$/, ".$10");
+  sub_total = sub_total.toFixed(2).replace(/\.(\d)$/, ".$10");
   return { total, sub_total };
 };
 
 exports.calculateAmount = (items) => {
   items.forEach((item) => {
     const amount = item.qty * item.rate * (1 + item.tax / 100);
-    item.amount = parseFloat(amount.toFixed(0)); // Round to 0 decimal places
+    item.amount = parseFloat(amount.toFixed(2)); // Round to 0 decimal places
   });
 
   return items;
