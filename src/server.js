@@ -40,7 +40,7 @@ app.use(
 );
 const morgan = require("morgan");
 const path = require("path");
-const { socket_connection, eventEmitter } = require("./socket");
+// const { socket_connection, eventEmitter } = require("./socket");
 app.use(express.json());
 app.use(morgan("dev"));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
@@ -52,12 +52,12 @@ app.use("/api/v1", rootRoutes);
 app.use(errorHandler);
 
 // Set up Socket.IO server
-const http_server = require("http").createServer(app);
-socket_connection(http_server);
+// const http_server = require("http").createServer(app);
+// socket_connection(http_server);
 
 setupNightlyCronJob();
 
-http_server.listen(port, async () => {
+app.listen(port, async () => {
   // await insertData();
   logger.info(`Server started at port:${port}`);
 });
