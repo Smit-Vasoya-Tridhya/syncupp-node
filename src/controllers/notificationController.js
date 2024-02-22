@@ -18,7 +18,7 @@ exports.addNotification = catchAsyncError(async (req, res, next) => {
   );
 });
 
-// Get ------
+// Get Notification ------
 
 exports.getNotification = catchAsyncError(async (req, res, next) => {
   const notification = await notificationService.getNotification(
@@ -29,6 +29,22 @@ exports.getNotification = catchAsyncError(async (req, res, next) => {
     res,
     true,
     returnMessage("notification", "notificationFetched"),
+    notification,
+    statusCode.success
+  );
+});
+
+// Read notification ------
+
+exports.getNotification = catchAsyncError(async (req, res, next) => {
+  const notification = await notificationService.readNotification(
+    req?.body,
+    req?.user
+  );
+  sendResponse(
+    res,
+    true,
+    returnMessage("notification", "notificationRead"),
     notification,
     statusCode.success
   );

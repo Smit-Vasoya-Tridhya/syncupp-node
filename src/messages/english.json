@@ -249,7 +249,8 @@
   },
   "notification": {
     "messageAdded": "Notification added successfully.",
-    "notificationFetched": "Notification fetched successfully."
+    "notificationFetched": "Notification fetched successfully.",
+    "notificationRead": "Notification read successfully."
   },
   "referral": {
     "checkRefferal": "Referral check successfully.",

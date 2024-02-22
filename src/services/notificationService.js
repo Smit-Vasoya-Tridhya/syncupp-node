@@ -17,18 +17,16 @@ const { sendNotification } = require("../socket");
 
 class NotificationService {
   // Get Client list  ------   AGENCY API
-  addNotification = async (payload, activity_id, activity_data, res) => {
+  addNotification = async (payload, activity_id, activity_data) => {
     try {
       const { client_id, assign_to, assign_by } = payload;
-      let message = `A new meeting has been scheduled and arranged by ${activity_data[0].assigned_by_name}.The meeting is titled "${payload.title}" and is set to take place on ${payload.due_date} from ${payload.meeting_start_time} to ${payload.meeting_end_time}.`;
+      let message = `A new meeting has been scheduled and arranged by ${activity_data.assigned_by_name}.The meeting is titled "${payload.title}" and is set to take place on ${payload.due_date} from ${payload.meeting_start_time} to ${payload.meeting_end_time}.`;
 
       if (payload.recurring_end_date) {
         message += `The meeting is part of a recurring schedule, with the last occurrence on ${payload.recurring_end_date}.`;
       }
-      sendNotification(client_id, message);
-      sendNotification(assign_to, message);
 
-      await Notification.create({
+      const newNotification = await Notification.create({
         client_info: {
           _id: client_id,
         },
@@ -45,6 +43,10 @@ class NotificationService {
         },
         message: message,
       });
+
+      sendNotification(client_id, newNotification);
+      sendNotification(assign_to, newNotification);
+      return;
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
       return throwError(error?.message, error?.statusCode);
@@ -56,6 +58,8 @@ class NotificationService {
       const { skip, limit } = searchObj;
       console.log(skip);
       console.log(limit);
+
+      console.log(user.reference_id);
 
       const notifications = await Notification.find(
         {
@@ -77,6 +81,23 @@ class NotificationService {
         .limit(parseInt(limit));
 
       return notifications;
+    } catch (error) {
+      logger.error(`Error while fetching agencies: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  readNotification = async (payload, user) => {
+    try {
+      const { notification_id } = payload;
+      const notification = await Notification.findOne({
+        _id: notification_id,
+        $or: [
+          { "client_info._id": user.reference_id },
+          { "assign_to._id": user.reference_id },
+          { "assign_by._id": user.reference_id },
+        ],
+      });
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
       return throwError(error?.message, error?.statusCode);

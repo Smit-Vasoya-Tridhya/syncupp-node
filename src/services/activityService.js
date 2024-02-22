@@ -17,6 +17,9 @@ const Team_Agency = require("../models/teamAgencySchema");
 const statusCode = require("../messages/statusCodes.json");
 const sendEmail = require("../helpers/sendEmail");
 const Authentication = require("../models/authenticationSchema");
+const NotificationService = require("../services/notificationService");
+const notificationService = new NotificationService();
+
 class ActivityService {
   createTask = async (payload, user) => {
     try {
@@ -1256,7 +1259,6 @@ class ActivityService {
         recurring_end_date: recurring_date,
       });
       const activityData = await this.getActivity(newActivity?._id);
-      console.log(activityData);
 
       const [assign_to_data, client_data] = await Promise.all([
         Authentication.findOne({ reference_id: assign_to }),
@@ -1264,6 +1266,11 @@ class ActivityService {
       ]);
 
       const activity_email_template = activityTemplate(activityData[0]);
+      await notificationService.addNotification(
+        { assign_by: user.reference_id, ...payload },
+        newActivity._id,
+        activityData[0]
+      );
 
       await sendEmail({
         email: user?.email,
