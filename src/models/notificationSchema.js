@@ -4,8 +4,8 @@ const { boolean } = require("webidl-conversions");
 
 const notificationSchema = new mongoose.Schema(
   {
-    client_info: {
-      _id: {
+    client: {
+      reference_id: {
         type: mongoose.Types.ObjectId,
       },
       is_read: {
@@ -14,7 +14,7 @@ const notificationSchema = new mongoose.Schema(
       },
     },
     assign_to: {
-      _id: {
+      reference_id: {
         type: mongoose.Types.ObjectId,
       },
       is_read: {
@@ -23,7 +23,7 @@ const notificationSchema = new mongoose.Schema(
       },
     },
     assign_by: {
-      _id: {
+      reference_id: {
         type: mongoose.Types.ObjectId,
       },
       is_read: {

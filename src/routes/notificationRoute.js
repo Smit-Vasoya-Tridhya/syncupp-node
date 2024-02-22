@@ -8,5 +8,9 @@ notificationRoute.post("/create", notificationController.addNotification);
 
 notificationRoute.use(protect);
 notificationRoute.get("/", notificationController.getNotification);
+notificationRoute.post(
+  "/read-notification",
+  notificationController.readNotification
+);
 
 module.exports = notificationRoute;

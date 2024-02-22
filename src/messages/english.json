@@ -251,7 +251,8 @@
   "notification": {
     "messageAdded": "Notification added successfully.",
     "notificationFetched": "Notification fetched successfully.",
-    "notificationRead": "Notification read successfully."
+    "notificationRead": "Notification read successfully.",
+    "callMeetingCreated": "A meeting has been scheduled - "
   },
   "referral": {
     "checkRefferal": "Referral check successfully.",

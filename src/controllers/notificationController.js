@@ -36,7 +36,7 @@ exports.getNotification = catchAsyncError(async (req, res, next) => {
 
 // Read notification ------
 
-exports.getNotification = catchAsyncError(async (req, res, next) => {
+exports.readNotification = catchAsyncError(async (req, res, next) => {
   const notification = await notificationService.readNotification(
     req?.body,
     req?.user
