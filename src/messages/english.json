@@ -187,7 +187,7 @@
     "meetingScheduledForClient": "Meeting is already set for this client.",
     "meetingScheduledForTeam": "Meeting is already set for this team member.",
     "recurringDateRequired": "Recurring date is required for the other type of the activity.",
-    "invalidRecurringDate": "Recurring date should be fututure date.",
+    "invalidRecurringDate": "Recurring date should be future date.",
     "activityNotFound": "Activity not found.",
     "callScheduled": "Call meeting is scheduled successfully.",
     "activityCreated": "Activity created successfully.",

@@ -40,7 +40,7 @@ app.use(
 );
 const morgan = require("morgan");
 const path = require("path");
-const { socket_connection, eventEmitter } = require("./socket");
+const { socket_connection } = require("./socket");
 app.use(express.json());
 app.use(morgan("dev"));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));

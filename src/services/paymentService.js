@@ -602,9 +602,7 @@ class PaymentService {
   // fetch subscription by id
   subscripionDetail = async (subscription_id) => {
     try {
-      return await Promise.resolve(
-        razorpay.subscriptions.fetch(subscription_id)
-      );
+      return await razorpay.subscriptions.fetch(subscription_id);
     } catch (error) {
       console.log(JSON.stringify(error));
 
@@ -1045,38 +1043,36 @@ class PaymentService {
     }
   };
 
-  referralPay = async (user, payload) => {
+  referralPay = async (payload, user) => {
     try {
-      const { total_referral_point, agency_id } = payload;
-
-      if (!total_referral_point) {
-        return returnMessage("referral", "insufficientReferralPoints");
+      if (payload?.without_referral === true) {
+        return await this.withoutReferralPay(payload, user);
       }
       const referral_data = await Configuration.findOne().lean();
-      if (total_referral_point >= referral_data.referral.reedem_requred_point) {
-        const update_referral = await Authentication.findOneAndUpdate(
-          { reference_id: agency_id },
-          {
-            $inc: {
-              total_referral_point:
-                -referral_data?.referral?.reedem_requred_point,
-            },
-          },
-          { new: true }
-        );
-        if (update_referral) {
-          const status_change = await this.referralStatusChange(payload);
-          if (!status_change.success) return { success: false };
-          return { success: true, message: status_change?.message };
-        } else {
-          return { success: false };
-        }
-        return update_referral;
-      } else {
+      if (
+        !(
+          total_referral_point >= referral_data?.referral?.redeem_required_point
+        )
+      )
         return throwError(
           returnMessage("referral", "insufficientReferralPoints")
         );
-      }
+
+      payload.redeem_required_point =
+        referral_data?.referral?.redeem_required_point;
+      const status_change = await this.referralStatusChange(payload, user);
+      if (!status_change.success) return { success: false };
+
+      await Authentication.findOneAndUpdate(
+        { reference_id: user?.reference_id },
+        {
+          $inc: {
+            total_referral_point:
+              -referral_data?.referral?.redeem_required_point,
+          },
+        }
+      );
+      return { success: true, message: status_change?.message };
     } catch (error) {
       logger.error(`Error while verifying referral: ${error}`);
       return throwError(
@@ -1086,80 +1082,43 @@ class PaymentService {
     }
   };
 
-  referralStatusChange = async (payload) => {
+  referralStatusChange = async (payload, user) => {
     try {
-      const {
-        agency_id,
-        user_id,
-        amount,
-        subscription_id,
-        razorpay_order_id,
-        total_referral_point,
-        currency,
-      } = payload;
-      if (payload?.agency_id && !payload?.user_id) {
-        await Authentication.findOneAndUpdate(
-          { reference_id: agency_id },
-          {
-            status: "confirmed",
-            subscribe_date: moment().format("YYYY-MM-DD").toString(),
-          }
-        );
-        await PaymentHistory.create({
-          agency_id,
-          amount: total_referral_point,
-          payment_mode: "referral",
-        });
-
-        await SheetManagement.findOneAndUpdate(
-          { agency_id },
-          {
-            agency_id,
-            total_sheets: 1,
-            occupied_sheets: [],
-          },
-          { upsert: true }
-        );
-        return {
-          success: true,
-          message: returnMessage("payment", "paymentCompleted"),
-        };
-      } else if (payload?.agency_id && payload?.user_id) {
-        const [agency_details, user_details, sheets] = await Promise.all([
-          Authentication.findOne({
-            reference_id: agency_id,
-          }).lean(),
+      const { user_id, redeem_required_point } = payload;
+      const agency_details = user;
+      if (payload?.user_id) {
+        const [user_details, sheets] = await Promise.all([
           Authentication.findOne({
             reference_id: payload?.user_id,
           })
             .populate("role", "name")
             .lean(),
-          SheetManagement.findOne({ agency_id }).lean(),
+          SheetManagement.findOne({ agency_id: user?.reference_id }).lean(),
         ]);
-        // const agency_details = await Authentication.findOne({
-        //   reference_id: agency_id,
-        // }).lean();
-        // const user_details = await Authentication.findOne({
-        //   reference_id: payload?.user_id,
-        // })
-        //   .populate("role", "name")
-        //   .lean();
-        // const sheets = await SheetManagement.findOne({ agency_id }).lean();
+
         if (!sheets) return { success: false };
 
         if (user_details?.role?.name === "client") {
           let link = `${
             process.env.REACT_APP_URL
           }/client/verify?name=${encodeURIComponent(
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(agency_details?.last_name)
           )}&email=${encodeURIComponent(
             user_details?.email
           )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
 
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_mail = invitationEmail(
             link,
-            user_details?.first_name + " " + user_details?.last_name,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
             invitation_text
           );
 
@@ -1175,15 +1134,23 @@ class PaymentService {
           );
         } else if (user_details?.role?.name === "team_agency") {
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}&token=${user_details?.invitation_token}&redirect=false`;
 
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
           const invitation_template = invitationEmail(
             link,
-            user_details?.first_name + " " + user_details?.last_name,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
             invitation_text
           );
 
@@ -1204,15 +1171,23 @@ class PaymentService {
           ).lean();
 
           const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
-            agency_details?.first_name + " " + agency_details?.last_name
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
           }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
             user_details?.email
           )}&clientId=${team_client_detail.client_id}`;
-          const invitation_text = `${agency_details?.first_name} ${agency_details?.last_name} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
 
           const invitation_template = invitationEmail(
             link,
-            user_details?.first_name + " " + user_details?.last_name,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
             invitation_text
           );
 
@@ -1232,7 +1207,7 @@ class PaymentService {
         await PaymentHistory.create({
           agency_id,
           user_id: user_details?.reference_id,
-          amount: total_referral_point,
+          amount: redeem_required_point,
           role: user_details?.role?.name,
           payment_mode: "referral",
         });
@@ -1250,11 +1225,7 @@ class PaymentService {
           occupied_sheets,
         };
         await SheetManagement.findByIdAndUpdate(sheets._id, sheet_obj);
-        // await Team_Client.updateOne(
-        //   { _id: user_id, "agency_ids.agency_id": agency_id },
-        //   { $set: { "agency_ids.$.status": "confirmed" } },
-        //   { new: true }
-        // );
+
         await this.updateSubscription(agency_id, sheet_obj.total_sheets);
 
         let message;
@@ -1272,6 +1243,200 @@ class PaymentService {
     } catch (error) {
       console.log(JSON.stringify(error));
 
+      logger.error(`Error while changing status after the payment: ${error}`);
+      return false;
+    }
+  };
+
+  // this function is used to get the referral and available sheets
+  paymentScopes = async (agency) => {
+    try {
+      const [plan, subscription_detail, config, sheet] = await Promise.all([
+        SubscriptionPlan.findOne({ active: true }).lean(),
+        this.subscripionDetail(agency?.subscription_id),
+        Configuration.findOne().lean(),
+        SheetManagement.findOne({ agency_id: agency?.reference_id }),
+      ]);
+      const payable_amount = (
+        this.customPaymentCalculator(
+          subscription_detail?.current_start,
+          subscription_detail?.current_end,
+          plan
+        ) / 100
+      ).toFixed(2);
+
+      const redirect_payment_page =
+        agency?.total_referral_point >= config?.referral?.redeem_required_point
+          ? true
+          : false;
+
+      return {
+        payable_amount,
+        referral_point: agency?.total_referral_point,
+        redeem_required_point: config?.referral?.redeem_required_point,
+        redirect_payment_page,
+        available_sheets:
+          sheet?.total_sheets - sheet?.occupied_sheets?.length - 1,
+      };
+    } catch (error) {
+      logger.error(`Error while fetching referral statistics: ${error}`);
+      return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  // this function is used for to add the team member or the client without redeeming the points and currency
+  withoutReferralPay = async (payload, user) => {
+    try {
+      const { user_id } = payload;
+      const agency_details = user;
+      if (payload?.user_id) {
+        const [user_details, sheets] = await Promise.all([
+          Authentication.findOne({
+            reference_id: payload?.user_id,
+          })
+            .populate("role", "name")
+            .lean(),
+          SheetManagement.findOne({ agency_id: user?.reference_id }).lean(),
+        ]);
+
+        if (
+          !sheets ||
+          !(sheets.total_sheets - sheets.occupied_sheets.length - 1 > 0)
+        )
+          return { success: false };
+
+        if (user_details?.role?.name === "client") {
+          let link = `${
+            process.env.REACT_APP_URL
+          }/client/verify?name=${encodeURIComponent(
+            capitalizeFirstLetter(agency_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(agency_details?.last_name)
+          )}&email=${encodeURIComponent(
+            user_details?.email
+          )}&agency=${encodeURIComponent(agency_details?.reference_id)}`;
+
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_mail = invitationEmail(
+            link,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
+            invitation_text
+          );
+
+          await sendEmail({
+            email: user_details?.email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_mail,
+          });
+          await Client.updateOne(
+            { _id: user_id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "pending" } },
+            { new: true }
+          );
+        } else if (user_details?.role?.name === "team_agency") {
+          const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
+          }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
+            user_details?.email
+          )}&token=${user_details?.invitation_token}&redirect=false`;
+
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
+          const invitation_template = invitationEmail(
+            link,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
+            invitation_text
+          );
+
+          await Authentication.findByIdAndUpdate(
+            user_details?._id,
+            { status: "confirm_pending" },
+            { new: true }
+          );
+
+          await sendEmail({
+            email: user_details?.email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_template,
+          });
+        } else if (user_details?.role?.name === "team_client") {
+          const team_client_detail = await Team_Client.findById(
+            user_details.reference_id
+          ).lean();
+
+          const link = `${process.env.REACT_APP_URL}/team/verify?agency=${
+            capitalizeFirstLetter(agency_details?.first_name) +
+            " " +
+            capitalizeFirstLetter(agency_details?.last_name)
+          }&agencyId=${agency_details?.reference_id}&email=${encodeURIComponent(
+            user_details?.email
+          )}&clientId=${team_client_detail.client_id}`;
+          const invitation_text = `${capitalizeFirstLetter(
+            agency_details?.first_name
+          )} ${capitalizeFirstLetter(
+            agency_details?.last_name
+          )} has sent an invitation to you. please click on below button to join SyncUpp.`;
+
+          const invitation_template = invitationEmail(
+            link,
+            capitalizeFirstLetter(user_details?.first_name) +
+              " " +
+              capitalizeFirstLetter(user_details?.last_name),
+            invitation_text
+          );
+
+          await sendEmail({
+            email: user_details?.email,
+            subject: returnMessage("emailTemplate", "invitation"),
+            message: invitation_template,
+          });
+
+          await Team_Client.updateOne(
+            { _id: user_id, "agency_ids.agency_id": agency_id },
+            { $set: { "agency_ids.$.status": "pending" } },
+            { new: true }
+          );
+        }
+
+        const occupied_sheets = [
+          ...sheets.occupied_sheets,
+          {
+            user_id,
+            role: user_details?.role?.name,
+          },
+        ];
+
+        await SheetManagement.findByIdAndUpdate(sheets._id, {
+          occupied_sheets,
+        });
+
+        let message;
+        if (user_details?.role?.name === "client") {
+          message = returnMessage("agency", "clientCreated");
+        } else if (user_details?.role?.name === "team_agency") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        } else if (user_details?.role?.name === "team_client") {
+          message = returnMessage("teamMember", "teamMemberCreated");
+        }
+
+        return { success: true, message };
+      }
+      return { success: false };
+    } catch (error) {
+      console.log(JSON.stringify(error));
       logger.error(`Error while changing status after the payment: ${error}`);
       return false;
     }
