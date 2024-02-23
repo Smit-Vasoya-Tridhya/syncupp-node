@@ -22,38 +22,38 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
       .lean();
     if (!user) return throwError(returnMessage("auth", "unAuthorized"), 401);
 
-    const verify_date = await Competition_Point.findOne({
-      agency_id: user.reference_id,
-    });
-    const currentDate = new Date().toISOString().split("T")[0];
-    const verifyDate = verify_date.login_date.toISOString().split("T")[0];
+    // const verify_date = await Competition_Point.findOne({
+    //   agency_id: user.reference_id,
+    // });
+    // const currentDate = new Date().toISOString().split("T")[0];
+    // const verifyDate = verify_date.login_date.toISOString().split("T")[0];
 
-    if (!(verifyDate === currentDate)) {
-      // If the condition is true, execute the following code
-      if (user?.role?.name === "team_agency" || user?.role?.name === "agency") {
-        const referral_data = await Configuration.findOne().lean();
+    // if (!(verifyDate === currentDate)) {
+    //   // If the condition is true, execute the following code
+    //   if (user?.role?.name === "team_agency" || user?.role?.name === "agency") {
+    //     const referral_data = await Configuration.findOne().lean();
 
-        await Competition_Point.create({
-          user_id: user.reference_id,
-          agency_id: user.reference_id,
-          point: +referral_data.competition.successful_login.toString(),
-          type: "login",
-          role: user?.role?.name,
-          login_date: Date.now(),
-        });
+    //     await Competition_Point.create({
+    //       user_id: user.reference_id,
+    //       agency_id: user.reference_id,
+    //       point: +referral_data.competition.successful_login.toString(),
+    //       type: "login",
+    //       role: user?.role?.name,
+    //       login_date: Date.now(),
+    //     });
 
-        await Authentication.findOneAndUpdate(
-          { reference_id: user.reference_id },
-          {
-            $inc: {
-              total_referral_point:
-                referral_data?.competition?.successful_login,
-            },
-          },
-          { new: true }
-        );
-      }
-    }
+    //     await Authentication.findOneAndUpdate(
+    //       { reference_id: user.reference_id },
+    //       {
+    //         $inc: {
+    //           total_referral_point:
+    //             referral_data?.competition?.successful_login,
+    //         },
+    //       },
+    //       { new: true }
+    //     );
+    //   }
+    // }
 
     const req_paths = ["/create-subscription", "/order"];
     if (
