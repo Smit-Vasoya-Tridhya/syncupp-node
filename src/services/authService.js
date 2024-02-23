@@ -28,6 +28,7 @@ const ReferralHistory = require("../models/referralHistorySchema");
 const Configuration = require("../models/configurationSchema");
 const Affiliate = require("../models/affiliateSchema");
 const Affiliate_Referral = require("../models/affiliateReferralSchema");
+const CompetitionPoint = require("../models/competitionPointSchema");
 class AuthService {
   tokenGenerator = (payload) => {
     try {
@@ -318,11 +319,79 @@ class AuthService {
             return referral_registered;
           }
         }
+        const verify_date = await CompetitionPoint.findOne({
+          agency_id: agency_enroll.reference_id,
+        });
+        const currentDate = new Date().toISOString().split("T")[0];
+        const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
+
+        if (!(verifyDate === currentDate)) {
+          if (
+            agency_enroll?.role?.name === "team_agency" ||
+            agency_enroll?.role?.name === "agency"
+          ) {
+            const referral_data = await Configuration.findOne().lean();
+
+            await CompetitionPoint.create({
+              user_id: agency_enroll.reference_id,
+              agency_id: agency_enroll.reference_id,
+              point: +referral_data.competition.successful_login.toString(),
+              type: "login",
+              role: agency_enroll?.role?.name,
+              login_date: Date.now(),
+            });
+
+            await Authentication.findOneAndUpdate(
+              { reference_id: agency_enroll.reference_id },
+              {
+                $inc: {
+                  total_referral_point:
+                    referral_data?.competition?.successful_login,
+                },
+              },
+              { new: true }
+            );
+          }
+        }
 
         return this.tokenGenerator({
           ...agency_enroll,
         });
       } else {
+        const verify_date = await CompetitionPoint.findOne({
+          agency_id: existing_agency.reference_id,
+        });
+        const currentDate = new Date().toISOString().split("T")[0];
+        const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
+
+        if (!(verifyDate === currentDate)) {
+          if (
+            existing_agency?.role?.name === "team_agency" ||
+            existing_agency?.role?.name === "agency"
+          ) {
+            const referral_data = await Configuration.findOne().lean();
+
+            await CompetitionPoint.create({
+              user_id: existing_agency.reference_id,
+              agency_id: existing_agency.reference_id,
+              point: +referral_data.competition.successful_login.toString(),
+              type: "login",
+              role: existing_agency?.role?.name,
+              login_date: Date.now(),
+            });
+
+            await Authentication.findOneAndUpdate(
+              { reference_id: existing_agency.reference_id },
+              {
+                $inc: {
+                  total_referral_point:
+                    referral_data?.competition?.successful_login,
+                },
+              },
+              { new: true }
+            );
+          }
+        }
         return this.tokenGenerator({
           ...existing_agency,
         });
@@ -393,11 +462,78 @@ class AuthService {
             return referral_registered;
           }
         }
+        const verify_date = await CompetitionPoint.findOne({
+          agency_id: agency_enroll.reference_id,
+        });
+        const currentDate = new Date().toISOString().split("T")[0];
+        const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
 
+        if (!(verifyDate === currentDate)) {
+          if (
+            agency_enroll?.role?.name === "team_agency" ||
+            agency_enroll?.role?.name === "agency"
+          ) {
+            const referral_data = await Configuration.findOne().lean();
+
+            await CompetitionPoint.create({
+              user_id: agency_enroll.reference_id,
+              agency_id: agency_enroll.reference_id,
+              point: +referral_data.competition.successful_login.toString(),
+              type: "login",
+              role: agency_enroll?.role?.name,
+              login_date: Date.now(),
+            });
+
+            await Authentication.findOneAndUpdate(
+              { reference_id: agency_enroll.reference_id },
+              {
+                $inc: {
+                  total_referral_point:
+                    referral_data?.competition?.successful_login,
+                },
+              },
+              { new: true }
+            );
+          }
+        }
         return this.tokenGenerator({
           ...agency_enroll,
         });
       } else {
+        const verify_date = await CompetitionPoint.findOne({
+          agency_id: existing_agency.reference_id,
+        });
+        const currentDate = new Date().toISOString().split("T")[0];
+        const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
+
+        if (!(verifyDate === currentDate)) {
+          if (
+            existing_agency?.role?.name === "team_agency" ||
+            existing_agency?.role?.name === "agency"
+          ) {
+            const referral_data = await Configuration.findOne().lean();
+
+            await CompetitionPoint.create({
+              user_id: agency_enroll.reference_id,
+              agency_id: existing_agency.reference_id,
+              point: +referral_data.competition.successful_login.toString(),
+              type: "login",
+              role: existing_agency?.role?.name,
+              login_date: Date.now(),
+            });
+
+            await Authentication.findOneAndUpdate(
+              { reference_id: existing_agency.reference_id },
+              {
+                $inc: {
+                  total_referral_point:
+                    referral_data?.competition?.successful_login,
+                },
+              },
+              { new: true }
+            );
+          }
+        }
         return this.tokenGenerator({
           ...existing_agency,
         });
@@ -456,6 +592,40 @@ class AuthService {
       delete existing_Data?.is_facebook_signup;
       delete existing_Data?.is_google_signup;
       delete existing_Data?.password;
+      const verify_date = await CompetitionPoint.findOne({
+        agency_id: existing_Data.reference_id,
+      });
+      const currentDate = new Date().toISOString().split("T")[0];
+      const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
+
+      if (!(verifyDate === currentDate)) {
+        if (
+          existing_Data?.role?.name === "team_agency" ||
+          existing_Data?.role?.name === "agency"
+        ) {
+          const referral_data = await Configuration.findOne().lean();
+
+          await CompetitionPoint.create({
+            user_id: existing_Data.reference_id,
+            agency_id: existing_Data.reference_id,
+            point: +referral_data.competition.successful_login.toString(),
+            type: "login",
+            role: existing_Data?.role?.name,
+            login_date: Date.now(),
+          });
+
+          await Authentication.findOneAndUpdate(
+            { reference_id: existing_Data.reference_id },
+            {
+              $inc: {
+                total_referral_point:
+                  referral_data?.competition?.successful_login,
+              },
+            },
+            { new: true }
+          );
+        }
+      }
       return this.tokenGenerator({
         ...existing_Data,
         rememberMe: payload?.rememberMe,

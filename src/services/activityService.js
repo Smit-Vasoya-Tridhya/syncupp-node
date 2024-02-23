@@ -17,6 +17,8 @@ const Team_Agency = require("../models/teamAgencySchema");
 const statusCode = require("../messages/statusCodes.json");
 const sendEmail = require("../helpers/sendEmail");
 const Authentication = require("../models/authenticationSchema");
+const Configuration = require("../models/configurationSchema");
+const Competition_Point = require("../models/competitionPointSchema");
 class ActivityService {
   createTask = async (payload, user) => {
     try {
@@ -922,6 +924,106 @@ class ActivityService {
         },
         { new: true, useFindAndModify: false }
       );
+      const current_activity = await Activity.findById(id).lean();
+      const current_status = current_activity?.activity_status;
+
+      if (current_status.toString() !== status._id.toString()) {
+        const referral_data = await Configuration.findOne().lean();
+
+        if (
+          current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "completed" }).lean()
+            )._id.toString() &&
+          (status.name === "pending" ||
+            status.name === "in_progress" ||
+            status.name === "overdue")
+        ) {
+          await Activity.findOneAndUpdate(
+            { _id: id },
+            {
+              $inc: {
+                competition_point:
+                  -referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          await Authentication.findOneAndUpdate(
+            { reference_id: current_activity.agency_id },
+            {
+              $inc: {
+                total_referral_point:
+                  -referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          const assign_role = await Authentication.findOne({
+            reference_id: current_activity.assign_to,
+          }).populate("role", "name");
+
+          await Competition_Point.create({
+            user_id: current_activity.assign_to,
+            agency_id: current_activity.agency_id,
+            point:
+              -referral_data.competition.successful_task_competition.toString(),
+            type: "task",
+            role: assign_role?.role?.name,
+          });
+        }
+
+        if (
+          (current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "pending" }).lean()
+            )._id.toString() &&
+            status.name === "completed") ||
+          (current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "overdue" }).lean()
+            )._id.toString() &&
+            status.name === "completed") ||
+          (current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "in_progress" }).lean()
+            )._id.toString() &&
+            status.name === "completed")
+        ) {
+          await Activity.findOneAndUpdate(
+            { _id: id },
+            {
+              $inc: {
+                competition_point:
+                  referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          await Authentication.findOneAndUpdate(
+            { reference_id: current_activity.agency_id },
+            {
+              $inc: {
+                total_referral_point:
+                  referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          const assign_role = await Authentication.findOne({
+            reference_id: current_activity.assign_to,
+          }).populate("role", "name");
+
+          await Competition_Point.create({
+            user_id: current_activity.assign_to,
+            agency_id: current_activity.agency_id,
+            point:
+              +referral_data.competition.successful_task_competition.toString(),
+            type: "task",
+            role: assign_role?.role?.name,
+          });
+        }
+      }
 
       const pipeline = [
         {
@@ -1042,6 +1144,8 @@ class ActivityService {
           name: "cancel",
         }).lean();
       }
+      let current_activity = await Activity.findById(id).lean();
+      let current_status = current_activity.activity_status;
 
       const updateTasks = await Activity.findByIdAndUpdate(
         {
@@ -1052,6 +1156,107 @@ class ActivityService {
         },
         { new: true, useFindAndModify: false }
       );
+
+      if (current_status.toString() !== update_status._id.toString()) {
+        const referral_data = await Configuration.findOne().lean();
+
+        // Decrement completion points if transitioning from completed to pending, in_progress, or overdue
+        if (
+          current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "completed" }).lean()
+            )._id.toString() &&
+          (update_status.name === "pending" ||
+            update_status.name === "in_progress" ||
+            update_status.name === "overdue")
+        ) {
+          await Activity.findOneAndUpdate(
+            { _id: id },
+            {
+              $inc: {
+                competition_point:
+                  -referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          await Authentication.findOneAndUpdate(
+            { reference_id: current_activity.agency_id },
+            {
+              $inc: {
+                total_referral_point:
+                  -referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          const assign_role = await Authentication.findOne({
+            reference_id: current_activity.assign_to,
+          }).populate("role", "name");
+
+          await Competition_Point.create({
+            user_id: current_activity.assign_to,
+            agency_id: current_activity.agency_id,
+            point:
+              -referral_data.competition.successful_task_competition.toString(),
+            type: "task",
+            role: assign_role?.role?.name,
+          });
+        }
+
+        // Increment completion points if transitioning from pending or overdue to completed
+        if (
+          (current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "pending" }).lean()
+            )._id.toString() &&
+            update_status.name === "completed") ||
+          (current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "overdue" }).lean()
+            )._id.toString() &&
+            update_status.name === "completed") ||
+          (current_status.toString() ===
+            (
+              await ActivityStatus.findOne({ name: "in_progress" }).lean()
+            )._id.toString() &&
+            update_status.name === "completed")
+        ) {
+          await Activity.findOneAndUpdate(
+            { _id: id },
+            {
+              $inc: {
+                competition_point:
+                  referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          await Authentication.findOneAndUpdate(
+            { reference_id: current_activity.agency_id },
+            {
+              $inc: {
+                total_referral_point:
+                  referral_data?.competition?.successful_task_competition,
+              },
+            },
+            { new: true }
+          );
+          const assign_role = await Authentication.findOne({
+            reference_id: current_activity.assign_to,
+          }).populate("role", "name");
+
+          await Competition_Point.create({
+            user_id: current_activity.assign_to,
+            agency_id: current_activity.agency_id,
+            point:
+              +referral_data.competition.successful_task_competition.toString(),
+            type: "task",
+            role: assign_role?.role?.name,
+          });
+        }
+      }
+
       return updateTasks;
     } catch (error) {
       logger.error(`Error while Updating status, ${error}`);
