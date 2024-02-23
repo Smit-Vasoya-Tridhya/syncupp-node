@@ -1067,7 +1067,6 @@ class ActivityService {
 
       validateRequestFields(payload, [
         "title",
-        "agenda",
         "client_id",
         "due_date",
         "assign_to",
@@ -1457,7 +1456,6 @@ class ActivityService {
       }
       validateRequestFields(payload, [
         "title",
-        "agenda",
         "client_id",
         "meeting_start_time",
         "meeting_end_time",
@@ -1646,14 +1644,10 @@ class ActivityService {
         title,
         client_id,
         internal_info,
-        meeting_start_time: moment(meeting_start_time, "HH:mm a").format(
-          "HH:mm a"
-        ),
-        meeting_end_time: moment(meeting_end_time, "HH:mm a").format("HH:mm a"),
+        meeting_start_time: start_time,
+        meeting_end_time: end_time,
         due_date: start_date,
-        recurring_end_date: moment
-          .utc(payload?.recurring_end_date)
-          .endOf("day"),
+        recurring_end_date: recurring_date,
       });
 
       // const activityData = await this.getActivity(activity_id);
@@ -1803,7 +1797,10 @@ class ActivityService {
             ],
           };
         }
-        if (payload?.filter?.activity_type) {
+        if (
+          payload?.filter?.activity_type &&
+          payload?.filter?.activity_type !== ""
+        ) {
           const activity_type = await ActivityType.findOne({
             name: payload?.filter?.activity_type,
           })
@@ -1861,10 +1858,10 @@ class ActivityService {
           client_id: user?.reference_id,
           agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
         };
-        if (payload?.team_id) {
+        if (payload?.client_team_id) {
           match_obj["$match"] = {
             ...match_obj["$match"],
-            assign_to: new mongoose.Types.ObjectId(payload?.team_id),
+            client_id: new mongoose.Types.ObjectId(payload?.client_team_id),
           };
         }
       } else if (user?.role?.name === "team_client") {
