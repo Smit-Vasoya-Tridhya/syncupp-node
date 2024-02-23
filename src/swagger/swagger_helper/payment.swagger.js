@@ -205,6 +205,29 @@ const getSubscription = {
   },
 };
 
+const paymentScopes = {
+  tags: ["Payment - CRM Panel"],
+  description: "",
+  summary: "Get Payment scope details for the Agency",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const paymentRoute = {
   "/api/v1/payment/history": {
     post: paymentHistory,
@@ -220,6 +243,9 @@ const paymentRoute = {
   },
   "/api/v1/payment/get-subscription": {
     get: getSubscription,
+  },
+  "/api/v1/payment/payment-scopes": {
+    get: paymentScopes,
   },
 };
 
