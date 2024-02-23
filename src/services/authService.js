@@ -323,7 +323,9 @@ class AuthService {
           agency_id: agency_enroll.reference_id,
         });
         const currentDate = new Date().toISOString().split("T")[0];
-        const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
+        const verifyDate = verify_date?.login_date
+          ?.toISOString()
+          ?.split("T")[0];
 
         if (!(verifyDate === currentDate)) {
           if (
@@ -361,8 +363,10 @@ class AuthService {
         const verify_date = await CompetitionPoint.findOne({
           agency_id: existing_agency.reference_id,
         });
-        const currentDate = new Date().toISOString().split("T")[0];
-        const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
+        const currentDate = new Date()?.toISOString()?.split("T")[0];
+        const verifyDate = verify_date?.login_date
+          ?.toISOString()
+          ?.split("T")[0];
 
         if (!(verifyDate === currentDate)) {
           if (
@@ -374,7 +378,7 @@ class AuthService {
             await CompetitionPoint.create({
               user_id: existing_agency.reference_id,
               agency_id: existing_agency.reference_id,
-              point: +referral_data.competition.successful_login.toString(),
+              point: +referral_data?.competition?.successful_login?.toString(),
               type: "login",
               role: existing_agency?.role?.name,
               login_date: Date.now(),
@@ -595,8 +599,8 @@ class AuthService {
       const verify_date = await CompetitionPoint.findOne({
         agency_id: existing_Data.reference_id,
       });
-      const currentDate = new Date().toISOString().split("T")[0];
-      const verifyDate = verify_date?.login_date?.toISOString().split("T")[0];
+      const currentDate = new Date()?.toISOString()?.split("T")[0];
+      const verifyDate = verify_date?.login_date?.toISOString()?.split("T")[0];
 
       if (!(verifyDate === currentDate)) {
         if (
@@ -608,7 +612,7 @@ class AuthService {
           await CompetitionPoint.create({
             user_id: existing_Data.reference_id,
             agency_id: existing_Data.reference_id,
-            point: +referral_data.competition.successful_login.toString(),
+            point: +referral_data?.competition?.successful_login?.toString(),
             type: "login",
             role: existing_Data?.role?.name,
             login_date: Date.now(),

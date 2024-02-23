@@ -26,7 +26,7 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
     //   agency_id: user.reference_id,
     // });
     // const currentDate = new Date().toISOString().split("T")[0];
-    // const verifyDate = verify_date.login_date.toISOString().split("T")[0];
+    // const verifyDate = verify_date?.login_date?.toISOString()?.split("T")[0];
 
     // if (!(verifyDate === currentDate)) {
     //   // If the condition is true, execute the following code
