@@ -28,7 +28,7 @@ class NotificationService {
         activity_type,
       } = payload;
 
-      let message = `A new call meeting has been scheduled - "${title}" by ${assigned_by_name}.`;
+      let message = `A new call meeting has been scheduled by ${assigned_by_name}.`;
 
       const newNotification = await Notification.create({
         client: {
@@ -47,7 +47,9 @@ class NotificationService {
         },
         message: message,
       });
-      eventEmitter("NOTIFICATION", newNotification, [client_id, assign_to]);
+      console.log("first");
+      eventEmitter("NOTIFICATION", newNotification, client_id);
+      eventEmitter("NOTIFICATION", newNotification, assign_to);
       return;
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
@@ -68,15 +70,31 @@ class NotificationService {
       const updateObject = {};
       updateObject[`${search_key}.reference_id`] = user.reference_id._id;
 
-      const notifications = await Notification.find(updateObject, {
-        _id: 1,
-        message: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        [search_key]: 1,
-      })
-        .skip(parseInt(skip))
-        .limit(parseInt(limit));
+      const aggregationPipeline = [
+        {
+          $match: {
+            [`${search_key}.reference_id`]: user.reference_id._id,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            message: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            [search_key]: 1,
+            data: 1,
+          },
+        },
+        {
+          $skip: parseInt(skip),
+        },
+        {
+          $limit: parseInt(limit),
+        },
+      ];
+
+      const notifications = await Notification.aggregate(aggregationPipeline);
 
       return notifications;
     } catch (error) {
@@ -99,21 +117,26 @@ class NotificationService {
       updateObject[`${search_key}.reference_id`] = user.reference_id._id;
       updateObject[`${search_key}.is_read`] = true;
 
-      const updatedNotification = await Notification.findOneAndUpdate(
-        {
-          _id: notification_id,
-          [`${search_key}.reference_id`]: user.reference_id._id,
-        },
-        updateObject,
-        { new: true, useFindAndModify: false }
-      );
-
-      if (!updatedNotification) {
-        // Notification not found
-        // Handle accordingly, throw an error or return a response
+      if (notification_id === "all") {
+        await Notification.updateMany(
+          {
+            [`${search_key}.reference_id`]: user.reference_id._id,
+          },
+          updateObject,
+          { new: true }
+        );
+      } else {
+        await Notification.findOneAndUpdate(
+          {
+            _id: notification_id,
+            [`${search_key}.reference_id`]: user.reference_id._id,
+          },
+          updateObject,
+          { new: true, useFindAndModify: false }
+        );
       }
 
-      return updatedNotification;
+      return;
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
       return throwError(error?.message, error?.statusCode);

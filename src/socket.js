@@ -25,12 +25,6 @@ exports.socket_connection = (http_server) => {
       socket.join(obj.id);
     });
 
-    // New event handler for emitting notifications
-    socket.on("NOTIFICATION", (notificationPayload) => {
-      logger.info(`Emitting Notification: ${notificationPayload}`);
-      io.to(socket.id).emit("NOTIFICATION", notificationPayload);
-    });
-
     // When Data delivered
     socket.on("CONFIRMATION", (payload) => {
       logger.info(`Event Confirmation : ${payload}`);

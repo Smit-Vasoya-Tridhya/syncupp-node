@@ -160,7 +160,8 @@
     "invitation": "Join to SyncUpp",
     "welcomeMailSubject": "Welcome to Syncupp.",
     "newActivityMeeting": "New meeting scheduled",
-    "activityUpdated": "Activity updated"
+    "activityUpdated": "Activity updated",
+    "meetingCancelled": "Activity cancelled"
   },
 
   "client": {

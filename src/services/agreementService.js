@@ -166,10 +166,13 @@ class AgreementService {
   getAllAgreement = async (searchObj, user_id) => {
     try {
       const { client_id } = searchObj;
+
+      const client = await Authentication.findOne({ reference_id: client_id });
+
       const queryObj = {
         is_deleted: false,
         agency_id: user_id,
-        ...(client_id && { receiver: new ObjectId(client_id) }),
+        ...(client_id && { receiver: new ObjectId(client._id) }),
       };
 
       if (searchObj.search && searchObj.search !== "") {
