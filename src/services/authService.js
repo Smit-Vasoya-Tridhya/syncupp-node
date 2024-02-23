@@ -602,34 +602,34 @@ class AuthService {
       const currentDate = new Date()?.toISOString()?.split("T")[0];
       const verifyDate = verify_date?.login_date?.toISOString()?.split("T")[0];
 
-      if (!(verifyDate === currentDate)) {
-        if (
-          existing_Data?.role?.name === "team_agency" ||
-          existing_Data?.role?.name === "agency"
-        ) {
-          const referral_data = await Configuration.findOne().lean();
+      // if (!(verifyDate === currentDate)) {
+      if (
+        existing_Data?.role?.name === "team_agency" ||
+        existing_Data?.role?.name === "agency"
+      ) {
+        const referral_data = await Configuration.findOne().lean();
 
-          await CompetitionPoint.create({
-            user_id: existing_Data.reference_id,
-            agency_id: existing_Data.reference_id,
-            point: +referral_data?.competition?.successful_login?.toString(),
-            type: "login",
-            role: existing_Data?.role?.name,
-            login_date: Date.now(),
-          });
+        await CompetitionPoint.create({
+          user_id: existing_Data.reference_id,
+          agency_id: existing_Data.reference_id,
+          point: +referral_data?.competition?.successful_login?.toString(),
+          type: "login",
+          role: existing_Data?.role?.name,
+          login_date: Date.now(),
+        });
 
-          await Authentication.findOneAndUpdate(
-            { reference_id: existing_Data.reference_id },
-            {
-              $inc: {
-                total_referral_point:
-                  referral_data?.competition?.successful_login,
-              },
+        await Authentication.findOneAndUpdate(
+          { reference_id: existing_Data.reference_id },
+          {
+            $inc: {
+              total_referral_point:
+                referral_data?.competition?.successful_login,
             },
-            { new: true }
-          );
-        }
+          },
+          { new: true }
+        );
       }
+      // }
       return this.tokenGenerator({
         ...existing_Data,
         rememberMe: payload?.rememberMe,
