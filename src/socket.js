@@ -1,8 +1,6 @@
 let io;
 const { Server } = require("socket.io");
-const logger = require("./logger/logger");
-
-let activeUsers = [];
+const logger = require("./logger");
 
 exports.socket_connection = (http_server) => {
   io = new Server(http_server, {
@@ -16,32 +14,40 @@ exports.socket_connection = (http_server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log(`Socket connected ${socket.id}`);
+    logger.info(`Socket connected ${socket.id}`);
     socket.on("disconnect", () => {
-      console.log(`Socket ${socket.id} has disconnected.`);
+      logger.info(`Socket ${socket.id} has disconnected.`);
     });
-    socket.on("new-user-add", (user_id) => {
-      // if user is not added previously
-      if (!activeUsers.some((user) => user.userId === user_id)) {
-        activeUsers.push({ userId: user_id, socketId: socket.id });
-        console.log("New User Connected", activeUsers);
-      }
-      // send all active users to new user
-      io.emit("get-users", activeUsers);
+
+    // For user joined
+    socket.on("ROOM", (obj) => {
+      logger.info(obj.id, 15);
+      socket.join(obj.id);
+    });
+
+    // New event handler for emitting notifications
+    socket.on("NOTIFICATION", (notificationPayload) => {
+      logger.info(`Emitting Notification: ${notificationPayload}`);
+      io.to(socket.id).emit("NOTIFICATION", notificationPayload);
+    });
+
+    // When Data delivered
+    socket.on("CONFIRMATION", (payload) => {
+      logger.info(`Event Confirmation : ${payload}`);
     });
   });
 };
 
-exports.sendNotification = (userId, notification) => {
-  const user = activeUsers.find((user) => user.userId === userId);
-  console.log("Sending from socket to :", userId);
+exports.eventEmitter = (event_name, payload, user_id) => {
   try {
-    if (user) {
-      console.log(user);
-      io.to(user.socketId).emit("notification", notification);
-      console.log("Notification sent");
+    if (Array.isArray(user_id)) {
+      user_id.forEach((user_id) => {
+        io.to(user_id.toString()).emit(event_name, payload);
+      });
+    } else {
+      io.to(user_id.toString()).emit(event_name, payload);
     }
   } catch (error) {
-    console.log("Error while sendNotification socket error", error);
+    logger.info("Error while emitting socket error", error);
   }
 };

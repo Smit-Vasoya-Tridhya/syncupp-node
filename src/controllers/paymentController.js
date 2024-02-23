@@ -97,9 +97,14 @@ exports.getSubscriptionDetail = catchAsyncError(async (req, res, next) => {
 });
 
 // payment using referral point
-exports.verifyReferral = catchAsyncError(async (req, res, next) => {
-  const verified = await paymentService.referralPay(req.user, req.body);
+exports.referralPay = catchAsyncError(async (req, res, next) => {
+  const verified = await paymentService.referralPay(req.body, req.user);
   let message = verified?.message;
   if (!verified?.success) message = returnMessage("payment", "paymentFailed");
   sendResponse(res, true, message, verified, 200);
+});
+
+exports.paymentScopes = catchAsyncError(async (req, res, next) => {
+  const paymentScopes = await paymentService.paymentScopes(req.user);
+  sendResponse(res, true, undefined, paymentScopes, 200);
 });

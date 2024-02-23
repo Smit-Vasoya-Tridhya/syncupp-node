@@ -13,7 +13,7 @@ class referralClass {
         Authentication.findById(user._id).lean(),
       ]);
       const referralAvailable =
-        user_data.total_referral_point >= config.referral.reedem_requred_point;
+        user_data.total_referral_point >= config.referral.redeem_required_point;
 
       return { referralAvailable };
     } catch (error) {

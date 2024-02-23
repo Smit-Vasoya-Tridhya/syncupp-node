@@ -5,7 +5,6 @@ const { protect } = require("../middlewares/authMiddleware");
 paymentRoute.post("/plan-create", paymentConrtoller.createPlan);
 paymentRoute.post("/webhook", paymentConrtoller.webHookHandler);
 paymentRoute.post("/verify-signature", paymentConrtoller.verifySignature);
-paymentRoute.post("/verify-referral", paymentConrtoller.verifyReferral);
 
 paymentRoute.use(protect);
 paymentRoute.post("/order", paymentConrtoller.singleTimePayment);
@@ -15,5 +14,7 @@ paymentRoute.post("/sheets", paymentConrtoller.sheetsListing);
 paymentRoute.post("/remove-user", paymentConrtoller.removeUser);
 paymentRoute.get("/cancel-subscription", paymentConrtoller.cancelSubscription);
 paymentRoute.get("/get-subscription", paymentConrtoller.getSubscriptionDetail);
+paymentRoute.get("/payment-scopes", paymentConrtoller.paymentScopes);
+paymentRoute.post("/referral-payout", paymentConrtoller.referralPay);
 
 module.exports = paymentRoute;
