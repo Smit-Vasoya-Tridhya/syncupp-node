@@ -602,9 +602,7 @@ class PaymentService {
   // fetch subscription by id
   subscripionDetail = async (subscription_id) => {
     try {
-      return await Promise.resolve(
-        razorpay.subscriptions.fetch(subscription_id)
-      );
+      return await razorpay.subscriptions.fetch(subscription_id);
     } catch (error) {
       console.log(JSON.stringify(error));
 
