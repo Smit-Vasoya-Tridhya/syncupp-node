@@ -9,7 +9,6 @@ const {
   getKeywordType,
   validateRequestFields,
   taskTemplate,
-  activityTemplate,
 } = require("../utils/utils");
 const moment = require("moment");
 const { default: mongoose } = require("mongoose");
@@ -19,6 +18,7 @@ const sendEmail = require("../helpers/sendEmail");
 const Authentication = require("../models/authenticationSchema");
 const Configuration = require("../models/configurationSchema");
 const Competition_Point = require("../models/competitionPointSchema");
+
 class ActivityService {
   createTask = async (payload, user) => {
     try {
@@ -28,9 +28,7 @@ class ActivityService {
       if (user.role.name === "agency") {
         agency_id = user?.reference_id;
       } else if (user.role.name === "team_agency") {
-        const agencies = await Team_Agency.findOne({
-          agency_id: user?.reference_id,
-        }).lean();
+        const agencies = await Team_Agency.findById(user?.reference_id).lean();
         agency_id = agencies.agency_id;
       }
       const dueDateObject = moment(due_date);
@@ -165,7 +163,7 @@ class ActivityService {
         queryObj = {
           is_deleted: false,
           client_id: user.reference_id,
-          agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
+          agency_id: new mongoose.Types.ObjectId(searchObj?.agency_id),
           activity_type: new mongoose.Types.ObjectId(type._id),
         };
       } else if (user?.role?.name === "team_agency") {
@@ -194,7 +192,7 @@ class ActivityService {
         queryObj = {
           is_deleted: false,
           client_id: user.reference_id,
-          agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
+          agency_id: new mongoose.Types.ObjectId(searchObj?.agency_id),
           activity_type: new mongoose.Types.ObjectId(type._id),
         };
       }
@@ -423,7 +421,7 @@ class ActivityService {
         queryObj = {
           is_deleted: false,
           client_id: user.reference_id,
-          agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
+          agency_id: new mongoose.Types.ObjectId(searchObj?.agency_id),
           activity_type: new mongoose.Types.ObjectId(type._id),
         };
       } else if (user?.role?.name === "team_agency") {
@@ -453,7 +451,7 @@ class ActivityService {
           is_deleted: false,
           client_id: user.reference_id,
           activity_type: new mongoose.Types.ObjectId(type._id),
-          agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
+          agency_id: new mongoose.Types.ObjectId(searchObj?.agency_id),
         };
       }
 
@@ -1275,7 +1273,6 @@ class ActivityService {
 
       validateRequestFields(payload, [
         "title",
-        "agenda",
         "client_id",
         "due_date",
         "assign_to",
@@ -1460,31 +1457,35 @@ class ActivityService {
         due_date: start_date,
         recurring_end_date: recurring_date,
       });
-      const activityData = await this.getActivity(newActivity?._id);
-      console.log(activityData);
+      // const activityData = await this.getActivity(newActivity?._id);
 
-      const [assign_to_data, client_data] = await Promise.all([
-        Authentication.findOne({ reference_id: assign_to }),
-        Authentication.findOne({ reference_id: client_id }),
-      ]);
+      // const [assign_to_data, client_data] = await Promise.all([
+      //   Authentication.findOne({ reference_id: assign_to }),
+      //   Authentication.findOne({ reference_id: client_id }),
+      // ]);
 
-      const activity_email_template = activityTemplate(activityData[0]);
+      // const activity_email_template = activityTemplate(activityData[0]);
+      // await notificationService.addNotification(
+      //   { assign_by: user.reference_id, ...payload },
+      //   newActivity._id,
+      //   activityData[0]
+      // );
 
-      await sendEmail({
-        email: user?.email,
-        subject: returnMessage("emailTemplate", "newActivityMeeting"),
-        message: activity_email_template,
-      });
-      await sendEmail({
-        email: client_data?.email,
-        subject: returnMessage("emailTemplate", "newActivityMeeting"),
-        message: activity_email_template,
-      });
-      await sendEmail({
-        email: assign_to_data?.email,
-        subject: returnMessage("emailTemplate", "newActivityMeeting"),
-        message: activity_email_template,
-      });
+      // await sendEmail({
+      //   email: user?.email,
+      //   subject: returnMessage("emailTemplate", "newActivityMeeting"),
+      //   message: activity_email_template,
+      // });
+      // await sendEmail({
+      //   email: client_data?.email,
+      //   subject: returnMessage("emailTemplate", "newActivityMeeting"),
+      //   message: activity_email_template,
+      // });
+      // await sendEmail({
+      //   email: assign_to_data?.email,
+      //   subject: returnMessage("emailTemplate", "newActivityMeeting"),
+      //   message: activity_email_template,
+      // });
 
       return;
     } catch (error) {
@@ -1661,7 +1662,6 @@ class ActivityService {
       }
       validateRequestFields(payload, [
         "title",
-        "agenda",
         "client_id",
         "meeting_start_time",
         "meeting_end_time",
@@ -1850,14 +1850,10 @@ class ActivityService {
         title,
         client_id,
         internal_info,
-        meeting_start_time: moment(meeting_start_time, "HH:mm a").format(
-          "HH:mm a"
-        ),
-        meeting_end_time: moment(meeting_end_time, "HH:mm a").format("HH:mm a"),
+        meeting_start_time: start_time,
+        meeting_end_time: end_time,
         due_date: start_date,
-        recurring_end_date: moment
-          .utc(payload?.recurring_end_date)
-          .endOf("day"),
+        recurring_end_date: recurring_date,
       });
 
       // const activityData = await this.getActivity(activity_id);
@@ -2007,7 +2003,10 @@ class ActivityService {
             ],
           };
         }
-        if (payload?.filter?.activity_type) {
+        if (
+          payload?.filter?.activity_type &&
+          payload?.filter?.activity_type !== ""
+        ) {
           const activity_type = await ActivityType.findOne({
             name: payload?.filter?.activity_type,
           })
@@ -2042,6 +2041,12 @@ class ActivityService {
             client_id: new mongoose.Types.ObjectId(payload?.client_id),
           };
         }
+        if (payload?.client_team_id) {
+          match_obj["$match"] = {
+            ...match_obj["$match"],
+            client_id: new mongoose.Types.ObjectId(payload?.client_team_id),
+          };
+        }
         if (payload?.team_id) {
           match_obj["$match"] = {
             ...match_obj["$match"],
@@ -2059,10 +2064,10 @@ class ActivityService {
           client_id: user?.reference_id,
           agency_id: new mongoose.Types.ObjectId(payload?.agency_id),
         };
-        if (payload?.team_id) {
+        if (payload?.client_team_id) {
           match_obj["$match"] = {
             ...match_obj["$match"],
-            assign_to: new mongoose.Types.ObjectId(payload?.team_id),
+            client_id: new mongoose.Types.ObjectId(payload?.client_team_id),
           };
         }
       } else if (user?.role?.name === "team_client") {

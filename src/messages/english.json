@@ -185,7 +185,7 @@
     "meetingScheduledForClient": "Meeting is already set for this client.",
     "meetingScheduledForTeam": "Meeting is already set for this team member.",
     "recurringDateRequired": "Recurring date is required for the other type of the activity.",
-    "invalidRecurringDate": "Recurring date should be fututure date.",
+    "invalidRecurringDate": "Recurring date should be future date.",
     "activityNotFound": "Activity not found.",
     "callScheduled": "Call meeting is scheduled successfully.",
     "activityCreated": "Activity created successfully.",
@@ -247,9 +247,17 @@
     "ShippingandDeliveryUpdate": "Shipping and delivery update successfully",
     "ShippingandDeliveryFetched": "Shipping and delivery fetched successfully."
   },
+  "notification": {
+    "messageAdded": "Notification added successfully.",
+    "notificationFetched": "Notification fetched successfully.",
+    "notificationRead": "Notification read successfully."
+  },
   "referral": {
     "checkRefferal": "Referral check successfully.",
     "insufficientReferralPoints": "Insufficient Referral Points"
+  },
+  "activityNotification": {
+    "createActivityNotification": "A new meeting has been scheduled and arranged by ${activity_data[0].assigned_by_name}.The meeting is titled ${payload.title} and is set to take place on ${payload.due_date} from ${payload.meeting_start_time} to ${payload.meeting_end_time}."
   },
 
   "default": { "default": "Something went wrong." }

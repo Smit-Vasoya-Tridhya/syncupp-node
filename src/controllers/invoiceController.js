@@ -144,10 +144,9 @@ exports.sendInvoice = catchAsyncError(async (req, res, next) => {
 // Download PDF
 
 exports.downloadPdf = catchAsyncError(async (req, res, next) => {
-  console.log(req?.body);
-
-  console.log(req.user);
-  const downloadPdf = await invoiceService.downloadPdf(req?.params, res);
+  if (req.user?.role?.name === "agency" || req.user?.role?.name === "client") {
+    var downloadPdf = await invoiceService.downloadPdf(req?.params, res);
+  }
 
   sendResponse(
     res,

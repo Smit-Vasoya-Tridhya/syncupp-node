@@ -13,6 +13,7 @@ const inquiryRoute = require("./inquiryRoute");
 const affiliateRoute = require("./affiliateRoute");
 const cmsRoute = require("./cmsRoute");
 const referralRoute = require("./referralRoute");
+const notificationRoute = require("./notificationRoute");
 
 router.use("/activity", activityRoute);
 router.use("/auth", authRoute);
@@ -33,5 +34,6 @@ router.use("/inquiry", inquiryRoute);
 router.use("/agreement", agreementRoute);
 router.use("/crm", cmsRoute);
 router.use("/referral", referralRoute);
+router.use("/notification", notificationRoute);
 
 module.exports = router;
