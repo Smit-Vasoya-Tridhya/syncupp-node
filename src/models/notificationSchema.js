@@ -4,38 +4,16 @@ const { boolean } = require("webidl-conversions");
 
 const notificationSchema = new mongoose.Schema(
   {
-    client: {
-      reference_id: {
-        type: mongoose.Types.ObjectId,
-      },
-      is_read: {
-        type: Boolean,
-        default: false,
-      },
+    user_id: {
+      type: mongoose.Types.ObjectId,
     },
-    assign_to: {
-      reference_id: {
-        type: mongoose.Types.ObjectId,
-      },
-      is_read: {
-        type: Boolean,
-        default: false,
-      },
-    },
-    assign_by: {
-      reference_id: {
-        type: mongoose.Types.ObjectId,
-      },
-      is_read: {
-        type: Boolean,
-        default: false,
-      },
-    },
-    data: {
-      activity_type: { type: String },
-      reference_id: { type: mongoose.Types.ObjectId },
-    },
+    type: { type: String },
+    data: { type: mongoose.Types.ObjectId },
     message: { type: String },
+    is_read: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

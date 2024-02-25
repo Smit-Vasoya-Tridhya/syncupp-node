@@ -5,6 +5,9 @@ const {
   returnMessage,
   invoiceTemplate,
   paginationObject,
+  returnNotification,
+  replaceFields,
+  extractTextFromHtml,
 } = require("../utils/utils");
 const { ObjectId } = require("mongodb");
 const fs = require("fs");
@@ -19,37 +22,147 @@ class NotificationService {
   // Get Client list  ------   AGENCY API
   addNotification = async (payload, activity_id) => {
     try {
-      const {
-        client_id,
-        assign_to,
-        assign_by,
-        title,
-        assigned_by_name,
-        activity_type,
-      } = payload;
+      console.log(payload);
+      // Activity
+      if (payload.module_name === "activity") {
+        if (payload.activity_type_action === "create_call_meeting") {
+          const clientMessage = replaceFields(
+            returnNotification(
+              "activity",
+              "createCallMeeting",
+              "clientMessage"
+            ),
+            {
+              ...payload,
+              agenda: extractTextFromHtml(payload.agenda),
+            }
+          );
+          const clientNotification = await Notification.create({
+            user_id: payload.client_id,
+            type: "activity",
+            data: activity_id,
+            message: clientMessage,
+          });
+          eventEmitter("NOTIFICATION", clientNotification, payload.client_id);
+          const assignToMessage = replaceFields(
+            returnNotification(
+              "activity",
+              "createCallMeeting",
+              "assignToMessage"
+            ),
+            { ...payload, agenda: extractTextFromHtml(payload.agenda) }
+          );
+          const assignToNotification = await Notification.create({
+            user_id: payload.assign_to,
+            type: "activity",
+            data: activity_id,
+            message: assignToMessage,
+          });
 
-      let message = `A new call meeting has been scheduled by ${assigned_by_name}.`;
+          eventEmitter("NOTIFICATION", assignToNotification, payload.assign_to);
+        }
+        if (payload.activity_type_action === "cancel") {
+          const clientMessage = replaceFields(
+            returnNotification(
+              "activity",
+              "activityCancelled",
+              "clientMessage"
+            ),
+            {
+              ...payload,
+              agenda: extractTextFromHtml(payload.agenda),
+            }
+          );
+          const clientNotification = await Notification.create({
+            user_id: payload.client_id,
+            type: "activity",
+            data: activity_id,
+            message: clientMessage,
+          });
+          eventEmitter("NOTIFICATION", clientNotification, payload.client_id);
+          const assignToMessage = replaceFields(
+            returnNotification(
+              "activity",
+              "activityCancelled",
+              "assignToMessage"
+            ),
+            { ...payload, agenda: extractTextFromHtml(payload.agenda) }
+          );
+          const assignToNotification = await Notification.create({
+            user_id: payload.assign_to,
+            type: "activity",
+            data: activity_id,
+            message: assignToMessage,
+          });
 
-      const newNotification = await Notification.create({
-        client: {
-          reference_id: client_id,
-        },
-        assign_to: {
-          reference_id: assign_to,
-        },
-        assign_by: {
-          reference_id: assign_by,
-        },
+          eventEmitter("NOTIFICATION", assignToNotification, payload.assign_to);
+        }
+      }
 
-        data: {
-          reference_id: activity_id,
-          activity_type: activity_type,
-        },
-        message: message,
-      });
-      console.log("first");
-      eventEmitter("NOTIFICATION", newNotification, client_id);
-      eventEmitter("NOTIFICATION", newNotification, assign_to);
+      // Task
+
+      if (payload.module_name === "task") {
+        if (payload.activity_type_action === "createTask") {
+          const clientMessage = replaceFields(
+            returnNotification("activity", "createTask", "clientMessage"),
+            {
+              ...payload,
+            }
+          );
+          console.log(clientMessage);
+          const clientNotification = await Notification.create({
+            user_id: payload.client_id,
+            type: "task",
+            data: activity_id,
+            message: clientMessage,
+          });
+          eventEmitter("NOTIFICATION", clientNotification, payload.client_id);
+          const assignToMessage = replaceFields(
+            returnNotification("activity", "createTask", "assignToMessage"),
+            { ...payload }
+          );
+
+          const assignToNotification = await Notification.create({
+            user_id: payload.assign_to,
+            type: "task",
+            data: activity_id,
+            message: assignToMessage,
+          });
+          eventEmitter("NOTIFICATION", assignToNotification, payload.assign_to);
+        }
+        if (payload.activity_type_action === "cancel") {
+          const clientMessage = replaceFields(
+            returnNotification("activity", "createTask", "clientMessage"),
+            {
+              ...payload,
+            }
+          );
+          const clientNotification = await Notification.create({
+            user_id: payload.client_id,
+            type: "activity",
+            data: activity_id,
+            message: clientMessage,
+          });
+          eventEmitter("NOTIFICATION", clientNotification, payload.client_id);
+          const assignToMessage = replaceFields(
+            returnNotification(
+              "activity",
+              "activityCancelled",
+              "assignToMessage"
+            ),
+            { ...payload }
+          );
+          const assignToNotification = await Notification.create({
+            user_id: payload.assign_to,
+            type: "activity",
+            data: activity_id,
+            message: assignToMessage,
+          });
+
+          eventEmitter("NOTIFICATION", assignToNotification, payload.assign_to);
+        }
+      }
+
       return;
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
@@ -61,41 +174,12 @@ class NotificationService {
     try {
       const { skip, limit } = searchObj;
 
-      let search_key;
-      if (user.role.name === "client" || user.role.name === "team_client")
-        search_key = "client";
-      if (user.role.name === "team_agency") search_key = "assign_to";
-      if (user.role.name === "agency") search_key = "assign_to";
-
-      const updateObject = {};
-      updateObject[`${search_key}.reference_id`] = user.reference_id._id;
-
-      const aggregationPipeline = [
-        {
-          $match: {
-            [`${search_key}.reference_id`]: user.reference_id._id,
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            message: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            [search_key]: 1,
-            data: 1,
-          },
-        },
-        {
-          $skip: parseInt(skip),
-        },
-        {
-          $limit: parseInt(limit),
-        },
-      ];
-
-      const notifications = await Notification.aggregate(aggregationPipeline);
-
+      const notifications = await Notification.find({
+        user_id: user.reference_id,
+      })
+        .sort({ is_read: -1 })
+        .skip(skip)
+        .limit(limit);
       return notifications;
     } catch (error) {
       logger.error(`Error while fetching agencies: ${error}`);
@@ -106,32 +190,25 @@ class NotificationService {
   readNotification = async (payload, user) => {
     try {
       const { notification_id } = payload;
-      let search_key;
-      if (user.role.name === "client" || user.role.name === "team_client")
-        search_key = "client";
-      if (user.role.name === "team_agency") search_key = "assign_to";
-      if (user.role.name === "agency") search_key = "assign_to";
-
-      // Create the update object dynamically
-      const updateObject = {};
-      updateObject[`${search_key}.reference_id`] = user.reference_id._id;
-      updateObject[`${search_key}.is_read`] = true;
-
       if (notification_id === "all") {
         await Notification.updateMany(
           {
-            [`${search_key}.reference_id`]: user.reference_id._id,
+            user_id: user.reference_id,
           },
-          updateObject,
+          {
+            is_read: true,
+          },
           { new: true }
         );
       } else {
         await Notification.findOneAndUpdate(
           {
             _id: notification_id,
-            [`${search_key}.reference_id`]: user.reference_id._id,
+            user_id: user.reference_id,
           },
-          updateObject,
+          {
+            is_read: true,
+          },
           { new: true, useFindAndModify: false }
         );
       }
