@@ -1997,9 +1997,19 @@ class ActivityService {
 
           filter["$match"] = {
             ...filter["$match"],
-            $and: [
-              { due_date: { $gte: new Date(start_date) } },
-              { due_date: { $lte: new Date(end_date) } },
+            $or: [
+              {
+                $and: [
+                  { due_date: { $gte: new Date(start_date) } },
+                  { due_date: { $lte: new Date(end_date) } },
+                ],
+              },
+              {
+                $and: [
+                  { due_date: { $gte: new Date(start_date) } },
+                  { recurring_end_date: { $lte: new Date(end_date) } },
+                ],
+              },
             ],
           };
         }
@@ -2266,8 +2276,18 @@ class ActivityService {
         let activity_array = [];
 
         activity.forEach((act) => {
-          if (act?.activity_type === "task") return;
-          if (act?.activity_type === "others" && act?.recurring_end_date) {
+          if (act?.activity_type?.name === "task") return;
+          if (act?.activity_type?.name === "others") console.log(act);
+          if (
+            act?.activity_type?.name === "others" &&
+            act?.recurring_end_date
+          ) {
+            // this will give the activity based on the filter selected and recurring date activity
+            if (payload?.filter?.date === "period") {
+              act.recurring_end_date = moment
+                .utc(payload?.filter?.end_date, "DD-MM-YYYY")
+                .endOf("day");
+            }
             const others_meetings = this.generateMeetingTimes(act);
             activity_array = [...activity_array, ...others_meetings];
             return;
@@ -2308,16 +2328,18 @@ class ActivityService {
   // because we need to generate the between dates from the start and recurring date
   generateMeetingTimes = (activity_obj) => {
     const meetingTimes = [];
-    let current_meeting_start = moment(activity_obj?.meeting_start_time);
-    const meeting_end = moment(activity_obj?.meeting_end_time);
-    const recurring_end = moment(activity_obj?.recurring_end_date);
+    let current_meeting_start = moment.utc(activity_obj?.meeting_start_time);
+    const meeting_end = moment.utc(activity_obj?.meeting_end_time);
+    const recurring_end = moment.utc(activity_obj?.recurring_end_date);
 
     // Generate meeting times till recurring end time
     while (current_meeting_start.isBefore(recurring_end)) {
-      const currentMeetingEnd = moment(current_meeting_start).add(
-        meeting_end.diff(activity_obj?.meeting_start_time),
-        "milliseconds"
-      );
+      const currentMeetingEnd = moment
+        .utc(current_meeting_start)
+        .add(
+          meeting_end.diff(activity_obj?.meeting_start_time),
+          "milliseconds"
+        );
       meetingTimes.push({
         id: activity_obj?._id,
         title: activity_obj?.title,
