@@ -11,6 +11,7 @@ const {
   taskTemplate,
   activityTemplate,
   extractTextFromHtml,
+  formatTime,
 } = require("../utils/utils");
 const moment = require("moment");
 const { default: mongoose } = require("mongoose");
@@ -133,6 +134,7 @@ class ActivityService {
         message: taskMessage,
       });
 
+      // ----------------------- Notification Start -----------------------
       const client_data = await Authentication.findOne({
         reference_id: client_id,
       });
@@ -155,6 +157,8 @@ class ActivityService {
         },
         getTask[0]?._id
       );
+
+      // ----------------------- Notification END -----------------------
 
       return added_task;
     } catch (error) {
@@ -876,6 +880,8 @@ class ActivityService {
             due_date: 1,
             due_time: 1,
             title: 1,
+            // assign_to: 1,
+            // client_id: 1,
           },
         },
       ];
@@ -898,6 +904,18 @@ class ActivityService {
           subject: returnMessage("activity", "UpdateSubject"),
           message: taskMessage,
         });
+        // await notificationService.addNotification(
+        //   {
+        //     title: task?.title,
+        //     module_name: "task",
+        //     activity_type_action: "deleted",
+        //     activity_type: "task",
+        //     assign_to: task?.assign_to,
+        //     client_id: task?.assign_by,
+        //   },
+        //   task?._id
+        // );
+        // console.log("rrr");
         return;
       });
 
@@ -1138,6 +1156,33 @@ class ActivityService {
         subject: returnMessage("activity", "UpdateSubject"),
         message: taskMessage,
       });
+
+      // -------------- Socket notification start --------------------
+
+      const client_data = await Authentication.findOne({
+        reference_id: client_id,
+      });
+      let taskAction = "update";
+      // For Complete
+      if (mark_as_done) taskAction = "complete";
+      await notificationService.addNotification(
+        {
+          ...payload,
+          module_name: "task",
+          activity_type_action: taskAction,
+          activity_type: "task",
+          agenda: extractTextFromHtml(agenda),
+          title: title,
+          client_name: client_data.first_name + " " + client_data.last_name,
+          assigned_to_name: getTask[0]?.assigned_to_name,
+          due_time: new Date(due_date).toTimeString().split(" ")[0],
+          due_date: new Date(due_date).toLocaleDateString("en-GB"),
+        },
+        id
+      );
+
+      // -------------- Socket notification end --------------------
+
       return updateTasks;
     } catch (error) {
       logger.error(`Error while Updating task, ${error}`);
@@ -1283,56 +1328,62 @@ class ActivityService {
         }
       }
 
+      //   ----------    Notifications start ----------
+      let task_status;
+      let emailTempKey;
       if (payload.status == "cancel") {
-        const activityData = await this.getActivity(id);
-        const [assign_to_data, client_data] = await Promise.all([
-          Authentication.findOne({ reference_id: activityData[0].assign_to }),
-          Authentication.findOne({ reference_id: activityData[0].client_id }),
-        ]);
-        const activity_email_template = activityTemplate({
-          ...activityData[0],
-          activity_type: activityData[0].activity_type.name,
-          meeting_end_time: activityData[0].meeting_end_time
-            .toTimeString()
-            .split(" ")[0],
-          meeting_start_time: activityData[0].meeting_start_time
-            .toTimeString()
-            .split(" ")[0],
-          recurring_end_date: activityData[0]?.recurring_end_date
-            ? activityData[0]?.recurring_end_date.toTimeString().split(" ")[0]
-            : null,
-          due_date: activityData[0].due_date.toLocaleDateString("en-GB"),
-        });
-        sendEmail({
-          email: client_data?.email,
-          subject: returnMessage("emailTemplate", "meetingCancelled"),
-          message: activity_email_template,
-        });
-        sendEmail({
-          email: assign_to_data?.email,
-          subject: returnMessage("emailTemplate", "meetingCancelled"),
-          message: activity_email_template,
-        });
-        await notificationService.addNotification(
-          {
-            client_name: client_data.first_name + " " + client_data.last_name,
-            assigned_to_name:
-              assign_to_data.first_name + " " + assign_to_data.last_name,
-            ...activityData[0],
-            module_name: "activity",
-            activity_type_action: "cancel",
-            activity_type:
-              activityData[0]?.activity_type.name === "others"
-                ? "activity"
-                : "call meeting",
-            meeting_start_time: activityData[0].meeting_start_time
-              .toTimeString()
-              .split(" ")[0],
-            due_date: activityData[0].due_date.toLocaleDateString("en-GB"),
-          },
-          id
-        );
+        task_status = "cancel";
+        emailTempKey = "meetingCancelled";
       }
+      if (payload.status == "completed") {
+        task_status = "completed";
+        emailTempKey = "activityCompleted";
+      }
+
+      const activityData = await this.getActivity(id);
+      const [assign_to_data, client_data] = await Promise.all([
+        Authentication.findOne({ reference_id: activityData[0].assign_to }),
+        Authentication.findOne({ reference_id: activityData[0].client_id }),
+      ]);
+      const activity_email_template = activityTemplate({
+        ...activityData[0],
+        activity_type: activityData[0].activity_type.name,
+        meeting_end_time: formatTime(activityData[0].meeting_end_time),
+        meeting_start_time: formatTime(activityData[0].meeting_start_time),
+        recurring_end_date: activityData[0]?.recurring_end_date
+          ? activityData[0]?.recurring_end_date.toTimeString().split(" ")[0]
+          : null,
+        due_date: activityData[0].due_date.toLocaleDateString("en-GB"),
+      });
+      sendEmail({
+        email: client_data?.email,
+        subject: returnMessage("emailTemplate", emailTempKey),
+        message: activity_email_template,
+      });
+      sendEmail({
+        email: assign_to_data?.email,
+        subject: returnMessage("emailTemplate", emailTempKey),
+        message: activity_email_template,
+      });
+      await notificationService.addNotification(
+        {
+          client_name: client_data.first_name + " " + client_data.last_name,
+          assigned_to_name:
+            assign_to_data.first_name + " " + assign_to_data.last_name,
+          ...activityData[0],
+          module_name: "activity",
+          activity_type_action: task_status,
+          activity_type:
+            activityData[0]?.activity_type.name === "others"
+              ? "activity"
+              : "call meeting",
+          meeting_start_time: formatTime(activityData[0].meeting_start_time),
+          due_date: activityData[0].due_date.toLocaleDateString("en-GB"),
+        },
+        id
+      );
+      //   ----------    Notifications start ----------
+
       return updateTasks;
     } catch (error) {
       logger.error(`Error while Updating status, ${error}`);
@@ -1946,34 +1997,54 @@ class ActivityService {
         recurring_end_date: recurring_date,
       });
 
-      // const activityData = await this.getActivity(activity_id);
-      // console.log(activityData);
+      // --------------- Start--------------------
+      let task_status = "update";
+      let emailTempKey = "activityUpdated";
+      if (payload.mark_as_done) {
+        task_status = "completed";
+        emailTempKey = "activityCompleted";
+      }
 
-      // const [assign_to_data, client_data] = await Promise.all([
-      //   Authentication.findOne({ reference_id: assign_to }),
-      //   Authentication.findOne({ reference_id: client_id }),
-      // ]);
+      const [assign_to_data, client_data] = await Promise.all([
+        Authentication.findOne({ reference_id: assign_to }),
+        Authentication.findOne({ reference_id: client_id }),
+      ]);
+      const activity_email_template = activityTemplate({
+        ...payload,
+        status: payload.mark_as_done ? "completed" : "pending",
+        assigned_by_name: user.first_name + " " + user.last_name,
+        client_name: client_data.first_name + " " + client_data.last_name,
+        assigned_to_name:
+          assign_to_data.first_name + " " + assign_to_data.last_name,
+      });
 
-      // const activity_email_template = activityTemplate({
-      //   ...activityData[0],
-      //   isNew: true,
-      // });
-
-      // await sendEmail({
-      //   email: user?.email,
-      //   subject: returnMessage("emailTemplate", "activityUpdated"),
-      //   message: activity_email_template,
-      // });
-      // await sendEmail({
-      //   email: client_data?.email,
-      //   subject: returnMessage("emailTemplate", "activityUpdated"),
-      //   message: activity_email_template,
-      // });
-      // await sendEmail({
-      //   email: assign_to_data?.email,
-      //   subject: returnMessage("emailTemplate", "activityUpdated"),
-      //   message: activity_email_template,
-      // });
+      sendEmail({
+        email: client_data?.email,
+        subject: returnMessage("emailTemplate", emailTempKey),
+        message: activity_email_template,
+      });
+      sendEmail({
+        email: assign_to_data?.email,
+        subject: returnMessage("emailTemplate", emailTempKey),
+        message: activity_email_template,
+      });
+      await notificationService.addNotification(
+        {
+          assign_by: user.reference_id,
+          assigned_by_name: user.first_name + " " + user.last_name,
+          client_name: client_data.first_name + " " + client_data.last_name,
+          assigned_to_name:
+            assign_to_data.first_name + " " + assign_to_data.last_name,
+          ...payload,
+          module_name: "activity",
+          activity_type_action: task_status,
+          activity_type:
+            activity_type === "others" ? "activity" : "call meeting",
+          agenda: extractTextFromHtml(payload.agenda),
+        },
+        activity_id
+      );
+      // ---------------- End ---------------
 
       return;
     } catch (error) {

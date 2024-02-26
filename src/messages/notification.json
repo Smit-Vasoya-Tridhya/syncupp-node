@@ -5,17 +5,37 @@
       "assignToMessage": "Hey ${assigned_to_name}! You're assigned to a ${activity_type} ${title} on ${due_date} from ${meeting_start_time} to ${meeting_end_time}. Agenda: ${agenda}. Be ready!",
       "assignByMessage": "Hey ${activityData.assign_by}! You just assigned ${activityData.assign_to} to a ${activityData.activity_type} ${activityData.title} on ${formatDate(activityData.due_date)} from ${formatDate(activityData.meeting_start_time)} to ${formatDate(activityData.meeting_end_time)}"
     },
+    "activityUpdated": {
+      "clientMessage": "Updated: Hi ${client_name}! Your ${activity_type} titled ${title} on ${due_date} at ${meeting_start_time}. Check the agenda: ${agenda}. See you there!",
+      "assignToMessage": "Updated: Hey ${assigned_to_name}! You're assigned to a ${activity_type} titled ${title} on ${due_date} from ${meeting_start_time} to ${meeting_end_time}. Agenda: ${agenda}. Be ready!"
+    },
     "activityCancelled": {
       "clientMessage": "Hi ${client_name}! Unfortunately, the ${activity_type} titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. ",
       "assignToMessage": "Hi ${assigned_to_name}! Unfortunately, the ${activity_type} titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. "
+    },
+    "activityCompleted": {
+      "clientMessage": "Hi ${client_name}! Your ${activity_type} '${title}' is complete.",
+      "assignToMessage": "Hey ${assigned_to_name}! The ${activity_type} '${title}' assigned to you is done."
     },
     "createTask": {
       "clientMessage": "Hi ${client_name}! You have a task titled ${title} due on ${due_date} before ${due_time}. Check the agenda: ${agenda}. See you there!",
       "assignToMessage": "Hey ${assigned_to_name}! You're assigned to a task titled ${title} due on ${due_date} before ${due_time}. Agenda: ${agenda}. Be ready!"
     },
+    "taskCompleted": {
+      "clientMessage": "Hi ${client_name}! Your task '${title}' is complete.",
+      "assignToMessage": "Hey ${assigned_to_name}! The task '${title}' assigned to you is done. Great job!"
+    },
+    "taskUpdated": {
+      "clientMessage": "Updated: Hi ${client_name}! Your task titled ${title} now has a due date on ${due_date} before ${due_time}. See you there!",
+      "assignToMessage": "Updated: Hey ${assigned_to_name}! You're assigned to a task titled ${title} due on ${due_date} before ${due_time}. Be ready!"
+    },
     "taskCancelled": {
       "clientMessage": "Hi ${client_name}! Unfortunately, the task titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. ",
       "assignToMessage": "Hi ${assigned_to_name}! Unfortunately, the task titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. "
+    },
+    "taskDeleted": {
+      "clientMessage": "Task '${title}' has been deleted.",
+      "assignToMessage": "Task '${title}' has been deleted."
     }
   }
 }

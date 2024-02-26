@@ -8,7 +8,7 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
     },
     type: { type: String },
-    data: { type: mongoose.Types.ObjectId },
+    data_reference_id: { type: mongoose.Types.ObjectId },
     message: { type: String },
     is_read: {
       type: Boolean,
