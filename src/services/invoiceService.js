@@ -976,15 +976,13 @@ class InvoiceService {
 
   downloadPdf = async (payload, res) => {
     try {
-      console.log(payload);
       const { invoice_id } = payload;
-      console.log(invoice_id);
       const invoice = await this.getInvoice(invoice_id);
       const renderedHtml = invoiceTemplate(invoice[0]);
-
+      const pdfOptions = {};
       // Convert the PDF to a buffer using html-pdf
       const pdfBuffer = await new Promise((resolve, reject) => {
-        pdf.create(renderedHtml).toBuffer((err, buffer) => {
+        pdf.create(renderedHtml, pdfOptions).toBuffer((err, buffer) => {
           if (err) {
             reject(err);
           } else {
