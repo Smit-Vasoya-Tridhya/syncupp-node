@@ -2251,10 +2251,38 @@ class ActivityService {
 
       let activity, total_activity;
       if (!payload?.pagination) {
-        [activity, total_activity] = await Promise.all([
-          Activity.aggregate(aggragate),
-          Activity.aggregate(aggragate),
-        ]);
+        activity = await Activity.aggregate(aggragate);
+
+        // this is the basic example of the front side requried to show data
+        //   {
+        //     id: "123",
+        //     start: new Date(2024, 2,1,5,0,0,0),
+        //     end: new Date(2024, 3,1,6,0,0,0),
+        //     allDay: false,
+        //     title: 'Event 1',
+        //     description: 'About Planning',
+        // }
+
+        let activity_array = [];
+
+        activity.forEach((act) => {
+          if (act?.activity_type === "task") return;
+          if (act?.activity_type === "others" && act?.recurring_end_date) {
+            const others_meetings = this.generateMeetingTimes(act);
+            activity_array = [...activity_array, ...others_meetings];
+            return;
+          }
+          let obj = {
+            id: act?._id,
+            title: act?.title,
+            description: act?.agenda,
+            allDay: false,
+            start: act?.meeting_start_time,
+            end: act?.meeting_end_time,
+          };
+          activity_array.push(obj);
+        });
+        return activity_array;
       } else {
         [activity, total_activity] = await Promise.all([
           Activity.aggregate(aggragate)
@@ -2274,6 +2302,34 @@ class ActivityService {
       logger.error(`Error while fetching the activity: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
+  };
+
+  // this function is used for the only generate the calandar view objects only
+  // because we need to generate the between dates from the start and recurring date
+  generateMeetingTimes = (activity_obj) => {
+    const meetingTimes = [];
+    let current_meeting_start = moment(activity_obj?.meeting_start_time);
+    const meeting_end = moment(activity_obj?.meeting_end_time);
+    const recurring_end = moment(activity_obj?.recurring_end_date);
+
+    // Generate meeting times till recurring end time
+    while (current_meeting_start.isBefore(recurring_end)) {
+      const currentMeetingEnd = moment(current_meeting_start).add(
+        meeting_end.diff(activity_obj?.meeting_start_time),
+        "milliseconds"
+      );
+      meetingTimes.push({
+        id: activity_obj?._id,
+        title: activity_obj?.title,
+        description: activity_obj?.agenda,
+        allDay: false,
+        start: current_meeting_start.format(),
+        end: currentMeetingEnd.format(),
+      });
+      current_meeting_start.add(1, "day"); // Increment meeting start time by one day
+    }
+
+    return meetingTimes;
   };
 }
 
