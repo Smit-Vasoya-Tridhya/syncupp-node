@@ -2059,8 +2059,10 @@ class ActivityService {
       const match_obj = {};
 
       if (payload?.given_date) {
-        match_obj["$match"]["due_date"] = {
-          $eq: moment.utc(payload?.given_date, "DD-MM-YYYY").startOf("day"),
+        match_obj["$match"] = {
+          due_date: {
+            $eq: moment.utc(payload?.given_date, "DD-MM-YYYY").startOf("day"),
+          },
         };
       }
 
@@ -2115,7 +2117,7 @@ class ActivityService {
             ...filter["$match"],
             due_date: { $eq: new Date(moment.utc().startOf("day")) },
           };
-        } else if (payload?.filter?.date === "tommorrow") {
+        } else if (payload?.filter?.date === "tomorrow") {
           filter["$match"] = {
             ...filter["$match"],
             due_date: {
@@ -2350,6 +2352,7 @@ class ActivityService {
                   name: {
                     $concat: ["$first_name", " ", "$last_name"],
                   },
+                  reference_id: 1,
                 },
               },
             ],
@@ -2392,6 +2395,7 @@ class ActivityService {
                   name: {
                     $concat: ["$first_name", " ", "$last_name"],
                   },
+                  reference_id: 1,
                 },
               },
             ],
@@ -2438,10 +2442,11 @@ class ActivityService {
 
         activity.forEach((act) => {
           if (act?.activity_type?.name === "task") return;
-          if (act?.activity_type?.name === "others") console.log(act);
           if (
             act?.activity_type?.name === "others" &&
-            act?.recurring_end_date
+            act?.recurring_end_date &&
+            !payload?.given_date &&
+            !payload?.filter
           ) {
             // this will give the activity based on the filter selected and recurring date activity
             if (payload?.filter?.date === "period") {
