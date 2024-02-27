@@ -543,6 +543,7 @@ class PaymentService {
           order_id: razorpay_order_id,
           currency,
           role: user_details?.role?.name,
+          payment_id: razorpay_payment_id,
         });
 
         const occupied_sheets = [
