@@ -98,10 +98,10 @@ class PaymentService {
         plan_id: plan?.plan_id,
         quantity: 1,
         customer_notify: 1,
-        total_count: 240,
+        total_count: 120,
       };
-      const subscription = await Promise.resolve(
-        razorpay.subscriptions.create(subscription_obj)
+      const subscription = await razorpay.subscriptions.create(
+        subscription_obj
       );
 
       await Authentication.findByIdAndUpdate(
