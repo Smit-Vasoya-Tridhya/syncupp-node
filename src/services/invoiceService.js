@@ -981,11 +981,14 @@ class InvoiceService {
       console.log(invoice_id);
       const invoice = await this.getInvoice(invoice_id);
       const renderedHtml = invoiceTemplate(invoice[0]);
-      
+const phantomJs = require("phantomjs-prebuilt");
+      const options = {
+        phantomPath: phantomJs.path,
+      };
 
       // Convert the PDF to a buffer using html-pdf
       const pdfBuffer = await new Promise((resolve, reject) => {
-        pdf.create(renderedHtml).toBuffer((err, buffer) => {
+        pdf.create(renderedHtml,options).toBuffer((err, buffer) => {
           if (err) {
             reject(err);
           } else {
