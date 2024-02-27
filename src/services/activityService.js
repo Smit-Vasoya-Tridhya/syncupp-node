@@ -1255,6 +1255,97 @@ class ActivityService {
         }
       }
 
+      const pipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "team_Data",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  email: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$team_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_by",
+            foreignField: "reference_id",
+            as: "assign_by",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_by_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$assign_by",
+        },
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(id),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            agenda: 1,
+            assigned_by_first_name: "$assign_by.first_name",
+            assigned_by_last_name: "$assign_by.last_name",
+            assigned_to_first_name: "$team_Data.first_name",
+            assigned_to_last_name: "$team_Data.last_name",
+            assigned_to_name: "$team_Data.assigned_to_name",
+            assigned_by_name: "$assign_by.assigned_by_name",
+            client_name: "$client_Data.client_name",
+            column_id: "$status.name",
+            assign_email: "$team_Data.email",
+            due_date: 1,
+            due_time: 1,
+            title: 1,
+          },
+        },
+      ];
+
+      const getTask = await Activity.aggregate(pipeline);
+      let data = {
+        TaskTitle: "Updated Task status",
+        taskName: getTask[0]?.title,
+        status: status,
+        assign_by: getTask[0]?.assigned_by_name,
+        dueDate: moment(getTask[0]?.due_date)?.format("DD/MM/YYYY"),
+        dueTime: getTask[0]?.due_time,
+        agginTo_email: getTask[0]?.assign_email,
+        assignName: getTask[0]?.assigned_to_name,
+      };
+      const taskMessage = taskTemplate(data);
+      await sendEmail({
+        email: getTask[0]?.assign_email,
+        subject: returnMessage("activity", "UpdateSubject"),
+        message: taskMessage,
+      });
+
       return updateTasks;
     } catch (error) {
       logger.error(`Error while Updating status, ${error}`);
@@ -2273,6 +2364,31 @@ class ActivityService {
     } catch (error) {
       logger.error(`Error while fetching the activity: ${error}`);
       return throwError(error?.message, error?.statusCode);
+    }
+  };
+
+  updateOverdueStatusOfActivity = async () => {
+    try {
+      // Find activity with due dates that have passed
+      const currentDate = new Date();
+      const overdue = await ActivityStatus.findOne({ name: "overdue" });
+      const overdueActivity = await Activity.find({
+        due_date: { $lt: currentDate },
+        status: { $ne: overdue._id },
+      });
+
+      // Update status to "overdue" for each overdue activity
+      const overdueStatus = await ActivityStatus.findOne({
+        name: "overdue",
+      });
+      for (const activity of overdueActivity) {
+        activity.status = overdueStatus._id;
+        await activity.save();
+      }
+
+      console.log("Updated overdue statuses successfully");
+    } catch (error) {
+      console.error("Error updating overdue status:", error);
     }
   };
 }
