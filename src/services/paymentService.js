@@ -374,6 +374,7 @@ class PaymentService {
         subscription_id,
         razorpay_order_id,
         currency,
+        razorpay_payment_id,
       } = payload;
       if (payload?.agency_id && !payload?.user_id) {
         await Authentication.findOneAndUpdate(
@@ -389,6 +390,7 @@ class PaymentService {
           amount,
           subscription_id,
           currency,
+          payment_id: razorpay_payment_id,
         });
 
         await SheetManagement.findOneAndUpdate(

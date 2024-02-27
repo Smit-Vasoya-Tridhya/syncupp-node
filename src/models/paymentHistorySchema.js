@@ -15,6 +15,7 @@ const paymentHistorySchema = new mongoose.Schema(
       enum: ["payment", "referral"],
       default: "payment",
     },
+    payment_id: { type: String },
   },
   { timestamps: true }
 );
