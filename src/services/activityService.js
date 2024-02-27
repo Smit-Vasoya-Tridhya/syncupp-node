@@ -1351,7 +1351,7 @@ class ActivityService {
           },
         },
         {
-          $unwind: "$team_Data",
+          $unwind: { path: "$team_Data", preserveNullAndEmptyArrays: true },
         },
         {
           $lookup: {
@@ -1374,7 +1374,25 @@ class ActivityService {
           },
         },
         {
-          $unwind: "$assign_by",
+          $unwind: { path: "$assign_by", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "activity_type_masters",
+            localField: "activity_type",
+            foreignField: "_id",
+            as: "activity_type",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: { path: "$activity_type", preserveNullAndEmptyArrays: true },
         },
         {
           $match: {
@@ -1397,82 +1415,86 @@ class ActivityService {
             due_date: 1,
             due_time: 1,
             title: 1,
+            activity_type: "$activity_type.name",
           },
         },
       ];
 
       const getTask = await Activity.aggregate(pipeline);
-      let data = {
-        TaskTitle: "Updated Task status",
-        taskName: getTask[0]?.title,
-        status: status,
-        assign_by: getTask[0]?.assigned_by_name,
-        dueDate: moment(getTask[0]?.due_date)?.format("DD/MM/YYYY"),
-        dueTime: getTask[0]?.due_time,
-        agginTo_email: getTask[0]?.assign_email,
-        assignName: getTask[0]?.assigned_to_name,
-      };
-      const taskMessage = taskTemplate(data);
-      await sendEmail({
-        email: getTask[0]?.assign_email,
-        subject: returnMessage("activity", "UpdateSubject"),
-        message: taskMessage,
-      });
-      //   ----------    Notifications start ----------
-      let task_status;
-      let emailTempKey;
-      if (payload.status == "cancel") {
-        task_status = "cancel";
-        emailTempKey = "meetingCancelled";
-      }
-      if (payload.status == "completed") {
-        task_status = "completed";
-        emailTempKey = "activityCompleted";
-      }
+      if (getTask[0].activity_type === "task") {
+        let data = {
+          TaskTitle: "Updated Task status",
+          taskName: getTask[0]?.title,
+          status: status,
+          assign_by: getTask[0]?.assigned_by_name,
+          dueDate: moment(getTask[0]?.due_date)?.format("DD/MM/YYYY"),
+          dueTime: getTask[0]?.due_time,
+          agginTo_email: getTask[0]?.assign_email,
+          assignName: getTask[0]?.assigned_to_name,
+        };
+        const taskMessage = taskTemplate(data);
+        await sendEmail({
+          email: getTask[0]?.assign_email,
+          subject: returnMessage("activity", "UpdateSubject"),
+          message: taskMessage,
+        });
+      } else {
+        //   ----------    Notifications start ----------
+        let task_status;
+        let emailTempKey;
+        if (payload.status == "cancel") {
+          task_status = "cancel";
+          emailTempKey = "meetingCancelled";
+        }
+        if (payload.status == "completed") {
+          task_status = "completed";
+          emailTempKey = "activityCompleted";
+        }
 
-      const activityData = await this.getActivity(id);
-      const [assign_to_data, client_data] = await Promise.all([
-        Authentication.findOne({ reference_id: activityData[0].assign_to }),
-        Authentication.findOne({ reference_id: activityData[0].client_id }),
-      ]);
-      const activity_email_template = activityTemplate({
-        ...activityData[0],
-        activity_type: activityData[0].activity_type.name,
-        meeting_end_time: formatTime(activityData[0].meeting_end_time),
-        meeting_start_time: formatTime(activityData[0].meeting_start_time),
-        recurring_end_date: activityData[0]?.recurring_end_date
-          ? activityData[0]?.recurring_end_date.toTimeString().split(" ")[0]
-          : null,
-        due_date: activityData[0].due_date.toLocaleDateString("en-GB"),
-      });
-      sendEmail({
-        email: client_data?.email,
-        subject: returnMessage("emailTemplate", emailTempKey),
-        message: activity_email_template,
-      });
-      sendEmail({
-        email: assign_to_data?.email,
-        subject: returnMessage("emailTemplate", emailTempKey),
-        message: activity_email_template,
-      });
-      await notificationService.addNotification(
-        {
-          client_name: client_data.first_name + " " + client_data.last_name,
-          assigned_to_name:
-            assign_to_data.first_name + " " + assign_to_data.last_name,
+        const activityData = await this.getActivity(id);
+        const [assign_to_data, client_data] = await Promise.all([
+          Authentication.findOne({ reference_id: activityData[0].assign_to }),
+          Authentication.findOne({ reference_id: activityData[0].client_id }),
+        ]);
+        const activity_email_template = activityTemplate({
           ...activityData[0],
-          module_name: "activity",
-          activity_type_action: task_status,
-          activity_type:
-            activityData[0]?.activity_type.name === "others"
-              ? "activity"
-              : "call meeting",
+          activity_type: activityData[0].activity_type.name,
+          meeting_end_time: formatTime(activityData[0].meeting_end_time),
           meeting_start_time: formatTime(activityData[0].meeting_start_time),
+          recurring_end_date: activityData[0]?.recurring_end_date
+            ? activityData[0]?.recurring_end_date.toTimeString().split(" ")[0]
+            : null,
           due_date: activityData[0].due_date.toLocaleDateString("en-GB"),
-        },
-        id
-      );
-      //   ----------    Notifications start ----------
+        });
+        sendEmail({
+          email: client_data?.email,
+          subject: returnMessage("emailTemplate", emailTempKey),
+          message: activity_email_template,
+        });
+        sendEmail({
+          email: assign_to_data?.email,
+          subject: returnMessage("emailTemplate", emailTempKey),
+          message: activity_email_template,
+        });
+        await notificationService.addNotification(
+          {
+            client_name: client_data.first_name + " " + client_data.last_name,
+            assigned_to_name:
+              assign_to_data.first_name + " " + assign_to_data.last_name,
+            ...activityData[0],
+            module_name: "activity",
+            activity_type_action: task_status,
+            activity_type:
+              activityData[0]?.activity_type.name === "others"
+                ? "activity"
+                : "call meeting",
+            meeting_start_time: formatTime(activityData[0].meeting_start_time),
+            due_date: activityData[0].due_date.toLocaleDateString("en-GB"),
+          },
+          id
+        );
+        //   ----------    Notifications end ----------
+      }
 
       return updateTasks;
     } catch (error) {
