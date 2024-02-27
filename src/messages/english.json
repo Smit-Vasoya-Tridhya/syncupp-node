@@ -110,7 +110,7 @@
     "clientInvited": "Invitation mail sent to the client.",
     "clientExist": "Client already exist.",
     "agencyNotFound": "Agency does not exist.",
-    "agencyUpdated": "Updated successfully.",
+    "agencyUpdated": "Agency status changed successfully.",
     "agencyGet": "Agency profile fetched successfully.",
     "agencyUpdate": "Agency profile updated successfully.",
     "clientUpdated": "Client details updated successfully.",
