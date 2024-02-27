@@ -1328,6 +1328,96 @@ class ActivityService {
         }
       }
 
+      const pipeline = [
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_to",
+            foreignField: "reference_id",
+            as: "team_Data",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  email: 1,
+                  assigned_to_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$team_Data",
+        },
+        {
+          $lookup: {
+            from: "authentications",
+            localField: "assign_by",
+            foreignField: "reference_id",
+            as: "assign_by",
+            pipeline: [
+              {
+                $project: {
+                  name: 1,
+                  first_name: 1,
+                  last_name: 1,
+                  assigned_by_name: {
+                    $concat: ["$first_name", " ", "$last_name"],
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: "$assign_by",
+        },
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(id),
+            is_deleted: false,
+          },
+        },
+        {
+          $project: {
+            agenda: 1,
+            assigned_by_first_name: "$assign_by.first_name",
+            assigned_by_last_name: "$assign_by.last_name",
+            assigned_to_first_name: "$team_Data.first_name",
+            assigned_to_last_name: "$team_Data.last_name",
+            assigned_to_name: "$team_Data.assigned_to_name",
+            assigned_by_name: "$assign_by.assigned_by_name",
+            client_name: "$client_Data.client_name",
+            column_id: "$status.name",
+            assign_email: "$team_Data.email",
+            due_date: 1,
+            due_time: 1,
+            title: 1,
+          },
+        },
+      ];
+
+      const getTask = await Activity.aggregate(pipeline);
+      let data = {
+        TaskTitle: "Updated Task status",
+        taskName: getTask[0]?.title,
+        status: status,
+        assign_by: getTask[0]?.assigned_by_name,
+        dueDate: moment(getTask[0]?.due_date)?.format("DD/MM/YYYY"),
+        dueTime: getTask[0]?.due_time,
+        agginTo_email: getTask[0]?.assign_email,
+        assignName: getTask[0]?.assigned_to_name,
+      };
+      const taskMessage = taskTemplate(data);
+      await sendEmail({
+        email: getTask[0]?.assign_email,
+        subject: returnMessage("activity", "UpdateSubject"),
+        message: taskMessage,
+      });
       //   ----------    Notifications start ----------
       let task_status;
       let emailTempKey;
@@ -2059,8 +2149,10 @@ class ActivityService {
       const match_obj = {};
 
       if (payload?.given_date) {
-        match_obj["$match"]["due_date"] = {
-          $eq: moment.utc(payload?.given_date, "DD-MM-YYYY").startOf("day"),
+        match_obj["$match"] = {
+          due_date: {
+            $eq: moment.utc(payload?.given_date, "DD-MM-YYYY").startOf("day"),
+          },
         };
       }
 
@@ -2115,7 +2207,7 @@ class ActivityService {
             ...filter["$match"],
             due_date: { $eq: new Date(moment.utc().startOf("day")) },
           };
-        } else if (payload?.filter?.date === "tommorrow") {
+        } else if (payload?.filter?.date === "tomorrow") {
           filter["$match"] = {
             ...filter["$match"],
             due_date: {
@@ -2350,6 +2442,7 @@ class ActivityService {
                   name: {
                     $concat: ["$first_name", " ", "$last_name"],
                   },
+                  reference_id: 1,
                 },
               },
             ],
@@ -2392,6 +2485,7 @@ class ActivityService {
                   name: {
                     $concat: ["$first_name", " ", "$last_name"],
                   },
+                  reference_id: 1,
                 },
               },
             ],
@@ -2438,10 +2532,11 @@ class ActivityService {
 
         activity.forEach((act) => {
           if (act?.activity_type?.name === "task") return;
-          if (act?.activity_type?.name === "others") console.log(act);
           if (
             act?.activity_type?.name === "others" &&
-            act?.recurring_end_date
+            act?.recurring_end_date &&
+            !payload?.given_date &&
+            !payload?.filter
           ) {
             // this will give the activity based on the filter selected and recurring date activity
             if (payload?.filter?.date === "period") {

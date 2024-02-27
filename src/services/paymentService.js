@@ -22,6 +22,8 @@ const crypto = require("crypto");
 const moment = require("moment");
 const sendEmail = require("../helpers/sendEmail");
 const Configuration = require("../models/configurationSchema");
+const CompetitionPoint = require("../models/competitionPointSchema");
+const ReferralHistory = require("../models/referralHistorySchema");
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_SECRET,
@@ -96,10 +98,10 @@ class PaymentService {
         plan_id: plan?.plan_id,
         quantity: 1,
         customer_notify: 1,
-        total_count: 240,
+        total_count: 120,
       };
-      const subscription = await Promise.resolve(
-        razorpay.subscriptions.create(subscription_obj)
+      const subscription = await razorpay.subscriptions.create(
+        subscription_obj
       );
 
       await Authentication.findByIdAndUpdate(
@@ -372,6 +374,7 @@ class PaymentService {
         subscription_id,
         razorpay_order_id,
         currency,
+        razorpay_payment_id,
       } = payload;
       if (payload?.agency_id && !payload?.user_id) {
         await Authentication.findOneAndUpdate(
@@ -379,6 +382,7 @@ class PaymentService {
           {
             status: "confirmed",
             subscribe_date: moment().format("YYYY-MM-DD").toString(),
+            last_login_date: moment.utc().startOf("day"),
           }
         );
         await PaymentHistory.create({
@@ -386,6 +390,7 @@ class PaymentService {
           amount,
           subscription_id,
           currency,
+          payment_id: razorpay_payment_id,
         });
 
         await SheetManagement.findOneAndUpdate(
@@ -482,7 +487,10 @@ class PaymentService {
 
           await Authentication.findByIdAndUpdate(
             user_details?._id,
-            { status: "confirm_pending" },
+            {
+              status: "confirm_pending",
+              last_login_date: moment.utc().startOf("day"),
+            },
             { new: true }
           );
 
@@ -535,6 +543,7 @@ class PaymentService {
           order_id: razorpay_order_id,
           currency,
           role: user_details?.role?.name,
+          payment_id: razorpay_payment_id,
         });
 
         const occupied_sheets = [
@@ -1012,9 +1021,10 @@ class PaymentService {
         agency?.subscription_id
       );
 
-      const [plan_details, sheets_detail] = await Promise.all([
+      const [plan_details, sheets_detail, earned_total] = await Promise.all([
         this.planDetails(subscription.plan_id),
         SheetManagement.findOne({ agency_id: agency?.reference_id }).lean(),
+        this.calculateTotalReferralPoints(agency),
       ]);
 
       return {
@@ -1025,8 +1035,8 @@ class PaymentService {
         available_sheets: sheets_detail.occupied_sheets.length,
         subscription,
         referral_points: {
-          erned_points: 200, //this static data as of now
-          available_points: 100, // this is static data as of now
+          erned_points: earned_total, //this static data as of now
+          available_points: agency?.total_referral_point, // this is static data as of now
         },
       };
     } catch (error) {
@@ -1034,7 +1044,27 @@ class PaymentService {
       return throwError(error?.message, error?.statusCode);
     }
   };
+  calculateTotalReferralPoints = async (agency) => {
+    try {
+      const referral_data = await Configuration.findOne().lean();
+      const total_earned_point = await CompetitionPoint.find({
+        agency_id: agency.reference_id,
+      });
+      const total_earned_points_sum = total_earned_point.reduce((acc, curr) => {
+        return acc + parseInt(curr.point);
+      }, 0);
+      const total_referral = await ReferralHistory.find({
+        referred_by: agency.reference_id,
+      });
+      const total_referral_points_sum =
+        total_referral.length * referral_data.referral.redeem_required_point;
 
+      const total_earned = total_referral_points_sum + total_earned_points_sum;
+      return total_earned;
+    } catch (error) {
+      throw error;
+    }
+  };
   planDetails = async (plan_id) => {
     try {
       return Promise.resolve(razorpay.plans.fetch(plan_id));
@@ -1174,7 +1204,10 @@ class PaymentService {
 
           await Authentication.findByIdAndUpdate(
             user_details?._id,
-            { status: "confirm_pending" },
+            {
+              status: "confirm_pending",
+              last_login_date: moment.utc().startOf("day"),
+            },
             { new: true }
           );
 

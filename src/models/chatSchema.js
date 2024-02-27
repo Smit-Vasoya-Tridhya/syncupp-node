@@ -3,12 +3,12 @@ const { crm_connection } = require("../config/connection");
 
 const chat_schema = new mongoose.Schema(
   {
-    from: { type: mongoose.Schema.Types.ObjectId, required: true },
-    to: { type: mongoose.Schema.Types.ObjectId, required: true },
+    from_user: { type: mongoose.Schema.Types.ObjectId, required: true },
+    to_user: { type: mongoose.Schema.Types.ObjectId, required: true },
     message: { type: String },
     is_deleted: { type: Boolean, default: false },
-    image_url: { type: String },
-    document_url: { type: String },
+    image_url: [{ type: String }],
+    document_url: [{ type: String }],
   },
   { timestamps: true }
 );

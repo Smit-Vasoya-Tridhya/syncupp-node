@@ -4,7 +4,7 @@ const Authentication = require("../models/authenticationSchema");
 const { throwError } = require("../helpers/errorUtil");
 const { returnMessage } = require("../utils/utils");
 const Competition_Point = require("../models/competitionPointSchema");
-
+const moment = require("moment");
 exports.protect = catchAsyncErrors(async (req, res, next) => {
   const token = req.headers.authorization || req.headers.token;
 
@@ -22,38 +22,39 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
       .lean();
     if (!user) return throwError(returnMessage("auth", "unAuthorized"), 401);
 
-    // const verify_date = await Competition_Point.findOne({
-    //   agency_id: user.reference_id,
-    // });
-    // const currentDate = new Date().toISOString().split("T")[0];
-    // const verifyDate = verify_date?.login_date?.toISOString()?.split("T")[0];
+    // Convert last_login_date to UTC format using Moment.js
+    const lastLoginDateUTC = moment.utc(user.last_login_date);
 
-    // if (!(verifyDate === currentDate)) {
-    //   // If the condition is true, execute the following code
-    //   if (user?.role?.name === "team_agency" || user?.role?.name === "agency") {
-    //     const referral_data = await Configuration.findOne().lean();
+    // Get the current date in UTC format using Moment.js
+    const currentDateUTC = moment().startOf("day");
 
-    //     await Competition_Point.create({
-    //       user_id: user.reference_id,
-    //       agency_id: user.reference_id,
-    //       point: +referral_data.competition.successful_login.toString(),
-    //       type: "login",
-    //       role: user?.role?.name,
-    //       login_date: Date.now(),
-    //     });
+    // Check if last login date is the same as current date
+    if (lastLoginDateUTC.isSameOrBefore(currentDateUTC)) {
+      // If the condition is true, execute the following code
+      if (user?.role?.name === "team_agency" || user?.role?.name === "agency") {
+        const referral_data = await Configuration.findOne().lean();
 
-    //     await Authentication.findOneAndUpdate(
-    //       { reference_id: user.reference_id },
-    //       {
-    //         $inc: {
-    //           total_referral_point:
-    //             referral_data?.competition?.successful_login,
-    //         },
-    //       },
-    //       { new: true }
-    //     );
-    //   }
-    // }
+        await Competition_Point.create({
+          user_id: user.reference_id,
+          agency_id: user.reference_id,
+          point: +referral_data.competition.successful_login.toString(),
+          type: "login",
+          role: user?.role?.name,
+        });
+
+        await Authentication.findOneAndUpdate(
+          { reference_id: user.reference_id },
+          {
+            $inc: {
+              total_referral_point:
+                referral_data?.competition?.successful_login,
+            },
+            last_login_date: moment.utc().startOf("day"),
+          },
+          { new: true }
+        );
+      }
+    }
 
     const req_paths = ["/create-subscription", "/order"];
     if (
