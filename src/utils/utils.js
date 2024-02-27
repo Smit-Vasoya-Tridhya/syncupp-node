@@ -1,8 +1,45 @@
 const { throwError } = require("../helpers/errorUtil");
 const engMessage = require("../messages/english.json");
+const notificationMessage = require("../messages/notification.json");
+const cheerio = require("cheerio");
 
 exports.returnMessage = (module, key, language = "en") => {
   return engMessage[module][key];
+};
+
+exports.returnNotification = (module, key, subKey) => {
+  const moduleData = notificationMessage[module];
+
+  if (moduleData) {
+    const keyData = moduleData[key];
+
+    if (keyData) {
+      if (subKey !== undefined && keyData.hasOwnProperty(subKey)) {
+        return keyData[subKey];
+      } else {
+        return keyData;
+      }
+    }
+  }
+  return undefined;
+};
+
+exports.replaceFields = (inputString, replacements) => {
+  for (const [key, value] of Object.entries(replacements)) {
+    const pattern = new RegExp(`\\$\\{${key}\\}`, "g");
+    inputString = inputString.replace(pattern, value);
+  }
+  return inputString;
+};
+
+exports.extractTextFromHtml = (htmlString) => {
+  const $ = cheerio.load(htmlString);
+  return $("body").text();
+};
+
+exports.formatTime = (date) => {
+  const options = { hour12: false, hour: "2-digit", minute: "2-digit" };
+  return new Date(date).toLocaleTimeString("en-US", options);
 };
 
 exports.validateEmail = (email) => {
@@ -7014,9 +7051,9 @@ exports.activityTemplate = (data) => {
                                       ">
                                     Recent Activity :
                                     <span style="font-weight: 600;">${
-                                      data.isNew
-                                        ? "New call meeting schedule"
-                                        : "Call meeting updated"
+                                      data?.activity_type === "call_meeting"
+                                        ? "Call meeting"
+                                        : "Other"
                                     }</span>
 
                                   </p>
@@ -7097,9 +7134,7 @@ border-collapse: collapse;">Due Date :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${
-    data?.due_date ? new Date(data?.due_date).toLocaleDateString() : `&nbsp;`
-  }</td>
+white-space: nowrap;">${data?.due_date ?? `&nbsp;`}</td>
                                       </tr>
 
 
@@ -7111,14 +7146,7 @@ border-collapse: collapse;">Meeting start time :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${
-    data?.meeting_start_time
-      ? new Date(data?.meeting_start_time).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : `&nbsp;`
-  }</td>
+white-space: nowrap;">${data?.meeting_start_time ?? `&nbsp;`}</td>
                                     </tr>
 
                                     
@@ -7129,14 +7157,7 @@ border-collapse: collapse;">Meeting end time :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${
-    data?.meeting_end_time
-      ? new Date(data?.meeting_end_time).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : `&nbsp;`
-  }</td>
+white-space: nowrap;">${data?.meeting_end_time ?? `&nbsp;`}</td>
                                   </tr>
 
                                   
@@ -7148,7 +7169,9 @@ border-collapse: collapse;">Activity type :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.activity_type.name ?? `&nbsp;`}</td>
+white-space: nowrap;">${
+    data?.activity_type === "call_meeting" ? "call meeting" : "other"
+  }</td>
                                 </tr>
 
                                 <tr>
@@ -7158,7 +7181,7 @@ border-collapse: collapse;">Status :</td>
 border-collapse: collapse; font-weight: 600; max-width: 100px;
 overflow: hidden;
 text-overflow: ellipsis;
-white-space: nowrap;">${data?.status ?? `&nbsp;`}</td>
+white-space: nowrap;">${data?.status}</td>
                               </tr>
                                   
                                         

@@ -27,7 +27,7 @@ exports.socket_connection = (http_server) => {
 
     // When Data delivered
     socket.on("CONFIRMATION", (payload) => {
-      logger.info(`Event Confirmation : ${payload}`);
+      logger.info(`Event Confirmation : ${payload.name} ${payload.id}`);
     });
   });
 };

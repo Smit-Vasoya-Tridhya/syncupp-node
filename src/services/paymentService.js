@@ -632,6 +632,7 @@ class PaymentService {
       );
       return;
     } catch (error) {
+      console.log(JSON.stringify(error));
       logger.error(`Error while updating the subscription: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -663,12 +664,24 @@ class PaymentService {
       let search_obj = {};
       if (payload?.search && payload?.search !== "") {
         search_obj["$or"] = [
-          { amount: { $regex: payload.search.toLowerCase(), $options: "i" } },
+          {
+            payment_mode: {
+              $regex: payload.search.toLowerCase(),
+              $options: "i",
+            },
+          },
         ];
 
         const keywordType = getKeywordType(payload.search);
-        const dateKeyword = new Date(payload.search);
-        search_obj["$or"].push({ createdAt: dateKeyword });
+
+        if (keywordType === "date") {
+          const dateKeyword = new Date(payload.search);
+          search_obj["$or"].push({ createdAt: dateKeyword });
+        }
+        if (keywordType === "number") {
+          const number = parseInt(payload.search);
+          search_obj["$or"].push({ amount: number });
+        }
       }
 
       const [payment_history, total_history] = await Promise.all([
@@ -993,6 +1006,7 @@ class PaymentService {
       );
       return;
     } catch (error) {
+      console.log(JSON.stringify(error));
       logger.error(`Error while canceling the subscription: ${error}`);
       return throwError(error?.message, error?.statusCode);
     }
@@ -1078,7 +1092,7 @@ class PaymentService {
       const referral_data = await Configuration.findOne().lean();
       if (
         !(
-          payload.total_referral_point >=
+          user?.total_referral_point >=
           referral_data?.referral?.redeem_required_point
         )
       )
@@ -1156,7 +1170,10 @@ class PaymentService {
             message: invitation_mail,
           });
           await Client.updateOne(
-            { _id: user_id, "agency_ids.agency_id": agency_id },
+            {
+              _id: user_id,
+              "agency_ids.agency_id": agency_details?.reference_id,
+            },
             { $set: { "agency_ids.$.status": "pending" } },
             { new: true }
           );
@@ -1229,14 +1246,17 @@ class PaymentService {
           });
 
           await Team_Client.updateOne(
-            { _id: user_id, "agency_ids.agency_id": agency_id },
+            {
+              _id: user_id,
+              "agency_ids.agency_id": agency_details?.reference_id,
+            },
             { $set: { "agency_ids.$.status": "pending" } },
             { new: true }
           );
         }
 
         await PaymentHistory.create({
-          agency_id,
+          agency_id: agency_details?.reference_id,
           user_id: user_details?.reference_id,
           amount: redeem_required_point,
           role: user_details?.role?.name,
@@ -1257,7 +1277,10 @@ class PaymentService {
         };
         await SheetManagement.findByIdAndUpdate(sheets._id, sheet_obj);
 
-        await this.updateSubscription(agency_id, sheet_obj.total_sheets);
+        await this.updateSubscription(
+          agency_details?.reference_id,
+          sheet_obj.total_sheets
+        );
 
         let message;
         if (user_details?.role?.name === "client") {
@@ -1366,7 +1389,10 @@ class PaymentService {
             message: invitation_mail,
           });
           await Client.updateOne(
-            { _id: user_id, "agency_ids.agency_id": agency_id },
+            {
+              _id: user_id,
+              "agency_ids.agency_id": agency_details?.reference_id,
+            },
             { $set: { "agency_ids.$.status": "pending" } },
             { new: true }
           );
@@ -1436,7 +1462,10 @@ class PaymentService {
           });
 
           await Team_Client.updateOne(
-            { _id: user_id, "agency_ids.agency_id": agency_id },
+            {
+              _id: user_id,
+              "agency_ids.agency_id": agency_details?.reference_id,
+            },
             { $set: { "agency_ids.$.status": "pending" } },
             { new: true }
           );
@@ -1469,7 +1498,7 @@ class PaymentService {
     } catch (error) {
       console.log(JSON.stringify(error));
       logger.error(`Error while changing status after the payment: ${error}`);
-      return false;
+      return { success: false };
     }
   };
 }
