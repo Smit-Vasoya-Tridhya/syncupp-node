@@ -1024,7 +1024,7 @@ class PaymentService {
       const [plan_details, sheets_detail, earned_total] = await Promise.all([
         this.planDetails(subscription.plan_id),
         SheetManagement.findOne({ agency_id: agency?.reference_id }).lean(),
-        calculateTotalReferralPoints(agency),
+        this.calculateTotalReferralPoints(agency),
       ]);
 
       return {
