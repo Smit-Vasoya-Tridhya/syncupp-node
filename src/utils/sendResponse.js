@@ -1,13 +1,18 @@
 const sendResponse = (
   response,
   success = true,
-  message = "Fetched Successfully!",
+  message,
   data,
-  statusCode = 200
+  statusCode = 200,
+  pagination = undefined
 ) => {
-  response
-    .status(statusCode)
-    .json({ success, message, data, status: statusCode });
+  response.status(statusCode).json({
+    success,
+    message,
+    data,
+    status: statusCode,
+    pagination: pagination,
+  });
 };
 
 module.exports = { sendResponse };

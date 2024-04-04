@@ -1,0 +1,145 @@
+{
+  "activity": {
+    "createCallMeeting": {
+      "clientMessage": "Hi ${client_name}! You have a ${activity_type} titled ${title} on ${due_date} at ${meeting_start_time}. Check the agenda. See you there!",
+      "assignToMessage": "Hey ${assigned_to_name}! You're assigned to a ${activity_type} ${title} on ${due_date} from ${meeting_start_time} to ${meeting_end_time}. Check the agenda. Be ready!",
+      "assignByMessage": "Hey ${agency_name}!${assigned_to_name} just created a ${activity_type} titled ${title} on ${due_date} from ${meeting_start_time} to ${meeting_end_time}. Check the agenda.",
+      "attendeesMessage": "You have a ${activity_type} titled ${title} on ${due_date} at ${meeting_start_time}. Check the agenda. See you there!"
+    },
+    "activityUpdated": {
+      "clientMessage": "Updated: Hi ${client_name}! Your ${activity_type} titled ${title} on ${due_date} at ${meeting_start_time}. Check the agenda. See you there!",
+      "assignToMessage": "Updated: Hey ${assigned_to_name}! You're assigned to a ${activity_type} titled ${title} on ${due_date} from ${meeting_start_time} to ${meeting_end_time}. Check the agenda. Be ready!",
+      "attendeesMessage": "Updated: The ${activity_type} titled ${title} on ${due_date} at ${meeting_start_time}. Check the agenda. See you there!",
+      "assignByMessage": "Updated: Hi ${agency_name}!${assigned_to_name}  just updated a ${activity_type} titled ${title} on ${due_date} from ${meeting_start_time} to ${meeting_end_time}."
+    },
+    "activityCancelled": {
+      "clientMessage": "Hi ${client_name}! The ${activity_type} titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. ",
+      "assignToMessage": "Hi ${assigned_to_name}! The ${activity_type} titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. ",
+      "assignByMessage": "Hi ${assigned_by_name}! The ${activity_type} titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. ",
+      "attendeesMessage": "The ${activity_type} titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled."
+    },
+    "activityCompleted": {
+      "clientMessage": "Hi ${client_name}! Your ${activity_type} '${title}' is completed.",
+      "assignToMessage": "Hey ${assigned_to_name}! The ${activity_type} '${title}' assigned to you is completed.",
+      "assignByMessage": "Hey ${assigned_by_name}! The ${activity_type} '${title}' is completed by ${assigned_to_name}.",
+      "attendeesMessage": "Hey ${assigned_to_name}! The ${activity_type} '${title}' assigned to you is completed."
+    },
+    "activityInProgress": {
+      "clientMessage": "Hi ${client_name}! Your ${activity_type} '${title}' is in progress.",
+      "assignToMessage": "Hey ${assigned_to_name}! The ${activity_type} '${title}' assigned to you is in progress.",
+      "attendeesMessage": "Hi ${client_name}! Your ${activity_type} '${title}' is in progress."
+    },
+    "activityPending": {
+      "clientMessage": "Hi ${client_name}! Your ${activity_type} '${title}' is in pending.",
+      "assignToMessage": "Hey ${assigned_to_name}! The ${activity_type} '${title}' assigned to you is pending.",
+      "assignByMessage": "Hi ${client_name}! Your ${activity_type} '${title}' is in pending.",
+      "attendeesMessage": "The ${activity_type} '${title}' is in pending."
+    },
+    "activityOverdue": {
+      "clientMessage": "Your ${activity_type} '${title}' has been overdue.",
+      "assignToMessage": "The ${activity_type} '${title}' assigned to you has been overdue.",
+      "attendeesMessage": "The ${activity_type} '${title}' has been overdue."
+    },
+    "activityDueDate": {
+      "clientMessage": "Today is the due date for ${activity_type} '${title}'.",
+      "assignToMessage": "Today is the due date for ${activity_type} '${title}'."
+    },
+    "createTask": {
+      "clientMessage": "Hi ${client_name}! You have a task titled ${title} due on ${due_date} before ${due_time}. Check the agenda. See you there!",
+      "assignToMessage": "Hey ${assigned_to_name}! You're assigned to a task titled ${title} due on ${due_date} before ${due_time}. Check the agenda. Be ready!",
+      "assignByMessage": "Hi ${agency_name}!${assigned_to_name} just created a task titled ${title} due on ${due_date} before ${due_time}. Check the agenda. See you there!"
+    },
+    "taskCompleted": {
+      "clientMessage": "Hi ${client_name}! Your task '${title}' is completed.",
+      "assignToMessage": "Hey ${assigned_to_name}! The task '${title}' assigned to you is completed. Great job!",
+      "assignByMessage": "Hi ${agency_name}! The task '${title}' is completed."
+    },
+    "taskPending": {
+      "clientMessage": "Hi ${client_name}! Your task '${title}' is pending.",
+      "assignToMessage": "Hey ${assigned_to_name}! The task '${title}' assigned to you is pending.",
+      "assignByMessage": "Hi ${client_name}! Your task '${title}' is pending."
+    },
+    "taskUpdated": {
+      "clientMessage": "Updated: Hi ${client_name}! Your task titled ${title} now has a due date on ${due_date} before ${due_time}. See you there!",
+      "assignToMessage": "Updated: Hey ${assigned_to_name}! You're assigned to a task titled ${title} due on ${due_date} before ${due_time}. Be ready!",
+      "assignByMessage": "Updated: Hi ${agency_name}! Your task titled ${title} now has a due date on ${due_date} before ${due_time}. See you there!"
+    },
+    "taskInProgress": {
+      "clientMessage": "Hi ${client_name}! Your task '${title}' is in progress.",
+      "assignToMessage": "Hey ${assigned_to_name}! The task '${title}' assigned to you is in progress.",
+      "assignByMessage": "Hi ${assigned_by_name}! The task '${title}' is in progress."
+    },
+    "taskCancelled": {
+      "clientMessage": "Hi ${client_name}! The task titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. ",
+      "assignToMessage": "Hi ${assigned_to_name}! The task titled ${title} scheduled for ${due_date} at ${meeting_start_time} has been canceled. "
+    },
+    "taskDeleted": {
+      "clientMessage": "Task '${title}' has been deleted.",
+      "assignToMessage": "Task '${title}' has been deleted."
+    },
+    "taskOverdue": {
+      "clientMessage": "Task '${title}' has been overdue.",
+      "assignToMessage": "Task '${title}' has been overdue.",
+      "assignByMessage": "Task '${title}' has been overdue."
+    },
+    "taskDueDate": {
+      "clientMessage": "Today is the due date for Task '${title}'.",
+      "assignToMessage": "Today is the due date for Task '${title}'."
+    },
+    "meetingAlert": {
+      "alertMessage": "The meeting titled '${title}' will start in 15 minutes; please get ready."
+    }
+  },
+  "agreement": {
+    "create": "Hi ${receiver_name}! An agreement titled ${title} has been created by ${sender_name}. Please review the agreement content and provide your consent.",
+    "statusUpdate": "Agreed: Hi ${sender_name}! An agreement titled ${title} has been agreed by ${receiver_name}."
+  },
+  "invoice": {
+    "create": "Hi ${receiver_name}! An invoice with number ${invoice_number} has been created by ${sender_name}.",
+    "invoiceDue": "Hi ${receiver_name}! This is a reminder that invoice number ${invoice_number} from ${sender_name} is due for payment. The due date is approaching, and we request you to process the payment at your earliest convenience.",
+    "invoicePaid": "Hi ${receiver_name}! Invoice number ${invoice_number} from ${sender_name} has been paid. Thank you for your prompt payment."
+  },
+
+  "general": {
+    "clientTeamMemberAdded": "Client member request received from client ${client_name}",
+    "clientTeamJoined": "Team member ${member_name} joined.",
+    "clientJoined": "Client ${client_name} joined.",
+    "clientTeamPaymentDone": "Team member ${member_name} payment done.",
+    "clientTeamPaymentFail": "Team member ${member_name} payment fail.",
+    "memberDeletedClient": "Team member ${member_name} has been deleted by ${client_name}.",
+    "memberDeletedAgency": "Team member ${member_name} has been deleted by ${agency_name}."
+  },
+
+  "admin": {
+    "clientSeatRemoved": "Client ${removed_user} seat removed by  ${agency_name}",
+    "teamClientSeatRemoved": "Team client member ${removed_user} seat removed by  ${agency_name}",
+    "teamAgencySeatRemoved": "Member ${removed_user} seat removed by  ${agency_name}",
+    "agencyCreated": "A new agency named ${agency_name} has been registered",
+    "clientTeamPaymentFail": "Team member ${member_name} payment fail.",
+    "memberPayment": "Team member ${user_name} payment ${currency} ${amount}  done by ${agency_name}.",
+    "agencyPayment": "Agency ${user_name} payment ${currency} ${amount} done.",
+    "clientPayment": "Client ${user_name} payment ${currency} ${amount} done by ${agency_name}.",
+    "newInquiry": "New inquiry received.",
+    "newTicket": "New ticket received."
+  },
+
+  "chat": {
+    "addedToGroup": "You are added to the {{group_name}} group by the {{creator_name}}.",
+    "newMessage": "{{sender_name}} has sent you a new message.",
+    "newGroupMessage": "You received new message from {{group_name}}."
+  },
+  "payment": {
+    "nextSubscriptionStart": "Your next subscription will start in {{no_days}} days",
+    "memberPayment": "Team member ${user_name} payment ${currency} ${amount}  done by you.",
+    "agencyPayment": "Your payment ${currency} ${amount} done.",
+    "clientPayment": "Client ${user_name} payment ${currency} ${amount} done by you.",
+    "agencyPackageExpired": "Your pack has been expired please renew it.",
+    "trialPeriodEnd": "Your free trial period will end in {{no_days}} day."
+  },
+  "referral": {
+    "signUp": "New user ${referred_to} joined ${points} Points added.",
+    "login": "${points} Points added to your account for your first daily login.",
+    "taskDeduct": "${points} points deducted of Task ${task_name}.",
+    "taskAdded": "${points} points added of Task ${task_name}."
+  }
+}

@@ -3,7 +3,10 @@ const { crm_connection } = require("../../config/connection");
 
 const agencyTypeSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: {
+      type: String,
+      enum: ["team_member", "admin"],
+    },
     label: { type: String, required: true },
   },
   { timestamps: true }

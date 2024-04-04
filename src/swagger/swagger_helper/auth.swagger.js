@@ -2,7 +2,6 @@ const registerAgency = {
   tags: ["CRM Panel"],
   description: "",
   summary: "Register Agency.",
-  security: [],
   requestBody: {
     content: {
       "application/json": {
@@ -112,15 +111,22 @@ const facebookSignIn = {
   tags: ["CRM Panel"],
   description: "Agency Facebook SignIn",
   summary: "Agency Facebook SignIn",
-  parameters: [
-    {
-      name: "code",
-      in: "query",
-      description: "Code from the facebook signup",
-      required: true,
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            access_token: {
+              type: "string",
+              descripition: "Enter your token",
+              required: true,
+            },
+          },
+        },
+      },
     },
-  ],
-
+  },
   responses: {
     200: {
       descripition: "ok",
@@ -295,6 +301,253 @@ const changePassword = {
   },
 };
 
+const countriesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all Countries",
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const statesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all states",
+  parameters: [
+    {
+      name: "countryId",
+      in: "path",
+      description: "provide the country id",
+      required: true,
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const citiesList = {
+  tags: ["Master table - CRM Panel"],
+  description: "",
+  summary: "Get all cities",
+  parameters: [
+    {
+      name: "stateId",
+      in: "path",
+      description: "provide the state id",
+      required: true,
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+          properties: {
+            search: {
+              type: "string",
+              description: "Enter value of search",
+            },
+          },
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const getProfile = {
+  tags: ["CRM Panel"],
+  description: "",
+  summary: "Get profile",
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const updateProfile = {
+  tags: ["CRM Panel"],
+  description: "",
+  summary: "Update agency profile ",
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          type: "object",
+
+          properties: {
+            first_name: {
+              type: "string",
+              description: "Enter first name",
+              required: true,
+            },
+            last_name: {
+              type: "string",
+              description: "Enter last name",
+              required: true,
+            },
+            contact_number: {
+              type: "string",
+              description: "Enter contact number",
+              required: true,
+            },
+            address: {
+              type: "string",
+              description: "Enter address",
+              required: true,
+            },
+            city: {
+              type: "string",
+              description: "Enter city id",
+              required: true,
+            },
+            company_name: {
+              type: "string",
+              description: "Enter company name ",
+              required: true,
+            },
+            company_website: {
+              type: "string",
+              description: "Enter Company Website",
+              required: true,
+            },
+            country: {
+              type: "string",
+              description: "Enter country id",
+              required: true,
+            },
+            industry: {
+              type: "string",
+              description: "Enter industry",
+              required: true,
+            },
+            no_of_people: {
+              type: "string",
+              description: "Enter No of people",
+              required: true,
+            },
+            pincode: {
+              type: "number",
+              description: "Enter Pin code",
+              required: true,
+            },
+            state: {
+              type: "string",
+              description: "Enter state Id",
+              required: true,
+            },
+          },
+        },
+      },
+    },
+  },
+
+  responses: {
+    200: {
+      description: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
+const checkSubscriptionHalt = {
+  tags: ["CRM Panel"],
+  description: "",
+  summary: "Get Subscription halt details",
+  responses: {
+    200: {
+      descripition: "ok",
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+          },
+        },
+      },
+    },
+  },
+};
+
 const authRoutes = {
   "/api/v1/auth/signup": {
     post: registerAgency,
@@ -303,7 +556,7 @@ const authRoutes = {
     post: googleSignIn,
   },
   "/api/v1/auth/facebook-signup": {
-    get: facebookSignIn,
+    post: facebookSignIn,
   },
   "/api/v1/auth/login": {
     post: login,
@@ -316,6 +569,24 @@ const authRoutes = {
   },
   "/api/v1/auth/change-password": {
     post: changePassword,
+  },
+  "/api/v1/auth/countries": {
+    post: countriesList,
+  },
+  "/api/v1/auth/states/{countryId}": {
+    post: statesList,
+  },
+  "/api/v1/auth/cities/{stateId}": {
+    post: citiesList,
+  },
+  "/api/v1/auth/profile": {
+    get: getProfile,
+  },
+  "/api/v1/auth/update-profile": {
+    patch: updateProfile,
+  },
+  "/api/v1/auth/subscription-halt": {
+    get: checkSubscriptionHalt,
   },
 };
 

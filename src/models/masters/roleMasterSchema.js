@@ -7,6 +7,10 @@ const roleMasterSchema = new mongoose.Schema(
       type: String,
       enum: ["agency", "client", "team_agency", "team_client"],
     },
+    is_deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
